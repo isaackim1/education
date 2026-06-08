@@ -29,38 +29,52 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
-function writeJson<T>(key: string, value: T): void {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(key, JSON.stringify(value));
+function writeJson<T>(key: string, value: T): boolean {
+  if (!isBrowser()) return false;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function removeItem(key: string): boolean {
+  if (!isBrowser()) return false;
+  try {
+    window.localStorage.removeItem(key);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function getExam(): Exam | null {
   return readJson<Exam | null>(KEYS.exam, null);
 }
 
-export function saveExam(exam: Exam): void {
-  writeJson(KEYS.exam, exam);
+export function saveExam(exam: Exam): boolean {
+  return writeJson(KEYS.exam, exam);
 }
 
 export function clearExam(): void {
-  if (!isBrowser()) return;
-  window.localStorage.removeItem(KEYS.exam);
+  removeItem(KEYS.exam);
 }
 
 export function getStudyPlan(): StudyPlan | null {
   return readJson<StudyPlan | null>(KEYS.plan, null);
 }
 
-export function saveStudyPlan(plan: StudyPlan): void {
-  writeJson(KEYS.plan, plan);
+export function saveStudyPlan(plan: StudyPlan): boolean {
+  return writeJson(KEYS.plan, plan);
 }
 
 export function getTopics(): Topic[] {
   return readJson<Topic[]>(KEYS.topics, []);
 }
 
-export function saveTopics(topics: Topic[]): void {
-  writeJson(KEYS.topics, topics);
+export function saveTopics(topics: Topic[]): boolean {
+  return writeJson(KEYS.topics, topics);
 }
 
 export function updateTopic(topicId: string, updates: Partial<Topic>): void {
@@ -119,8 +133,7 @@ export function updateMistake(
 }
 
 export function clearAllStudyCoachData(): void {
-  if (!isBrowser()) return;
   Object.values(KEYS).forEach((key) => {
-    window.localStorage.removeItem(key);
+    removeItem(key);
   });
 }

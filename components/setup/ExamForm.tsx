@@ -2,9 +2,14 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Exam, Topic } from "@/lib/types";
+import type { DailyPlan, Exam, StudyPlan, Topic } from "@/lib/types";
 import { generateLocalStudyPlan } from "@/lib/plan-generator";
-import { saveExam, saveStudyPlan, saveTopics } from "@/lib/storage";
+import {
+  clearAllStudyCoachData,
+  saveExam,
+  saveStudyPlan,
+  saveTopics,
+} from "@/lib/storage";
 import { generateId } from "@/lib/utils";
 
 export default function ExamForm() {
@@ -23,10 +28,16 @@ export default function ExamForm() {
     e.preventDefault();
     setError(null);
 
-    const topicNames = topicsText
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
+    const seenTopics = new Set<string>();
+    const topicNames = topicsText.split("\n").reduce<string[]>((names, line) => {
+      const name = line.trim();
+      const normalizedName = name.toLocaleLowerCase();
+      if (name && !seenTopics.has(normalizedName)) {
+        seenTopics.add(normalizedName);
+        names.push(name);
+      }
+      return names;
+    }, []);
 
     if (!subject.trim()) {
       setError("Subject is required.");
@@ -36,11 +47,15 @@ export default function ExamForm() {
       setError("Exam date is required.");
       return;
     }
+    if (Number.isNaN(new Date(`${examDate}T00:00:00`).getTime())) {
+      setError("Enter a valid exam date.");
+      return;
+    }
     if (topicNames.length === 0) {
       setError("Add at least one topic.");
       return;
     }
-    if (studyHours < 1 || studyHours > 8) {
+    if (!Number.isFinite(studyHours) || studyHours < 1 || studyHours > 8) {
       setError("Study hours must be between 1 and 8.");
       return;
     }
@@ -72,7 +87,7 @@ export default function ExamForm() {
         masteryHistory: [],
       }));
 
-      let plan;
+      let plan: StudyPlan;
       try {
         const response = await fetch("/api/plan", {
           method: "POST",
@@ -80,8 +95,8 @@ export default function ExamForm() {
           body: JSON.stringify({ exam, topics }),
         });
         if (response.ok) {
-          const data = await response.json();
-          plan = data.plan;
+          const data: unknown = await response.json();
+          plan = getPlanFromResponse(data) ?? generateLocalStudyPlan(exam, topics);
         } else {
           plan = generateLocalStudyPlan(exam, topics);
         }
@@ -89,12 +104,18 @@ export default function ExamForm() {
         plan = generateLocalStudyPlan(exam, topics);
       }
 
-      saveExam(exam);
-      saveTopics(topics);
-      saveStudyPlan(plan);
+      const savedExam = saveExam(exam);
+      const savedTopics = saveTopics(topics);
+      const savedPlan = saveStudyPlan(plan);
+      if (!savedExam || !savedTopics || !savedPlan) {
+        clearAllStudyCoachData();
+        throw new Error("Unable to save study plan");
+      }
       router.push("/plan");
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(
+        "We could not generate and save your study plan. Check your browser storage and try again."
+      );
       setLoading(false);
     }
   }
@@ -113,6 +134,7 @@ export default function ExamForm() {
           placeholder="e.g. Macroeconomics"
           className="w-full border border-neutral-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
           disabled={loading}
+          required
         />
       </div>
 
@@ -127,6 +149,7 @@ export default function ExamForm() {
           onChange={(e) => setExamDate(e.target.value)}
           className="w-full border border-neutral-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
           disabled={loading}
+          required
         />
       </div>
 
@@ -143,6 +166,7 @@ export default function ExamForm() {
           onChange={(e) => setStudyHours(Number(e.target.value))}
           className="w-full border border-neutral-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black"
           disabled={loading}
+          required
         />
       </div>
 
@@ -181,6 +205,7 @@ export default function ExamForm() {
           placeholder={"Supply and Demand\nElasticity\nInflation"}
           className="w-full border border-neutral-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-black resize-y"
           disabled={loading}
+          required
         />
       </div>
 
@@ -231,5 +256,62 @@ export default function ExamForm() {
         {loading ? "Building your plan..." : "Create study plan"}
       </button>
     </form>
+  );
+}
+
+function getPlanFromResponse(value: unknown): StudyPlan | null {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("plan" in value) ||
+    !isStudyPlan(value.plan)
+  ) {
+    return null;
+  }
+
+  return value.plan;
+}
+
+function isStudyPlan(value: unknown): value is StudyPlan {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "id" in value &&
+    typeof value.id === "string" &&
+    "examId" in value &&
+    typeof value.examId === "string" &&
+    "generatedAt" in value &&
+    typeof value.generatedAt === "string" &&
+    "days" in value &&
+    Array.isArray(value.days) &&
+    value.days.length === 14 &&
+    value.days.every(isDailyPlan)
+  );
+}
+
+function isDailyPlan(value: unknown): value is DailyPlan {
+  if (typeof value !== "object" || value === null) return false;
+
+  return (
+    "day" in value &&
+    typeof value.day === "number" &&
+    "date" in value &&
+    typeof value.date === "string" &&
+    "topicIds" in value &&
+    Array.isArray(value.topicIds) &&
+    value.topicIds.every((id) => typeof id === "string") &&
+    "sessionType" in value &&
+    ["learn", "quiz", "review", "exam-sim"].includes(
+      String(value.sessionType)
+    ) &&
+    "goalDescription" in value &&
+    typeof value.goalDescription === "string" &&
+    "estimatedMinutes" in value &&
+    typeof value.estimatedMinutes === "number" &&
+    Number.isFinite(value.estimatedMinutes) &&
+    "completed" in value &&
+    typeof value.completed === "boolean" &&
+    "sessionId" in value &&
+    (typeof value.sessionId === "string" || value.sessionId === null)
   );
 }

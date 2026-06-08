@@ -31,7 +31,7 @@ export default function PlanPage() {
     );
   }
 
-  if (!exam || !studyPlan) {
+  if (!exam || !studyPlan || topics.length === 0) {
     return (
       <main className="min-h-screen flex items-center justify-center">
         <div className="text-center">

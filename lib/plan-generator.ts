@@ -1,6 +1,11 @@
 import type { DailyPlan, Exam, SessionType, StudyPlan, Topic } from "./types";
 import { addDaysToDate, generateId, getTodayIsoDate } from "./utils";
 
+export type PlanGenerationExam = Pick<Exam, "id" | "studyHoursPerDay">;
+export type PlanGenerationTopic = Pick<Topic, "id" | "name">;
+
+const DAY_COUNT = 14;
+
 const SESSION_SCHEDULE: SessionType[] = [
   "learn",
   "learn",
@@ -30,7 +35,7 @@ const GOAL_TEMPLATES: Record<SessionType, (topicNames: string[]) => string> = {
 };
 
 function distributeTopicsAcrossDays(
-  topics: Topic[],
+  topics: PlanGenerationTopic[],
   dayCount: number
 ): string[][] {
   if (topics.length === 0) {
@@ -55,14 +60,19 @@ function distributeTopicsAcrossDays(
 }
 
 export function generateLocalStudyPlan(
-  exam: Exam,
-  topics: Topic[]
+  exam: PlanGenerationExam,
+  topics: PlanGenerationTopic[]
 ): StudyPlan {
   const today = getTodayIsoDate();
-  const topicAssignments = distributeTopicsAcrossDays(topics, 14);
-  const estimatedMinutes = exam.studyHoursPerDay * 60;
+  const topicAssignments = distributeTopicsAcrossDays(topics, DAY_COUNT);
+  const estimatedMinutes = Math.round(exam.studyHoursPerDay * 60);
 
-  const days: DailyPlan[] = SESSION_SCHEDULE.map((sessionType, index) => {
+  if (!Number.isFinite(estimatedMinutes) || estimatedMinutes <= 0) {
+    throw new Error("Study hours per day must be a positive number");
+  }
+
+  const days: DailyPlan[] = Array.from({ length: DAY_COUNT }, (_, index) => {
+    const sessionType = SESSION_SCHEDULE[index % SESSION_SCHEDULE.length];
     const dayNumber = index + 1;
     const topicIds = topicAssignments[index];
     const topicNames = topicIds

@@ -7,15 +7,19 @@ export function generateId(): string {
 export function daysUntilExam(examDate: string): number {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const exam = new Date(examDate);
-  exam.setHours(0, 0, 0, 0);
+  const exam = new Date(`${examDate}T00:00:00`);
+  if (Number.isNaN(exam.getTime())) return 0;
   const diffMs = exam.getTime() - today.getTime();
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
   return Math.max(0, diffDays);
 }
 
 export function formatDate(isoString: string): string {
-  const date = new Date(isoString);
+  const date = new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(isoString)
+      ? `${isoString}T00:00:00`
+      : isoString
+  );
   return date.toLocaleDateString("en-US", {
     weekday: "short",
     month: "short",
@@ -36,7 +40,7 @@ export function getNextReviewDate(reviewCount: number): string {
   } else {
     date.setDate(date.getDate() + 10);
   }
-  return date.toISOString().split("T")[0];
+  return formatLocalIsoDate(date);
 }
 
 export function clampMasteryScore(score: number): MasteryLevel {
@@ -45,11 +49,21 @@ export function clampMasteryScore(score: number): MasteryLevel {
 }
 
 export function getTodayIsoDate(): string {
-  return new Date().toISOString().split("T")[0];
+  return formatLocalIsoDate(new Date());
 }
 
 export function addDaysToDate(baseDate: string, days: number): string {
-  const date = new Date(baseDate);
+  const date = new Date(`${baseDate}T00:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Invalid base date");
+  }
   date.setDate(date.getDate() + days);
-  return date.toISOString().split("T")[0];
+  return formatLocalIsoDate(date);
+}
+
+function formatLocalIsoDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }

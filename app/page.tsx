@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getExam, getStudyPlan } from "@/lib/storage";
+import { getExam, getStudyPlan, getTopics } from "@/lib/storage";
 
 export default function HomePage() {
   const router = useRouter();
@@ -10,8 +10,9 @@ export default function HomePage() {
   useEffect(() => {
     const exam = getExam();
     const plan = getStudyPlan();
+    const topics = getTopics();
 
-    if (exam && plan) {
+    if (exam && plan && topics.length > 0) {
       router.replace("/plan");
     } else {
       router.replace("/setup");
