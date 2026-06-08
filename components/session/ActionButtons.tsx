@@ -1,4 +1,4 @@
-const ACTIONS = [
+export const ACTIONS = [
   { label: "Explain Simply", instruction: "Explain the current topic simply." },
   { label: "Give Example", instruction: "Give me a simple example for the current topic." },
   { label: "Quiz Me", instruction: "Quiz me on the current topic. Ask one question only." },

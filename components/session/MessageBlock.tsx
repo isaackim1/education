@@ -2,6 +2,8 @@ import type { Message } from "@/lib/types";
 
 interface MessageBlockProps {
   message: Message;
+  onSaveMistake?: (messageId: string) => void;
+  isMistakeSaved?: boolean;
 }
 
 function formatTime(iso: string): string {
@@ -11,7 +13,11 @@ function formatTime(iso: string): string {
   });
 }
 
-export default function MessageBlock({ message }: MessageBlockProps) {
+export default function MessageBlock({
+  message,
+  onSaveMistake,
+  isMistakeSaved = false,
+}: MessageBlockProps) {
   const isAgent = message.role === "agent";
 
   return (
@@ -35,8 +41,22 @@ export default function MessageBlock({ message }: MessageBlockProps) {
           {formatTime(message.timestamp)}
         </span>
         {message.flaggedMistake && (
-          <span className="text-xs text-neutral-500">
-            Flagged as possible mistake
+          <span className="flex items-center gap-2">
+            {onSaveMistake && !isMistakeSaved ? (
+              <button
+                type="button"
+                onClick={() => onSaveMistake(message.id)}
+                className="text-xs text-neutral-500 underline hover:text-black"
+              >
+                Save as mistake
+              </button>
+            ) : isMistakeSaved ? (
+              <span className="text-xs text-neutral-400">Saved</span>
+            ) : (
+              <span className="text-xs text-neutral-500">
+                Flagged as possible mistake
+              </span>
+            )}
           </span>
         )}
       </div>

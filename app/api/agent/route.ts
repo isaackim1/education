@@ -5,6 +5,7 @@ import {
   buildSystemPrompt,
   type AgentContext,
 } from "@/lib/prompts";
+import type { MistakeCategory } from "@/lib/types";
 
 export const runtime = "nodejs";
 
@@ -43,8 +44,14 @@ export async function POST(request: Request) {
     const rawReply =
       firstBlock?.type === "text" ? firstBlock.text : "";
 
-    const mistakeMatch = rawReply.match(/^\[MISTAKE\]\s*/i);
+    const mistakeMatch = rawReply.match(/^\[MISTAKE(?::(\w+))?\]\s*/i);
     const flaggedMistake = Boolean(mistakeMatch);
+    const rawCategory = mistakeMatch?.[1]?.toLowerCase() ?? "";
+    const validCategories = ["conceptual", "calculation", "recall", "application"];
+    const mistakeCategory: MistakeCategory =
+      validCategories.includes(rawCategory)
+        ? (rawCategory as MistakeCategory)
+        : "conceptual";
     const reply = mistakeMatch
       ? rawReply.slice(mistakeMatch[0].length).trim()
       : rawReply.trim();
@@ -53,7 +60,7 @@ export async function POST(request: Request) {
       throw new Error("Agent returned no text");
     }
 
-    return NextResponse.json({ reply, flaggedMistake });
+    return NextResponse.json({ reply, flaggedMistake, mistakeCategory });
   } catch {
     return NextResponse.json({ error: "Agent failed" }, { status: 500 });
   }

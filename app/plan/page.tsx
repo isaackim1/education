@@ -63,13 +63,21 @@ export default function PlanPage() {
               {daysLeft === 1 ? "" : "s"} remaining
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="text-xs text-neutral-500 underline hover:text-black self-start"
-          >
-            Reset setup
-          </button>
+          <div className="flex items-center gap-4 self-start">
+            <Link
+              href="/mistakes"
+              className="text-xs text-neutral-500 underline hover:text-black"
+            >
+              Mistake Bank
+            </Link>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="text-xs text-neutral-500 underline hover:text-black"
+            >
+              Reset setup
+            </button>
+          </div>
         </header>
 
         <section className="mb-8">

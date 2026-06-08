@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import ActionButtons from "@/components/session/ActionButtons";
+import ActionButtons, { ACTIONS } from "@/components/session/ActionButtons";
 import MessageThread from "@/components/session/MessageThread";
 import SessionInput from "@/components/session/SessionInput";
 import SessionSummaryModal from "@/components/session/SessionSummaryModal";
@@ -23,8 +23,11 @@ import {
   createOpeningMessage,
   getMockAgentReply,
 } from "@/lib/mock-agent";
+import { saveMistake } from "@/lib/storage";
 import type {
   Message,
+  Mistake,
+  MistakeCategory,
   SessionMode,
   SessionSummary,
   SessionType,
@@ -71,16 +74,39 @@ function buildApiMessages(
 
 function isAgentResponse(
   value: unknown
-): value is { reply: string; flaggedMistake: boolean } {
+): value is {
+  reply: string;
+  flaggedMistake: boolean;
+  mistakeCategory: MistakeCategory;
+} {
   return (
     typeof value === "object" &&
     value !== null &&
     "reply" in value &&
     typeof value.reply === "string" &&
     "flaggedMistake" in value &&
-    typeof value.flaggedMistake === "boolean"
+    typeof value.flaggedMistake === "boolean" &&
+    "mistakeCategory" in value &&
+    isMistakeCategory(value.mistakeCategory)
   );
 }
+
+function isMistakeCategory(value: unknown): value is MistakeCategory {
+  return (
+    value === "conceptual" ||
+    value === "calculation" ||
+    value === "recall" ||
+    value === "application"
+  );
+}
+
+const ACTION_MESSAGE_CONTENTS = new Set<string>(
+  ACTIONS.flatMap(({ label, instruction }) => [
+    label,
+    instruction,
+    instruction.split(".")[0],
+  ])
+);
 
 function parseSessionDay(dayParam: string | null): number | null {
   if (!dayParam || !/^\d+$/.test(dayParam)) return null;
@@ -112,6 +138,9 @@ function SessionContent() {
   const [sessionSummary, setSessionSummary] = useState<SessionSummary | null>(
     null
   );
+  const [savedMistakeMessageIds, setSavedMistakeMessageIds] =
+    useState<ReadonlySet<string>>(new Set());
+  const mistakeCategoryRef = useRef<Map<string, MistakeCategory>>(new Map());
 
   const isLoaded =
     examLoaded && planLoaded && topicsLoaded && sessionsLoaded;
@@ -321,6 +350,10 @@ function SessionContent() {
             flaggedMistake: data.flaggedMistake,
             timestamp: new Date().toISOString(),
           };
+
+          if (data.flaggedMistake) {
+            mistakeCategoryRef.current.set(agentReply.id, data.mistakeCategory);
+          }
         } finally {
           clearTimeout(timeoutId);
         }
@@ -362,15 +395,75 @@ function SessionContent() {
     await appendMessages(label, instruction);
   }
 
+  function handleSaveMistake(messageId: string): void {
+    if (!exam || !sessionRef.current) return;
+    const messages = sessionRef.current.messages;
+
+    const agentIdx = messages.findIndex((m) => m.id === messageId);
+    if (agentIdx === -1) return;
+    const agentMessage = messages[agentIdx];
+    if (agentMessage.role !== "agent" || !agentMessage.flaggedMistake) return;
+
+    let studentMessage: Message | null = null;
+    let studentIdx = -1;
+    for (let i = agentIdx - 1; i >= 0; i--) {
+      const candidate = messages[i];
+      const content = candidate.content.trim();
+      if (
+        candidate.role === "student" &&
+        content.length >= 5 &&
+        !ACTION_MESSAGE_CONTENTS.has(content)
+      ) {
+        studentMessage = candidate;
+        studentIdx = i;
+        break;
+      }
+    }
+    if (!studentMessage) return;
+
+    let questionContent = "";
+    for (let i = studentIdx - 1; i >= 0; i--) {
+      if (messages[i].role === "agent") {
+        questionContent = messages[i].content;
+        break;
+      }
+    }
+
+    const category = mistakeCategoryRef.current.get(messageId) ?? "conceptual";
+    const primaryTopic = sessionTopics[0];
+
+    const mistake: Mistake = {
+      id: generateId(),
+      examId: exam.id,
+      topicId: primaryTopic?.id ?? "",
+      topicName: primaryTopic?.name ?? "Unknown topic",
+      question: questionContent || "Context not available",
+      studentAnswer: studentMessage.content,
+      correctApproach: agentMessage.content,
+      mistakeCategory: category,
+      agentNote: agentMessage.content,
+      rememberThis: "",
+      followUpQuestion: "",
+      reviewed: false,
+      reviewCount: 0,
+      lastReviewed: null,
+      nextReviewDate: null,
+      createdAt: new Date().toISOString(),
+    };
+
+    saveMistake(mistake);
+    setSavedMistakeMessageIds(
+      (prev) => new Set([...Array.from(prev), messageId])
+    );
+  }
+
   function handleEndSession() {
     const currentSession = sessionRef.current;
     if (!currentSession || currentSession.endedAt || !dailyPlan || !studyPlan) {
       return;
     }
 
-    const mistakeCount = currentSession.messages.filter(
-      (m) => m.role === "agent" && m.flaggedMistake
-    ).length;
+    const mistakeCount = savedMistakeMessageIds.size;
     const nextDay = studyPlan.days.find((day) => day.day === dailyPlan.day + 1);
 
     const summary: SessionSummary = {
@@ -490,7 +583,11 @@ function SessionContent() {
         backHref="/plan"
       />
 
-      <MessageThread messages={session.messages} />
+      <MessageThread
+        messages={session.messages}
+        onSaveMistake={isEnded ? undefined : handleSaveMistake}
+        savedMistakeMessageIds={savedMistakeMessageIds}
+      />
 
       {isAgentLoading && (
         <p className="text-sm text-neutral-500 text-center py-2 shrink-0">
