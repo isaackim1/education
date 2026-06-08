@@ -37,6 +37,8 @@ export interface Topic {
   mistakeCount: number;
   lastStudied: string | null;
   masteryHistory: { date: string; score: MasteryLevel }[];
+  notes: string;
+  pastQuestions: string;
 }
 
 export interface StudyPlan {

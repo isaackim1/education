@@ -6,6 +6,9 @@ import type {
   Topic,
 } from "./types";
 
+type StoredTopic = Omit<Topic, "notes" | "pastQuestions"> &
+  Partial<Pick<Topic, "notes" | "pastQuestions">>;
+
 const KEYS = {
   exam: "studycoach_exam",
   plan: "studycoach_plan",
@@ -70,7 +73,60 @@ export function saveStudyPlan(plan: StudyPlan): boolean {
 }
 
 export function getTopics(): Topic[] {
-  return readJson<Topic[]>(KEYS.topics, []);
+  const raw = readJson<unknown>(KEYS.topics, []);
+  if (!Array.isArray(raw) || !raw.every(isStoredTopic)) return [];
+
+  // Migrate legacy localStorage topics created before per-topic materials existed.
+  return raw.map((t) => ({
+    ...t,
+    notes: typeof t.notes === "string" ? t.notes : "",
+    pastQuestions:
+      typeof t.pastQuestions === "string" ? t.pastQuestions : "",
+  }));
+}
+
+function isStoredTopic(value: unknown): value is StoredTopic {
+  if (typeof value !== "object" || value === null) return false;
+
+  return (
+    "id" in value &&
+    typeof value.id === "string" &&
+    "examId" in value &&
+    typeof value.examId === "string" &&
+    "name" in value &&
+    typeof value.name === "string" &&
+    "masteryScore" in value &&
+    typeof value.masteryScore === "number" &&
+    Number.isInteger(value.masteryScore) &&
+    value.masteryScore >= 0 &&
+    value.masteryScore <= 5 &&
+    "isWeakTopic" in value &&
+    typeof value.isWeakTopic === "boolean" &&
+    "mistakeCount" in value &&
+    typeof value.mistakeCount === "number" &&
+    "lastStudied" in value &&
+    (typeof value.lastStudied === "string" || value.lastStudied === null) &&
+    "masteryHistory" in value &&
+    Array.isArray(value.masteryHistory) &&
+    value.masteryHistory.every(
+      (entry) =>
+        typeof entry === "object" &&
+        entry !== null &&
+        "date" in entry &&
+        typeof entry.date === "string" &&
+        "score" in entry &&
+        typeof entry.score === "number" &&
+        Number.isInteger(entry.score) &&
+        entry.score >= 0 &&
+        entry.score <= 5
+    ) &&
+    (!("notes" in value) ||
+      value.notes === undefined ||
+      typeof value.notes === "string") &&
+    (!("pastQuestions" in value) ||
+      value.pastQuestions === undefined ||
+      typeof value.pastQuestions === "string")
+  );
 }
 
 export function saveTopics(topics: Topic[]): boolean {

@@ -48,6 +48,8 @@ export const mockTopics: Topic[] = mockExam.topicNames.map((name) => {
     mistakeCount: 0,
     lastStudied: null,
     masteryHistory: [],
+    notes: "",
+    pastQuestions: "",
   };
 });
 

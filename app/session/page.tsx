@@ -330,6 +330,13 @@ function SessionContent() {
                 pastQuestions: exam.pastQuestions,
                 todayTopicNames: topicNames,
                 mode: currentSession.mode,
+                topicMaterials: sessionTopics
+                  .filter((t) => t.notes.trim() || t.pastQuestions.trim())
+                  .map((t) => ({
+                    topicName: t.name,
+                    notes: t.notes.trim(),
+                    pastQuestions: t.pastQuestions.trim(),
+                  })),
               },
             }),
             signal: controller.signal,

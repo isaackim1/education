@@ -6,6 +6,12 @@ export interface ReviewMistakeContext {
   topicName: string;
 }
 
+export interface TopicMaterial {
+  topicName: string;
+  notes: string;
+  pastQuestions: string;
+}
+
 export interface AgentContext {
   subject: string;
   examDate: string;
@@ -15,6 +21,7 @@ export interface AgentContext {
   todayTopicNames: string[];
   mode: string;
   mistakeContext?: ReviewMistakeContext;
+  topicMaterials?: TopicMaterial[];
 }
 
 export function buildSystemPrompt(): string {
@@ -35,6 +42,11 @@ RESOLVED SIGNAL: When reviewing a previously saved mistake, if the student's ans
 RESPONSE FORMAT: Plain text only. No markdown headers, no bullet points, no bold text.`;
 }
 
+function truncateMaterial(text: string): string {
+  const MAX_CHARS = 600;
+  return text.length <= MAX_CHARS ? text : `${text.slice(0, MAX_CHARS)}...`;
+}
+
 export function buildContextMessage(context: AgentContext): string {
   const lines = [
     `Subject: ${context.subject}`,
@@ -50,6 +62,29 @@ export function buildContextMessage(context: AgentContext): string {
 
   if (context.pastQuestions.trim()) {
     lines.push(`Past questions: ${context.pastQuestions.trim()}`);
+  }
+
+  const topicMaterials = context.topicMaterials
+    ?.map((material) => ({
+      topicName: material.topicName,
+      notes: material.notes.trim(),
+      pastQuestions: material.pastQuestions.trim(),
+    }))
+    .filter((material) => material.notes || material.pastQuestions);
+
+  if (topicMaterials && topicMaterials.length > 0) {
+    lines.push("");
+    lines.push("Topic-specific materials:");
+    for (const tm of topicMaterials) {
+      lines.push(`[${tm.topicName}]`);
+      if (tm.notes) {
+        lines.push(`Notes: ${truncateMaterial(tm.notes)}`);
+      }
+      if (tm.pastQuestions) {
+        lines.push(`Past questions:
+${truncateMaterial(tm.pastQuestions)}`);
+      }
+    }
   }
 
   if (context.mistakeContext) {

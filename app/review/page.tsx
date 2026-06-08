@@ -7,6 +7,7 @@ import MessageThread from "@/components/session/MessageThread";
 import SessionInput from "@/components/session/SessionInput";
 import { useExam } from "@/hooks/useExam";
 import { useMistakes } from "@/hooks/useMistakes";
+import { useTopics } from "@/hooks/useTopics";
 import { getMockAgentReply } from "@/lib/mock-agent";
 import type { Message, MistakeCategory } from "@/lib/types";
 import { daysUntilExam, generateId } from "@/lib/utils";
@@ -18,6 +19,7 @@ function ReviewContent() {
 
   const { exam, isLoaded: examLoaded } = useExam();
   const { mistakes, markReviewed, isLoaded: mistakesLoaded } = useMistakes();
+  const { topics, isLoaded: topicsLoaded } = useTopics();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const messagesRef = useRef<Message[]>([]);
@@ -26,7 +28,7 @@ function ReviewContent() {
   const [isResolved, setIsResolved] = useState(false);
   const hasOpenedRef = useRef(false);
 
-  const isLoaded = examLoaded && mistakesLoaded;
+  const isLoaded = examLoaded && mistakesLoaded && topicsLoaded;
 
   const mistake = mistakeId
     ? mistakes.find((m) => m.id === mistakeId) ?? null
@@ -67,6 +69,24 @@ function ReviewContent() {
     if (!exam || !mistake) return;
     setIsAgentLoading(true);
 
+    const relevantTopic = topics.find((t) => t.id === mistake.topicId);
+    const topicMaterials: {
+      topicName: string;
+      notes: string;
+      pastQuestions: string;
+    }[] = [];
+    if (relevantTopic) {
+      const topicNotes = relevantTopic.notes.trim();
+      const topicPastQuestions = relevantTopic.pastQuestions.trim();
+      if (topicNotes || topicPastQuestions) {
+        topicMaterials.push({
+          topicName: mistake.topicName,
+          notes: topicNotes,
+          pastQuestions: topicPastQuestions,
+        });
+      }
+    }
+
     try {
       let apiMessages = currentMessages.slice(-10).map((m) => ({
         role: m.role === "agent" ? ("assistant" as const) : ("user" as const),
@@ -102,6 +122,7 @@ function ReviewContent() {
               pastQuestions: exam.pastQuestions,
               todayTopicNames: [mistake.topicName],
               mode: "review",
+              topicMaterials,
               mistakeContext: {
                 originalQuestion: mistake.question,
                 studentAnswer: mistake.studentAnswer,

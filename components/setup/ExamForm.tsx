@@ -85,6 +85,8 @@ export default function ExamForm() {
         mistakeCount: 0,
         lastStudied: null,
         masteryHistory: [],
+        notes: "",
+        pastQuestions: "",
       }));
 
       let plan: StudyPlan;

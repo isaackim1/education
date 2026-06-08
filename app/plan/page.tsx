@@ -65,6 +65,12 @@ export default function PlanPage() {
           </div>
           <div className="flex items-center gap-4 self-start">
             <Link
+              href="/materials"
+              className="text-xs text-neutral-500 underline hover:text-black"
+            >
+              Materials
+            </Link>
+            <Link
               href="/mistakes"
               className="text-xs text-neutral-500 underline hover:text-black"
             >

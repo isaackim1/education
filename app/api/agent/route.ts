@@ -5,6 +5,7 @@ import {
   buildSystemPrompt,
   type AgentContext,
   type ReviewMistakeContext,
+  type TopicMaterial,
 } from "@/lib/prompts";
 import type { MistakeCategory } from "@/lib/types";
 
@@ -127,6 +128,18 @@ function isAgentContext(context: unknown): context is AgentContext {
     return false;
   }
 
+  if (
+    "topicMaterials" in context &&
+    context.topicMaterials !== undefined
+  ) {
+    if (
+      !Array.isArray(context.topicMaterials) ||
+      !context.topicMaterials.every(isTopicMaterial)
+    ) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -144,6 +157,19 @@ function isReviewMistakeContext(value: unknown): value is ReviewMistakeContext {
     typeof value.mistakeCategory === "string" &&
     "topicName" in value &&
     typeof value.topicName === "string"
+  );
+}
+
+function isTopicMaterial(value: unknown): value is TopicMaterial {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "topicName" in value &&
+    typeof value.topicName === "string" &&
+    "notes" in value &&
+    typeof value.notes === "string" &&
+    "pastQuestions" in value &&
+    typeof value.pastQuestions === "string"
   );
 }
 
