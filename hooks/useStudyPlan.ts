@@ -14,8 +14,11 @@ export function useStudyPlan() {
   }, []);
 
   const saveStudyPlanState = useCallback((plan: StudyPlan) => {
-    saveStudyPlan(plan);
-    setStudyPlan(plan);
+    const saved = saveStudyPlan(plan);
+    if (saved) {
+      setStudyPlan(plan);
+    }
+    return saved;
   }, []);
 
   return {

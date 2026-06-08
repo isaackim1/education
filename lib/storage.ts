@@ -89,7 +89,7 @@ export function getSessions(): StudySession[] {
   return readJson<StudySession[]>(KEYS.sessions, []);
 }
 
-export function saveSession(session: StudySession): void {
+export function saveSession(session: StudySession): boolean {
   const sessions = getSessions();
   const index = sessions.findIndex((s) => s.id === session.id);
   if (index >= 0) {
@@ -97,18 +97,18 @@ export function saveSession(session: StudySession): void {
   } else {
     sessions.push(session);
   }
-  writeJson(KEYS.sessions, sessions);
+  return writeJson(KEYS.sessions, sessions);
 }
 
 export function updateSession(
   sessionId: string,
   updates: Partial<StudySession>
-): void {
+): boolean {
   const sessions = getSessions();
   const index = sessions.findIndex((s) => s.id === sessionId);
-  if (index === -1) return;
+  if (index === -1) return false;
   sessions[index] = { ...sessions[index], ...updates };
-  writeJson(KEYS.sessions, sessions);
+  return writeJson(KEYS.sessions, sessions);
 }
 
 export function getMistakes(): Mistake[] {
