@@ -31,7 +31,7 @@ import type {
   StudySession,
   Topic,
 } from "@/lib/types";
-import { generateId } from "@/lib/utils";
+import { daysUntilExam, generateId } from "@/lib/utils";
 
 function sessionTypeToMode(sessionType: SessionType): SessionMode {
   switch (sessionType) {
@@ -44,6 +44,42 @@ function sessionTypeToMode(sessionType: SessionType): SessionMode {
     case "exam-sim":
       return "exam";
   }
+}
+
+function buildApiMessages(
+  messages: Message[],
+  actionInstruction: string | null
+): { role: "user" | "assistant"; content: string }[] {
+  let apiMessages = messages.slice(-10).map((message) => ({
+    role: message.role === "agent" ? ("assistant" as const) : ("user" as const),
+    content: message.content,
+  }));
+
+  while (apiMessages.length > 0 && apiMessages[0].role === "assistant") {
+    apiMessages = apiMessages.slice(1);
+  }
+
+  if (actionInstruction) {
+    apiMessages = [
+      ...apiMessages,
+      { role: "user" as const, content: actionInstruction },
+    ];
+  }
+
+  return apiMessages;
+}
+
+function isAgentResponse(
+  value: unknown
+): value is { reply: string; flaggedMistake: boolean } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "reply" in value &&
+    typeof value.reply === "string" &&
+    "flaggedMistake" in value &&
+    typeof value.flaggedMistake === "boolean"
+  );
 }
 
 function parseSessionDay(dayParam: string | null): number | null {
@@ -71,6 +107,7 @@ function SessionContent() {
   const sessionRef = useRef<StudySession | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [isAgentLoading, setIsAgentLoading] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [sessionSummary, setSessionSummary] = useState<SessionSummary | null>(
     null
@@ -213,12 +250,12 @@ function SessionContent() {
 
   const isEnded = Boolean(session?.endedAt);
 
-  function appendMessages(
+  async function appendMessages(
     studentContent: string,
     actionInstruction: string | null
-  ): boolean {
+  ): Promise<boolean> {
     const currentSession = sessionRef.current;
-    if (!currentSession || currentSession.endedAt) return false;
+    if (!currentSession || currentSession.endedAt || !exam) return false;
 
     const studentMessage: Message = {
       id: generateId(),
@@ -229,34 +266,100 @@ function SessionContent() {
       timestamp: new Date().toISOString(),
     };
 
-    const agentReply = getMockAgentReply({
-      mode: currentSession.mode,
-      topicNames,
-      lastUserMessage: actionInstruction ? null : studentContent,
-      actionInstruction,
-      messageCount: currentSession.messages.length + 1,
-    });
-
-    const updated: StudySession = {
+    const withStudent: StudySession = {
       ...currentSession,
-      messages: [...currentSession.messages, studentMessage, agentReply],
+      messages: [...currentSession.messages, studentMessage],
     };
 
-    return persistSession(updated);
-  }
+    if (!persistSession(withStudent)) return false;
 
-  function handleSend() {
-    const trimmed = inputValue.trim();
-    if (!trimmed || !session || isEnded) return;
-    if (appendMessages(trimmed, null)) {
-      setInputValue("");
+    setIsAgentLoading(true);
+
+    let agentReply: Message;
+
+    try {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        try {
+          const response = await fetch("/api/agent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              messages: buildApiMessages(
+                withStudent.messages,
+                actionInstruction
+              ),
+              context: {
+                subject: exam.subject,
+                examDate: exam.examDate,
+                daysRemaining: daysUntilExam(exam.examDate),
+                notes: exam.notes,
+                pastQuestions: exam.pastQuestions,
+                todayTopicNames: topicNames,
+                mode: currentSession.mode,
+              },
+            }),
+            signal: controller.signal,
+          });
+
+          if (!response.ok) {
+            throw new Error("Agent request failed");
+          }
+
+          const data: unknown = await response.json();
+          if (!isAgentResponse(data)) {
+            throw new Error("Invalid agent response");
+          }
+
+          agentReply = {
+            id: generateId(),
+            role: "agent",
+            content: data.reply,
+            mode: currentSession.mode,
+            flaggedMistake: data.flaggedMistake,
+            timestamp: new Date().toISOString(),
+          };
+        } finally {
+          clearTimeout(timeoutId);
+        }
+      } catch {
+        agentReply = getMockAgentReply({
+          mode: currentSession.mode,
+          topicNames,
+          lastUserMessage: actionInstruction ? null : studentContent,
+          actionInstruction,
+          messageCount: withStudent.messages.length,
+        });
+      }
+
+      const latestSession = sessionRef.current;
+      if (!latestSession || latestSession.id !== withStudent.id) return false;
+      if (latestSession.endedAt) return true;
+
+      const updated: StudySession = {
+        ...latestSession,
+        messages: [...latestSession.messages, agentReply],
+      };
+
+      return persistSession(updated);
+    } finally {
+      setIsAgentLoading(false);
     }
   }
 
-  function handleAction(instruction: string) {
-    if (!session || isEnded) return;
+  async function handleSend() {
+    const trimmed = inputValue.trim();
+    if (!trimmed || !session || isEnded || isAgentLoading) return;
+    setInputValue("");
+    await appendMessages(trimmed, null);
+  }
+
+  async function handleAction(instruction: string) {
+    if (!session || isEnded || isAgentLoading) return;
     const label = instruction.split(".")[0];
-    appendMessages(label, instruction);
+    await appendMessages(label, instruction);
   }
 
   function handleEndSession() {
@@ -389,6 +492,12 @@ function SessionContent() {
 
       <MessageThread messages={session.messages} />
 
+      {isAgentLoading && (
+        <p className="text-sm text-neutral-500 text-center py-2 shrink-0">
+          Coach is thinking...
+        </p>
+      )}
+
       <div className="border-t border-neutral-200 px-4 py-3 space-y-3 shrink-0">
         {sessionError && (
           <p className="text-sm text-red-600 text-center" role="alert">
@@ -408,11 +517,15 @@ function SessionContent() {
           </p>
         ) : (
           <>
-            <ActionButtons onAction={handleAction} />
+            <ActionButtons
+              onAction={handleAction}
+              disabled={isAgentLoading}
+            />
             <SessionInput
               value={inputValue}
               onChange={setInputValue}
               onSubmit={handleSend}
+              disabled={isAgentLoading}
             />
             <button
               type="button"
