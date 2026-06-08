@@ -68,7 +68,7 @@ export default function TopicMaterialCard({
         type="button"
         onClick={handleSave}
         disabled={!isDirty && saveState === "idle"}
-        className="text-xs border border-neutral-300 rounded px-3 py-1.5 hover:border-black disabled:opacity-40 disabled:cursor-not-allowed"
+        className="text-xs border border-neutral-300 rounded px-3 py-1.5 hover:border-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {saveState === "saved" ? "Saved" : "Save"}
       </button>

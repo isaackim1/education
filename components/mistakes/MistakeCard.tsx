@@ -31,7 +31,7 @@ export default function MistakeCard({
         <p className="text-xs font-medium text-neutral-500 mb-1">
           Question asked
         </p>
-        <p className="text-sm text-neutral-700 line-clamp-2">
+        <p className="text-sm text-neutral-600 line-clamp-2">
           {mistake.question}
         </p>
       </div>
@@ -59,7 +59,7 @@ export default function MistakeCard({
           <div className="flex items-center gap-3">
             <Link
               href={`/review?mistakeId=${mistake.id}`}
-              className="text-xs underline text-neutral-700 hover:text-black"
+              className="text-xs text-neutral-500 underline hover:text-black"
             >
               Review now
             </Link>

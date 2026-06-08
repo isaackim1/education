@@ -636,7 +636,7 @@ function SessionContent() {
             <button
               type="button"
               onClick={handleEndSession}
-              className="w-full border border-neutral-300 text-sm py-2 rounded hover:border-black text-neutral-700"
+              className="w-full border border-neutral-300 text-sm py-2 rounded hover:border-black transition-colors"
             >
               End Session
             </button>

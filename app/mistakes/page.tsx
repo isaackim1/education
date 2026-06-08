@@ -63,7 +63,7 @@ export default function MistakesPage() {
           <select
             value={topicFilter}
             onChange={(e) => setTopicFilter(e.target.value)}
-            className="border border-neutral-300 rounded text-sm px-2 py-1"
+            className="border border-neutral-300 rounded text-sm px-2 py-1 focus:outline-none focus:ring-1 focus:ring-black"
           >
             <option value="all">All topics</option>
             {uniqueTopics.map((topic) => (
@@ -80,7 +80,7 @@ export default function MistakesPage() {
                 e.target.value as "all" | "unreviewed" | "reviewed"
               )
             }
-            className="border border-neutral-300 rounded text-sm px-2 py-1"
+            className="border border-neutral-300 rounded text-sm px-2 py-1 focus:outline-none focus:ring-1 focus:ring-black"
           >
             <option value="all">All</option>
             <option value="unreviewed">Unreviewed</option>

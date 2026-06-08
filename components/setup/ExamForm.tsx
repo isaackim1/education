@@ -125,7 +125,7 @@ export default function ExamForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="subject" className="block text-sm font-medium mb-1">
+        <label htmlFor="subject" className="block text-xs font-medium text-neutral-500 mb-1">
           Subject
         </label>
         <input
@@ -141,7 +141,7 @@ export default function ExamForm() {
       </div>
 
       <div>
-        <label htmlFor="examDate" className="block text-sm font-medium mb-1">
+        <label htmlFor="examDate" className="block text-xs font-medium text-neutral-500 mb-1">
           Exam date
         </label>
         <input
@@ -156,7 +156,7 @@ export default function ExamForm() {
       </div>
 
       <div>
-        <label htmlFor="studyHours" className="block text-sm font-medium mb-1">
+        <label htmlFor="studyHours" className="block text-xs font-medium text-neutral-500 mb-1">
           Study hours per day
         </label>
         <input
@@ -173,7 +173,7 @@ export default function ExamForm() {
       </div>
 
       <div>
-        <span className="block text-sm font-medium mb-2">
+        <span className="block text-xs font-medium text-neutral-500 mb-1">
           Confidence level (1 = low, 5 = high)
         </span>
         <div className="flex gap-2">
@@ -196,7 +196,7 @@ export default function ExamForm() {
       </div>
 
       <div>
-        <label htmlFor="topics" className="block text-sm font-medium mb-1">
+        <label htmlFor="topics" className="block text-xs font-medium text-neutral-500 mb-1">
           Topics (one per line)
         </label>
         <textarea
@@ -212,7 +212,7 @@ export default function ExamForm() {
       </div>
 
       <div>
-        <label htmlFor="notes" className="block text-sm font-medium mb-1">
+        <label htmlFor="notes" className="block text-xs font-medium text-neutral-500 mb-1">
           Notes (optional)
         </label>
         <textarea
@@ -229,7 +229,7 @@ export default function ExamForm() {
       <div>
         <label
           htmlFor="pastQuestions"
-          className="block text-sm font-medium mb-1"
+          className="block text-xs font-medium text-neutral-500 mb-1"
         >
           Past questions (optional)
         </label>

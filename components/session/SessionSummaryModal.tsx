@@ -27,24 +27,24 @@ export default function SessionSummaryModal({
 
         <div className="space-y-3 text-sm">
           <div>
-            <p className="font-medium text-neutral-700">Topics covered</p>
+            <p className="font-medium text-neutral-600">Topics covered</p>
             <p className="text-neutral-600">
               {summary.topicsCovered.join(", ") || "None"}
             </p>
           </div>
 
           <div>
-            <p className="font-medium text-neutral-700">Possible mistakes</p>
+            <p className="font-medium text-neutral-600">Possible mistakes</p>
             <p className="text-neutral-600">{summary.newMistakeCount}</p>
           </div>
 
           <div>
-            <p className="font-medium text-neutral-700">Tomorrow&apos;s focus</p>
+            <p className="font-medium text-neutral-600">Tomorrow&apos;s focus</p>
             <p className="text-neutral-600">{summary.tomorrowFocus}</p>
           </div>
 
           <div>
-            <p className="font-medium text-neutral-700">
+            <p className="font-medium text-neutral-600">
               Tomorrow&apos;s session type
             </p>
             <p className="text-neutral-600 capitalize">

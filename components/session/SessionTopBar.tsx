@@ -64,7 +64,7 @@ export default function SessionTopBar({
         </div>
         <Link
           href={backHref}
-          className="shrink-0 text-xs text-neutral-600 underline hover:text-black"
+          className="shrink-0 text-xs text-neutral-500 underline hover:text-black"
         >
           Back to Plan
         </Link>

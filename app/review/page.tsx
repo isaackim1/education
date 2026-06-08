@@ -276,7 +276,7 @@ function ReviewContent() {
       <div className="border-t border-neutral-200 px-4 py-3 space-y-3 shrink-0">
         {isResolved ? (
           <div className="text-center space-y-2">
-            <p className="text-sm text-neutral-700">
+            <p className="text-sm text-neutral-600">
               You fixed this. Mistake marked as reviewed.
             </p>
             <Link
@@ -297,7 +297,7 @@ function ReviewContent() {
             <button
               type="button"
               onClick={() => router.push("/mistakes")}
-              className="w-full border border-neutral-300 text-sm py-2 rounded hover:border-black text-neutral-700"
+              className="w-full border border-neutral-300 text-sm py-2 rounded hover:border-black transition-colors"
             >
               End review
             </button>
