@@ -14,7 +14,6 @@ import ActionButtons, { ACTIONS } from "@/components/session/ActionButtons";
 import MessageThread from "@/components/session/MessageThread";
 import SessionInput from "@/components/session/SessionInput";
 import SessionSummaryModal from "@/components/session/SessionSummaryModal";
-import SessionTopBar from "@/components/session/SessionTopBar";
 import { useExam } from "@/hooks/useExam";
 import { useSessions } from "@/hooks/useSessions";
 import { useStudyPlan } from "@/hooks/useStudyPlan";
@@ -110,6 +109,14 @@ const ACTION_MESSAGE_CONTENTS = new Set<string>(
   ])
 );
 
+const SESSION_LABELS: Record<SessionMode, string> = {
+  learn: "Learn",
+  quiz: "Quiz",
+  solve: "Solve",
+  review: "Review",
+  exam: "Exam",
+};
+
 function parseSessionDay(dayParam: string | null): number | null {
   if (!dayParam || !/^\d+$/.test(dayParam)) return null;
   const day = Number(dayParam);
@@ -143,6 +150,7 @@ function SessionContent() {
   const [savedMistakeMessageIds, setSavedMistakeMessageIds] =
     useState<ReadonlySet<string>>(new Set());
   const mistakeCategoryRef = useRef<Map<string, MistakeCategory>>(new Map());
+  const [elapsed, setElapsed] = useState("< 1 min");
 
   const isLoaded =
     examLoaded && planLoaded && topicsLoaded && sessionsLoaded;
@@ -280,6 +288,34 @@ function SessionContent() {
   ]);
 
   const isEnded = Boolean(session?.endedAt);
+
+  useEffect(() => {
+    if (!session?.startedAt) return;
+    const startedAt = session.startedAt;
+
+    function update() {
+      const start = new Date(startedAt).getTime();
+      const minutes = Math.floor((Date.now() - start) / 60000);
+
+      if (minutes < 1) {
+        setElapsed("< 1 min");
+      } else if (minutes < 60) {
+        setElapsed(`${minutes} min`);
+      } else {
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+        setElapsed(
+          remainingMinutes > 0
+            ? `${hours}h ${remainingMinutes}m`
+            : `${hours}h`
+        );
+      }
+    }
+
+    update();
+    const intervalId = setInterval(update, 60000);
+    return () => clearInterval(intervalId);
+  }, [session?.startedAt]);
 
   async function appendMessages(
     studentContent: string,
@@ -584,64 +620,120 @@ function SessionContent() {
 
   return (
     <main className="h-screen flex flex-col bg-white">
-      <SessionTopBar
-        day={dailyPlan.day}
-        sessionType={dailyPlan.sessionType}
-        topicNames={topicNames}
-        startedAt={session.startedAt}
-        backHref="/plan"
-      />
+      <div className="border-b border-neutral-200 px-4 py-3 flex items-center justify-between shrink-0">
+        <p className="text-sm font-semibold">StudyCoach</p>
+        <Link
+          href="/plan"
+          className="text-xs text-neutral-500 underline hover:text-black"
+        >
+          ← Back to plan
+        </Link>
+      </div>
 
-      <MessageThread
-        messages={session.messages}
-        onSaveMistake={isEnded ? undefined : handleSaveMistake}
-        savedMistakeMessageIds={savedMistakeMessageIds}
-      />
+      <div className="flex flex-1 min-h-0">
+        <aside className="w-60 shrink-0 border-r border-neutral-200 flex flex-col overflow-y-auto hidden sm:flex">
+          <div className="px-4 py-4 space-y-5 flex-1">
+            <div>
+              <p className="text-xs font-semibold text-neutral-500 mb-2">
+                Session
+              </p>
+              <p className="text-sm">
+                Day {dailyPlan.day} · {SESSION_LABELS[session.mode]}
+              </p>
+              <p className="text-xs text-neutral-400 mt-0.5">
+                {elapsed} elapsed
+              </p>
+            </div>
 
-      {isAgentLoading && (
-        <p className="text-sm text-neutral-500 text-center py-2 shrink-0">
-          Coach is thinking...
-        </p>
-      )}
+            <div>
+              <p className="text-xs font-semibold text-neutral-500 mb-2">
+                Topics
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {topicNames.map((name) => (
+                  <span
+                    key={name}
+                    className="text-xs bg-neutral-100 rounded px-2 py-0.5 text-neutral-700"
+                  >
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
 
-      <div className="border-t border-neutral-200 px-4 py-3 space-y-3 shrink-0">
-        {sessionError && (
-          <p className="text-sm text-red-600 text-center" role="alert">
-            {sessionError}
-          </p>
-        )}
-        {isEnded ? (
-          <p className="text-sm text-neutral-500 text-center">
-            Session ended.{" "}
-            <button
-              type="button"
-              onClick={() => setSummaryOpen(true)}
-              className="underline hover:text-black"
-            >
-              View summary
-            </button>
-          </p>
-        ) : (
-          <>
-            <ActionButtons
-              onAction={handleAction}
-              disabled={isAgentLoading}
-            />
-            <SessionInput
-              value={inputValue}
-              onChange={setInputValue}
-              onSubmit={handleSend}
-              disabled={isAgentLoading}
-            />
-            <button
-              type="button"
-              onClick={handleEndSession}
-              className="w-full border border-neutral-300 text-sm py-2 rounded hover:border-black transition-colors"
-            >
-              End Session
-            </button>
-          </>
-        )}
+            {exam && (
+              <div>
+                <p className="text-xs font-semibold text-neutral-500 mb-2">
+                  Exam
+                </p>
+                <p className="text-xs text-neutral-600">
+                  {daysUntilExam(exam.examDate)} days remaining
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="px-4 py-4 border-t border-neutral-200">
+            <p className="text-xs text-neutral-400 truncate">
+              {exam?.subject}
+            </p>
+          </div>
+        </aside>
+
+        <div className="flex flex-col flex-1 min-w-0">
+          <MessageThread
+            messages={session.messages}
+            onSaveMistake={isEnded ? undefined : handleSaveMistake}
+            savedMistakeMessageIds={savedMistakeMessageIds}
+          />
+
+          {isAgentLoading && (
+            <p className="text-sm text-neutral-500 text-center py-2 shrink-0">
+              Coach is thinking...
+            </p>
+          )}
+
+          <div className="border-t border-neutral-200 px-4 py-3 space-y-3 shrink-0">
+            {sessionError && (
+              <p className="text-sm text-red-600 text-center" role="alert">
+                {sessionError}
+              </p>
+            )}
+
+            {isEnded ? (
+              <p className="text-sm text-neutral-500 text-center">
+                Session ended.{" "}
+                <button
+                  type="button"
+                  onClick={() => setSummaryOpen(true)}
+                  className="underline hover:text-black"
+                >
+                  View summary
+                </button>
+              </p>
+            ) : (
+              <>
+                <ActionButtons
+                  onAction={handleAction}
+                  disabled={isAgentLoading}
+                />
+                <SessionInput
+                  value={inputValue}
+                  onChange={setInputValue}
+                  onSubmit={handleSend}
+                  disabled={isAgentLoading}
+                />
+                <button
+                  type="button"
+                  onClick={handleEndSession}
+                  className="w-full border border-neutral-300 text-sm py-2 rounded hover:border-black transition-colors"
+                >
+                  End Session
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       <SessionSummaryModal
