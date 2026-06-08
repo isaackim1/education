@@ -1,0 +1,137 @@
+export type MasteryLevel = 0 | 1 | 2 | 3 | 4 | 5;
+
+export type SessionMode = "learn" | "quiz" | "solve" | "review" | "exam";
+
+export type SessionType = "learn" | "quiz" | "review" | "exam-sim";
+
+export type MistakeCategory =
+  | "conceptual"
+  | "calculation"
+  | "recall"
+  | "application";
+
+export type QuestionType =
+  | "active-recall"
+  | "exam-style"
+  | "calculation"
+  | "concept";
+
+export interface Exam {
+  id: string;
+  subject: string;
+  examDate: string;
+  studyHoursPerDay: number;
+  confidenceLevel: 1 | 2 | 3 | 4 | 5;
+  topicNames: string[];
+  notes: string;
+  pastQuestions: string;
+  createdAt: string;
+}
+
+export interface Topic {
+  id: string;
+  examId: string;
+  name: string;
+  masteryScore: MasteryLevel;
+  isWeakTopic: boolean;
+  mistakeCount: number;
+  lastStudied: string | null;
+  masteryHistory: { date: string; score: MasteryLevel }[];
+}
+
+export interface StudyPlan {
+  id: string;
+  examId: string;
+  days: DailyPlan[];
+  generatedAt: string;
+}
+
+export interface DailyPlan {
+  day: number;
+  date: string;
+  topicIds: string[];
+  sessionType: SessionType;
+  goalDescription: string;
+  estimatedMinutes: number;
+  completed: boolean;
+  sessionId: string | null;
+}
+
+export interface StudySession {
+  id: string;
+  examId: string;
+  day: number;
+  date: string;
+  topicIds: string[];
+  mode: SessionMode;
+  messages: Message[];
+  startedAt: string;
+  endedAt: string | null;
+  summary: SessionSummary | null;
+}
+
+export interface Message {
+  id: string;
+  role: "agent" | "student";
+  content: string;
+  mode: SessionMode;
+  flaggedMistake: boolean;
+  timestamp: string;
+}
+
+export interface SessionSummary {
+  topicsCovered: string[];
+  masteryChanges: {
+    topicId: string;
+    before: MasteryLevel;
+    after: MasteryLevel;
+  }[];
+  newMistakeCount: number;
+  mistakesReviewed: number;
+  tomorrowFocus: string;
+  tomorrowSessionType: SessionType;
+}
+
+export interface Question {
+  id: string;
+  topicId: string;
+  examId: string;
+  text: string;
+  type: QuestionType;
+  difficulty: 1 | 2 | 3 | 4 | 5;
+  correctAnswer: string;
+  hint: string | null;
+  source: "generated" | "past-exam";
+  createdAt: string;
+}
+
+export interface Answer {
+  id: string;
+  questionId: string;
+  sessionId: string;
+  studentAnswer: string;
+  isCorrect: boolean;
+  isPartial: boolean;
+  agentFeedback: string;
+  mistakeCategory: MistakeCategory | null;
+  timestamp: string;
+}
+
+export interface Mistake {
+  id: string;
+  examId: string;
+  topicId: string;
+  topicName: string;
+  question: string;
+  studentAnswer: string;
+  correctApproach: string;
+  mistakeCategory: MistakeCategory;
+  agentNote: string;
+  rememberThis: string;
+  followUpQuestion: string;
+  reviewed: boolean;
+  reviewCount: number;
+  lastReviewed: string | null;
+  nextReviewDate: string | null;
+  createdAt: string;
+}
