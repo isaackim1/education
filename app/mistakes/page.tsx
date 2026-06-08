@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import MistakeCard from "@/components/mistakes/MistakeCard";
+import MistakeRow from "@/components/mistakes/MistakeRow";
 import { useMistakes } from "@/hooks/useMistakes";
 
 export default function MistakesPage() {
@@ -102,9 +102,9 @@ export default function MistakesPage() {
         )}
 
         {filteredMistakes.length > 0 && (
-          <div className="space-y-4">
+          <div>
             {filteredMistakes.map((mistake) => (
-              <MistakeCard
+              <MistakeRow
                 key={mistake.id}
                 mistake={mistake}
                 onMarkReviewed={markReviewed}

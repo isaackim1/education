@@ -31,7 +31,7 @@ export default function TopicMaterialCard({
     notes !== topic.notes || pastQuestions !== topic.pastQuestions;
 
   return (
-    <div className="border border-neutral-200 rounded p-4 space-y-4">
+    <div className="space-y-4">
       <h3 className="text-sm font-medium">{topic.name}</h3>
 
       <div>

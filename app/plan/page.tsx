@@ -56,9 +56,11 @@ export default function PlanPage() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <header className="mb-8 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">StudyCoach</h1>
-            <p className="text-sm text-neutral-600 mt-1">{exam.subject}</p>
-            <p className="text-xs text-neutral-500 mt-0.5">
+            <p className="text-xs text-neutral-500 mb-0.5">StudyCoach</p>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {exam.subject}
+            </h1>
+            <p className="text-xs text-neutral-400 mt-0.5">
               Exam: {formatDate(exam.examDate)} · {daysLeft} day
               {daysLeft === 1 ? "" : "s"} remaining
             </p>
