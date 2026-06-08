@@ -78,6 +78,7 @@ function isAgentResponse(
   reply: string;
   flaggedMistake: boolean;
   mistakeCategory: MistakeCategory;
+  resolved?: boolean;
 } {
   return (
     typeof value === "object" &&
@@ -87,7 +88,8 @@ function isAgentResponse(
     "flaggedMistake" in value &&
     typeof value.flaggedMistake === "boolean" &&
     "mistakeCategory" in value &&
-    isMistakeCategory(value.mistakeCategory)
+    isMistakeCategory(value.mistakeCategory) &&
+    (!("resolved" in value) || typeof value.resolved === "boolean")
   );
 }
 

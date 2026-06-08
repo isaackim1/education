@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Mistake } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 
@@ -55,13 +56,21 @@ export default function MistakeCard({
         {mistake.reviewed ? (
           <span className="text-xs text-neutral-400">Reviewed</span>
         ) : (
-          <button
-            type="button"
-            onClick={() => onMarkReviewed(mistake.id)}
-            className="text-xs underline text-neutral-500 hover:text-black"
-          >
-            Mark as reviewed
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/review?mistakeId=${mistake.id}`}
+              className="text-xs underline text-neutral-700 hover:text-black"
+            >
+              Review now
+            </Link>
+            <button
+              type="button"
+              onClick={() => onMarkReviewed(mistake.id)}
+              className="text-xs text-neutral-400 hover:text-neutral-600"
+            >
+              mark as reviewed
+            </button>
+          </div>
         )}
       </div>
     </div>

@@ -4,6 +4,7 @@ import {
   buildContextMessage,
   buildSystemPrompt,
   type AgentContext,
+  type ReviewMistakeContext,
 } from "@/lib/prompts";
 import type { MistakeCategory } from "@/lib/types";
 
@@ -44,23 +45,27 @@ export async function POST(request: Request) {
     const rawReply =
       firstBlock?.type === "text" ? firstBlock.text : "";
 
-    const mistakeMatch = rawReply.match(/^\[MISTAKE(?::(\w+))?\]\s*/i);
-    const flaggedMistake = Boolean(mistakeMatch);
+    const resolvedMatch = rawReply.match(/^\[RESOLVED\]\s*/i);
+    const resolved = Boolean(resolvedMatch);
+    const afterResolved = resolvedMatch
+      ? rawReply.slice(resolvedMatch[0].length).trim()
+      : rawReply;
+
+    const mistakeMatch = afterResolved.match(/^\[MISTAKE(?::(\w+))?\]\s*/i);
+    const flaggedMistake = !resolved && Boolean(mistakeMatch);
     const rawCategory = mistakeMatch?.[1]?.toLowerCase() ?? "";
-    const validCategories = ["conceptual", "calculation", "recall", "application"];
-    const mistakeCategory: MistakeCategory =
-      validCategories.includes(rawCategory)
-        ? (rawCategory as MistakeCategory)
-        : "conceptual";
+    const mistakeCategory: MistakeCategory = isMistakeCategory(rawCategory)
+      ? rawCategory
+      : "conceptual";
     const reply = mistakeMatch
-      ? rawReply.slice(mistakeMatch[0].length).trim()
-      : rawReply.trim();
+      ? afterResolved.slice(mistakeMatch[0].length).trim()
+      : afterResolved.trim();
 
     if (!reply) {
       throw new Error("Agent returned no text");
     }
 
-    return NextResponse.json({ reply, flaggedMistake, mistakeCategory });
+    return NextResponse.json({ reply, flaggedMistake, mistakeCategory, resolved });
   } catch {
     return NextResponse.json({ error: "Agent failed" }, { status: 500 });
   }
@@ -83,24 +88,70 @@ function isAgentRequest(body: unknown): body is AgentRequestBody {
 }
 
 function isAgentContext(context: unknown): context is AgentContext {
+  if (typeof context !== "object" || context === null) return false;
+  if (!("subject" in context) || typeof context.subject !== "string") {
+    return false;
+  }
+  if (!("examDate" in context) || typeof context.examDate !== "string") {
+    return false;
+  }
+  if (
+    !("daysRemaining" in context) ||
+    typeof context.daysRemaining !== "number" ||
+    !Number.isFinite(context.daysRemaining)
+  ) {
+    return false;
+  }
+  if (!("notes" in context) || typeof context.notes !== "string") {
+    return false;
+  }
+  if (!("pastQuestions" in context) || typeof context.pastQuestions !== "string") {
+    return false;
+  }
+  if (
+    !("todayTopicNames" in context) ||
+    !Array.isArray(context.todayTopicNames) ||
+    !context.todayTopicNames.every((topic) => typeof topic === "string")
+  ) {
+    return false;
+  }
+  if (!("mode" in context) || typeof context.mode !== "string") {
+    return false;
+  }
+
+  if (
+    "mistakeContext" in context &&
+    context.mistakeContext !== undefined &&
+    !isReviewMistakeContext(context.mistakeContext)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function isReviewMistakeContext(value: unknown): value is ReviewMistakeContext {
   return (
-    typeof context === "object" &&
-    context !== null &&
-    "subject" in context &&
-    typeof context.subject === "string" &&
-    "examDate" in context &&
-    typeof context.examDate === "string" &&
-    "daysRemaining" in context &&
-    typeof context.daysRemaining === "number" &&
-    Number.isFinite(context.daysRemaining) &&
-    "notes" in context &&
-    typeof context.notes === "string" &&
-    "pastQuestions" in context &&
-    typeof context.pastQuestions === "string" &&
-    "todayTopicNames" in context &&
-    Array.isArray(context.todayTopicNames) &&
-    context.todayTopicNames.every((topic) => typeof topic === "string") &&
-    "mode" in context &&
-    typeof context.mode === "string"
+    typeof value === "object" &&
+    value !== null &&
+    "originalQuestion" in value &&
+    typeof value.originalQuestion === "string" &&
+    "studentAnswer" in value &&
+    typeof value.studentAnswer === "string" &&
+    "correctApproach" in value &&
+    typeof value.correctApproach === "string" &&
+    "mistakeCategory" in value &&
+    typeof value.mistakeCategory === "string" &&
+    "topicName" in value &&
+    typeof value.topicName === "string"
+  );
+}
+
+function isMistakeCategory(value: unknown): value is MistakeCategory {
+  return (
+    value === "conceptual" ||
+    value === "calculation" ||
+    value === "recall" ||
+    value === "application"
   );
 }

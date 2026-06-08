@@ -1,3 +1,11 @@
+export interface ReviewMistakeContext {
+  originalQuestion: string;
+  studentAnswer: string;
+  correctApproach: string;
+  mistakeCategory: string;
+  topicName: string;
+}
+
 export interface AgentContext {
   subject: string;
   examDate: string;
@@ -6,6 +14,7 @@ export interface AgentContext {
   pastQuestions: string;
   todayTopicNames: string[];
   mode: string;
+  mistakeContext?: ReviewMistakeContext;
 }
 
 export function buildSystemPrompt(): string {
@@ -20,6 +29,8 @@ WHEN THE STUDENT IS WRONG: Name the specific error in one line. Then ask one tar
 WHEN THE STUDENT IS CORRECT: Confirm in one line. Raise difficulty or move to the next concept.
 
 MISTAKE SIGNAL: If the student's answer contains a clear conceptual error or factual mistake, start your reply with [MISTAKE:category] where category is one of: conceptual, calculation, recall, application. Use "conceptual" for wrong understanding of how something works. Use "calculation" for math or numerical errors. Use "recall" for forgetting a fact, definition, or formula. Use "application" for knowing the concept but applying it incorrectly. Otherwise do not include any MISTAKE prefix.
+
+RESOLVED SIGNAL: When reviewing a previously saved mistake, if the student's answer demonstrates they have genuinely understood the concept they previously got wrong, start your reply with [RESOLVED] followed by a space. Only use [RESOLVED] when you are confident the student fixed the gap — not for partial answers or lucky guesses.
 
 RESPONSE FORMAT: Plain text only. No markdown headers, no bullet points, no bold text.`;
 }
@@ -39,6 +50,21 @@ export function buildContextMessage(context: AgentContext): string {
 
   if (context.pastQuestions.trim()) {
     lines.push(`Past questions: ${context.pastQuestions.trim()}`);
+  }
+
+  if (context.mistakeContext) {
+    const mc = context.mistakeContext;
+    lines.push("");
+    lines.push("Review mode. The student previously saved this mistake:");
+    lines.push(`Topic: ${mc.topicName}`);
+    lines.push(`Mistake type: ${mc.mistakeCategory}`);
+    lines.push(`Original question: ${mc.originalQuestion}`);
+    lines.push(`Student's wrong answer: ${mc.studentAnswer}`);
+    lines.push(`Correct approach: ${mc.correctApproach}`);
+    lines.push("");
+    lines.push(
+      "Ask a different question that tests the same concept. Do not repeat the original question word for word. When the student answers correctly and demonstrates genuine understanding, use the [RESOLVED] signal."
+    );
   }
 
   return lines.join("\n");

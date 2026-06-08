@@ -21,7 +21,7 @@ export function useMistakes() {
 
   const markReviewed = useCallback((mistakeId: string) => {
     const current = getMistakes().find((m) => m.id === mistakeId);
-    if (!current) return;
+    if (!current || current.reviewed) return;
     const newCount = current.reviewCount + 1;
     updateMistake(mistakeId, {
       reviewed: true,
