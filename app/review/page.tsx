@@ -265,44 +265,71 @@ function ReviewContent() {
         </div>
       </div>
 
-      <MessageThread messages={messages} />
-
-      {isAgentLoading && (
-        <p className="text-sm text-neutral-500 text-center py-2 shrink-0">
-          Coach is thinking...
-        </p>
-      )}
-
-      <div className="border-t border-neutral-200 px-4 py-3 space-y-3 shrink-0">
-        {isResolved ? (
-          <div className="text-center space-y-2">
-            <p className="text-sm text-neutral-600">
-              You fixed this. Mistake marked as reviewed.
-            </p>
-            <Link
-              href="/mistakes"
-              className="inline-block text-sm underline text-neutral-500 hover:text-black"
-            >
-              Back to Mistake Bank
-            </Link>
+      <div className="flex flex-1 min-h-0">
+        <aside className="w-60 shrink-0 border-r border-neutral-200 overflow-y-auto hidden sm:block">
+          <div className="px-4 py-4 space-y-5">
+            <div>
+              <p className="text-xs font-semibold text-neutral-500 mb-1.5">
+                Original question
+              </p>
+              <p className="text-sm text-neutral-600">{mistake.question}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-neutral-500 mb-1.5">
+                Your answer
+              </p>
+              <p className="text-sm text-neutral-600">{mistake.studentAnswer}</p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-neutral-500 mb-1.5">
+                Correct approach
+              </p>
+              <p className="text-sm text-black">{mistake.correctApproach}</p>
+            </div>
           </div>
-        ) : (
-          <>
-            <SessionInput
-              value={inputValue}
-              onChange={setInputValue}
-              onSubmit={handleSend}
-              disabled={isAgentLoading}
-            />
-            <button
-              type="button"
-              onClick={() => router.push("/mistakes")}
-              className="w-full border border-neutral-300 text-sm py-2 rounded hover:border-black transition-colors"
-            >
-              End review
-            </button>
-          </>
-        )}
+        </aside>
+
+        <div className="flex flex-col flex-1 min-w-0">
+          <MessageThread messages={messages} />
+
+          {isAgentLoading && (
+            <p className="text-sm text-neutral-500 text-center py-2 shrink-0">
+              Coach is thinking...
+            </p>
+          )}
+
+          <div className="border-t border-neutral-200 px-4 py-3 space-y-3 shrink-0">
+            {isResolved ? (
+              <div className="text-center space-y-2">
+                <p className="text-sm text-neutral-600">
+                  You fixed this. Mistake marked as reviewed.
+                </p>
+                <Link
+                  href="/mistakes"
+                  className="inline-block text-sm underline text-neutral-500 hover:text-black"
+                >
+                  Back to Mistake Bank
+                </Link>
+              </div>
+            ) : (
+              <>
+                <SessionInput
+                  value={inputValue}
+                  onChange={setInputValue}
+                  onSubmit={handleSend}
+                  disabled={isAgentLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => router.push("/mistakes")}
+                  className="w-full border border-neutral-300 text-sm py-2 rounded hover:border-black transition-colors"
+                >
+                  End review
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </main>
   );
