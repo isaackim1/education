@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LandingPage from "@/components/marketing/LandingPage";
+import { getProjects } from "@/lib/project-storage";
 import { getExam, getStudyPlan, getTopics } from "@/lib/storage";
 
 export default function HomePage() {
@@ -16,6 +17,8 @@ export default function HomePage() {
 
     if (exam && plan && topics.length > 0) {
       router.replace("/plan");
+    } else if (getProjects().length > 0) {
+      router.replace("/projects");
     } else {
       setShowLanding(true);
     }

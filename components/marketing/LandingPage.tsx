@@ -36,7 +36,7 @@ function SecondaryButtonLink({
 
 function LogoMark() {
   return (
-    <Link href="/setup" className="flex items-center gap-2">
+    <Link href="/" className="flex items-center gap-2">
       <span className="w-4 h-4 rounded bg-black" />
       <span className="text-sm font-semibold text-black">StudyCoach</span>
     </Link>
@@ -49,7 +49,7 @@ function AnnouncementBanner() {
       <p className="text-sm text-neutral-700">
         StudyCoach is now free during beta —{" "}
         <Link
-          href="/setup"
+          href="/projects/new"
           className="text-black underline hover:text-neutral-600 transition-colors"
         >
           Start for free →
@@ -86,12 +86,12 @@ function Nav() {
         </div>
         <div className="flex items-center gap-4">
           <Link
-            href="/setup"
+            href="/projects/new"
             className="hidden md:inline text-sm text-neutral-500 hover:text-black transition-colors"
           >
             Get started
           </Link>
-          <PrimaryButtonLink href="/setup">Start free →</PrimaryButtonLink>
+          <PrimaryButtonLink href="/projects/new">Start free →</PrimaryButtonLink>
         </div>
       </div>
     </nav>
@@ -160,7 +160,7 @@ function Hero() {
             your mistakes, and arrive at your exam fully prepared.
           </p>
           <div className="flex gap-3 flex-wrap">
-            <PrimaryButtonLink href="/setup">
+            <PrimaryButtonLink href="/projects/new">
               Start studying free →
             </PrimaryButtonLink>
             <SecondaryButtonLink href="#how-it-works">
@@ -442,7 +442,7 @@ function FinalCTA() {
           2 minutes.
         </p>
         <div className="flex justify-center gap-4 mt-8 flex-wrap">
-          <PrimaryButtonLink href="/setup">Start studying free →</PrimaryButtonLink>
+          <PrimaryButtonLink href="/projects/new">Start studying free →</PrimaryButtonLink>
           <SecondaryButtonLink href="#how-it-works">
             See how it works
           </SecondaryButtonLink>
@@ -456,7 +456,7 @@ function Footer() {
   const productLinks = [
     { label: "How it works", href: "#how-it-works" },
     { label: "Features", href: "#features" },
-    { label: "Get started", href: "/setup" },
+    { label: "Get started", href: "/projects/new" },
   ];
 
   return (
