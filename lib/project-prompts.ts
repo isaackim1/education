@@ -11,6 +11,7 @@ export interface ProjectChatContext {
     topicName: string;
     mistakeCategory: string;
     question: string;
+    studentAnswer: string;
   }[];
 }
 
@@ -70,6 +71,8 @@ Train the student for their exam. Ask before you explain. Prefer one focused que
 
 When the student is wrong: explain briefly, then continue training with one targeted question. Do not give the full answer on the first wrong attempt.
 
+If recent unreviewed mistakes are listed in context, use them actively: retest weak areas with fresh exam-style questions, target the same gaps from new angles, and do not treat already-resolved material as mastered until the student proves it.
+
 MISTAKE SIGNAL: If the student's answer contains a clear error, start your reply with [MISTAKE:category] where category is conceptual, calculation, recall, or application.
 
 RESOLVED SIGNAL: When a previously missed concept is genuinely fixed, start with [RESOLVED] followed by a space.
@@ -110,14 +113,17 @@ export function buildProjectContextMessage(context: ProjectChatContext): string 
   if (mistakes.length > 0) {
     lines.push("");
     lines.push("Recent unreviewed mistakes:");
-    for (const mistake of mistakes.slice(0, 5)) {
+    for (const mistake of mistakes.slice(0, 3)) {
+      lines.push(`- Topic: ${truncateText(mistake.topicName, 100)}`);
+      lines.push(`  Category: ${truncateText(mistake.mistakeCategory, 40)}`);
+      lines.push(`  Question: ${truncateText(mistake.question, 300)}`);
       lines.push(
-        `- [${truncateText(mistake.topicName, 100)}] (${truncateText(
-          mistake.mistakeCategory,
-          40
-        )}) ${truncateText(mistake.question, 300)}`
+        `  Student answer: ${truncateText(mistake.studentAnswer, 200)}`
       );
     }
+    lines.push(
+      "Use these mistakes to guide your next question. Retest weak areas with fresh exam-style questions — do not repeat the same wording."
+    );
   }
 
   lines.push("");

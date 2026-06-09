@@ -239,11 +239,15 @@ export function resolveProjectMistakeTopic(
     return { topicId: "general", topicName: activeTopicName };
   }
 
-  if (topics.length === 1) {
-    return { topicId: topics[0].id, topicName: topics[0].name };
-  }
-
   return { topicId: "general", topicName: "General" };
+}
+
+const MAX_CORRECT_APPROACH_CHARS = 400;
+
+function truncateCorrectApproach(text: string): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= MAX_CORRECT_APPROACH_CHARS) return trimmed;
+  return `${trimmed.slice(0, MAX_CORRECT_APPROACH_CHARS)}...`;
 }
 
 function findPreviousAgentQuestion(messages: ChatMessage[]): string {
@@ -284,9 +288,9 @@ export function createProjectMistakeFromChat(
     topicName,
     question: findPreviousAgentQuestion(input.messagesBeforeAgent),
     studentAnswer: input.studentAnswer,
-    correctApproach: input.agentReply,
+    correctApproach: truncateCorrectApproach(input.agentReply),
     mistakeCategory: category,
-    agentNote: "Ivvy flagged this during project chat.",
+    agentNote: `Flagged as a ${category} mistake during training.`,
     rememberThis: "",
     followUpQuestion: "",
     reviewed: false,

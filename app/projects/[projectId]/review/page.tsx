@@ -142,7 +142,7 @@ function ProjectReviewContent({
         ) : currentMistake ? (
           <div className="border border-neutral-200 rounded p-4">
             <p className="text-xs text-neutral-500 mb-4">
-              {currentIndex + 1} of {reviewQueue.length}
+              Reviewing mistake {currentIndex + 1} of {reviewQueue.length}
               {reviewQueue.filter((m) => !m.reviewed).length > 0
                 ? ` · ${reviewQueue.filter((m) => !m.reviewed).length} unreviewed`
                 : ""}
@@ -164,6 +164,12 @@ function ProjectReviewContent({
                   Already reviewed
                 </span>
               )}
+              <Link
+                href={`/projects/${projectId}/chat?mistakeId=${currentMistake.id}`}
+                className="text-xs border border-neutral-300 rounded px-3 py-1.5 hover:border-black transition-colors"
+              >
+                Requiz me
+              </Link>
               {reviewQueue.length > 1 ? (
                 <button
                   type="button"
