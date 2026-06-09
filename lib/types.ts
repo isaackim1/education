@@ -185,6 +185,7 @@ export interface ChatMessage {
   content: string;
   flaggedMistake: boolean;
   timestamp: string;
+  mistakeSaved?: boolean;
 }
 
 export interface Chat {

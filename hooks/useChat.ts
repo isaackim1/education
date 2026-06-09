@@ -1,8 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Chat, ChatMessage } from "@/lib/types";
-import { getProjectChat, saveProjectChat } from "@/lib/project-storage";
+import type { Chat, ChatMessage, MistakeCategory, Topic } from "@/lib/types";
+import {
+  createProjectMistakeFromChat,
+  getProjectChat,
+  saveProjectChat,
+  saveProjectMistake,
+} from "@/lib/project-storage";
 
 function generateId(): string {
   if (
@@ -53,10 +58,29 @@ function toApiMessages(
   return apiMessages;
 }
 
+export type ProjectMistakeContext = {
+  topics: Topic[];
+  activeTopicName: string | null;
+};
+
 export type SendMessageOptions = {
   systemPrompt: string;
   contextMessage: string;
+  mistakeContext?: ProjectMistakeContext;
 };
+
+function parseMistakeCategory(value: unknown): MistakeCategory {
+  if (typeof value !== "string") return "conceptual";
+  if (
+    value === "conceptual" ||
+    value === "calculation" ||
+    value === "recall" ||
+    value === "application"
+  ) {
+    return value;
+  }
+  return "conceptual";
+}
 
 export function useChat(projectId: string) {
   const [chat, setChat] = useState<Chat | null>(null);
@@ -147,12 +171,32 @@ export function useChat(projectId: string) {
           "flaggedMistake" in data && typeof data.flaggedMistake === "boolean"
             ? data.flaggedMistake
             : false;
+        const mistakeCategory = parseMistakeCategory(
+          "mistakeCategory" in data ? data.mistakeCategory : undefined
+        );
 
-        const agentMessage = createChatMessage(
+        let agentMessage = createChatMessage(
           "agent",
           data.reply,
           flaggedMistake
         );
+
+        if (flaggedMistake && options.mistakeContext) {
+          const mistake = createProjectMistakeFromChat({
+            projectId,
+            studentAnswer: trimmed,
+            agentReply: data.reply,
+            mistakeCategory,
+            topics: options.mistakeContext.topics,
+            activeTopicName: options.mistakeContext.activeTopicName,
+            messagesBeforeAgent: withStudent.messages,
+          });
+          const mistakeSaved = saveProjectMistake(projectId, mistake);
+          if (mistakeSaved) {
+            agentMessage = { ...agentMessage, mistakeSaved: true };
+          }
+        }
+
         const latest = getProjectChat(projectId) ?? withStudent;
         const withAgent: Chat = {
           ...latest,

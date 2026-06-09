@@ -105,10 +105,16 @@ export default function ProjectChatPage({
   const handleSend = useCallback(
     async (content: string) => {
       if (!promptOptions) return;
-      await sendMessage(content, promptOptions);
+      await sendMessage(content, {
+        ...promptOptions,
+        mistakeContext: {
+          topics,
+          activeTopicName: null,
+        },
+      });
       setInput("");
     },
-    [promptOptions, sendMessage]
+    [promptOptions, sendMessage, topics]
   );
 
   const handleAction = useCallback(

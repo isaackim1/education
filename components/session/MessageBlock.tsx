@@ -56,6 +56,15 @@ export default function MessageBlock({
               </button>
             ) : isMistakeSaved ? (
               <span className="text-xs text-neutral-400">Saved</span>
+            ) : "mistakeSaved" in message && message.mistakeSaved ? (
+              <>
+                <span className="text-xs text-neutral-500">
+                  Flagged as possible mistake
+                </span>
+                <span className="text-xs text-neutral-500">
+                  Saved to mistake review
+                </span>
+              </>
             ) : (
               <span className="text-xs text-neutral-500">
                 Flagged as possible mistake

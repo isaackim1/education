@@ -1,8 +1,10 @@
 import type {
   Chat,
+  ChatMessage,
   LearningProfile,
   Material,
   Mistake,
+  MistakeCategory,
   StudyProject,
   Topic,
 } from "./types";
@@ -44,12 +46,14 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
-function writeJson<T>(key: string, value: T): void {
-  if (!isBrowser()) return;
+function writeJson<T>(key: string, value: T): boolean {
+  if (!isBrowser()) return false;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
+    return true;
   } catch {
     // Swallow quota / serialization errors; callers cannot recover on SSR.
+    return false;
   }
 }
 
@@ -156,14 +160,106 @@ export function getProjectMistakes(projectId: string): Mistake[] {
 export function saveProjectMistakes(
   projectId: string,
   mistakes: Mistake[]
-): void {
-  writeJson(projectMistakesKey(projectId), mistakes);
+): boolean {
+  return writeJson(projectMistakesKey(projectId), mistakes);
 }
 
-export function saveProjectMistake(projectId: string, mistake: Mistake): void {
+export function saveProjectMistake(
+  projectId: string,
+  mistake: Mistake
+): boolean {
   const mistakes = getProjectMistakes(projectId);
   mistakes.push(mistake);
-  saveProjectMistakes(projectId, mistakes);
+  return saveProjectMistakes(projectId, mistakes);
+}
+
+function generateMistakeId(): string {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+  return String(Date.now());
+}
+
+function isMistakeCategory(value: string): value is MistakeCategory {
+  return (
+    value === "conceptual" ||
+    value === "calculation" ||
+    value === "recall" ||
+    value === "application"
+  );
+}
+
+export function resolveProjectMistakeTopic(
+  topics: Topic[],
+  activeTopicName: string | null
+): { topicId: string; topicName: string } {
+  if (activeTopicName) {
+    const match = topics.find((topic) => topic.name === activeTopicName);
+    if (match) {
+      return { topicId: match.id, topicName: match.name };
+    }
+    return { topicId: "general", topicName: activeTopicName };
+  }
+
+  if (topics.length === 1) {
+    return { topicId: topics[0].id, topicName: topics[0].name };
+  }
+
+  return { topicId: "general", topicName: "General" };
+}
+
+function findPreviousAgentQuestion(messages: ChatMessage[]): string {
+  for (let i = messages.length - 2; i >= 0; i--) {
+    if (messages[i].role === "agent") {
+      return messages[i].content;
+    }
+  }
+  return "Training question";
+}
+
+export type CreateProjectMistakeInput = {
+  projectId: string;
+  studentAnswer: string;
+  agentReply: string;
+  mistakeCategory: string;
+  topics: Topic[];
+  activeTopicName: string | null;
+  messagesBeforeAgent: ChatMessage[];
+};
+
+export function createProjectMistakeFromChat(
+  input: CreateProjectMistakeInput
+): Mistake {
+  const { topicId, topicName } = resolveProjectMistakeTopic(
+    input.topics,
+    input.activeTopicName
+  );
+  const category = isMistakeCategory(input.mistakeCategory)
+    ? input.mistakeCategory
+    : "conceptual";
+
+  return {
+    id: generateMistakeId(),
+    examId: input.projectId,
+    projectId: input.projectId,
+    topicId,
+    topicName,
+    question: findPreviousAgentQuestion(input.messagesBeforeAgent),
+    studentAnswer: input.studentAnswer,
+    correctApproach: input.agentReply,
+    mistakeCategory: category,
+    agentNote: "Ivvy flagged this during project chat.",
+    rememberThis: "",
+    followUpQuestion: "",
+    reviewed: false,
+    reviewCount: 0,
+    lastReviewed: null,
+    nextReviewDate: null,
+    createdAt: new Date().toISOString(),
+  };
 }
 
 // ─── Project learning profile ───────────────────────────────────────────────
