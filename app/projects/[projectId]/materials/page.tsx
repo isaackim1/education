@@ -91,8 +91,12 @@ export default function ProjectMaterialsPage({
             Materials
           </h1>
           <p className="text-sm text-neutral-600 mt-2">
-            Paste the notes, syllabus, past questions, and weak points Ivvy
-            should use to train you.
+            Paste or upload the notes, syllabus, past questions, and weak points
+            Ivvy should use to train you.
+          </p>
+          <p className="text-xs text-neutral-500 mt-2">
+            For now, upload supports text-based files. PDF and DOCX extraction
+            will be added later.
           </p>
         </header>
 

@@ -59,6 +59,7 @@ function buildProjectChatContext(
       .map((material) => ({
         topicName: topicNameById.get(material.topicId) ?? "Unknown topic",
         content: material.content.trim(),
+        fileName: material.fileName,
       })),
     recentUnreviewedMistakes: [],
   };

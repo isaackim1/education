@@ -6,7 +6,7 @@ export interface ProjectChatContext {
   targetGrade: string;
   topics: { name: string; masteryScore: number }[];
   activeTopic: string | null;
-  materials: { topicName: string; content: string }[];
+  materials: { topicName: string; content: string; fileName?: string }[];
   recentUnreviewedMistakes?: {
     topicName: string;
     mistakeCategory: string;
@@ -52,7 +52,10 @@ function formatMaterials(context: ProjectChatContext): string[] {
     const snippet = truncateText(material.content, Math.min(limit, remaining));
     if (!snippet) continue;
 
-    lines.push(`[${material.topicName}]`);
+    lines.push(`Topic: ${material.topicName}`);
+    if (material.fileName) {
+      lines.push(`Source: ${material.fileName}`);
+    }
     lines.push(snippet);
     totalChars += snippet.length;
   }

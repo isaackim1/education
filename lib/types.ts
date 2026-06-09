@@ -160,6 +160,9 @@ export interface Material {
   aiSummary: string | null;
   analyzedAt: string | null;
   createdAt: string;
+  source?: "paste" | "file";
+  fileName?: string;
+  fileType?: string;
 }
 
 export type PreferredStudyMode =

@@ -22,6 +22,9 @@ export type SaveTopicMaterialInput = {
   topicId: string;
   title: string;
   content: string;
+  source?: "paste" | "file";
+  fileName?: string;
+  fileType?: string;
 };
 
 export function useProjectMaterials(projectId: string) {
@@ -53,11 +56,21 @@ export function useProjectMaterials(projectId: string) {
         (m) => m.topicId === input.topicId
       );
 
+      const source = input.source ?? (existing?.source ?? "paste");
+      const isFileSource = source === "file";
+
       const material: Material = existing
         ? {
             ...existing,
             title: input.title.trim(),
             content: input.content,
+            source,
+            fileName: isFileSource
+              ? input.fileName ?? existing.fileName
+              : undefined,
+            fileType: isFileSource
+              ? input.fileType ?? existing.fileType
+              : undefined,
           }
         : {
             id: generateId(),
@@ -68,6 +81,9 @@ export function useProjectMaterials(projectId: string) {
             aiSummary: null,
             analyzedAt: null,
             createdAt: new Date().toISOString(),
+            source,
+            fileName: isFileSource ? input.fileName : undefined,
+            fileType: isFileSource ? input.fileType : undefined,
           };
 
       saveMaterial(material);
