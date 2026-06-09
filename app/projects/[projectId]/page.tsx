@@ -160,16 +160,12 @@ export default function ProjectPage({
             </div>
           ) : (
             <div className="mt-3">
-              <button
-                type="button"
-                disabled
-                className="border border-neutral-200 text-sm text-neutral-400 px-4 py-2 rounded cursor-not-allowed"
+              <Link
+                href={`/projects/${params.projectId}/chat`}
+                className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors"
               >
-                Start adaptive chat
-              </button>
-              <p className="text-xs text-neutral-500 mt-2">
-                Coming in the next phase
-              </p>
+                Start training
+              </Link>
             </div>
           )}
         </section>

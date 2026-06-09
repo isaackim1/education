@@ -1,24 +1,28 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { Message } from "@/lib/types";
+import type { ChatMessage, Message } from "@/lib/types";
 import MessageBlock from "./MessageBlock";
 
+type ThreadMessage = Message | ChatMessage;
+
 interface MessageThreadProps {
-  messages: Message[];
+  messages: ThreadMessage[];
   onSaveMistake?: (messageId: string) => void;
   savedMistakeMessageIds?: ReadonlySet<string>;
+  agentLabel?: string;
 }
 
 export default function MessageThread({
   messages,
   onSaveMistake,
   savedMistakeMessageIds,
+  agentLabel,
 }: MessageThreadProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView();
   }, [messages]);
 
   if (messages.length === 0) {
@@ -37,6 +41,7 @@ export default function MessageThread({
           message={message}
           onSaveMistake={onSaveMistake}
           isMistakeSaved={savedMistakeMessageIds?.has(message.id) ?? false}
+          agentLabel={agentLabel}
         />
       ))}
       <div ref={bottomRef} />

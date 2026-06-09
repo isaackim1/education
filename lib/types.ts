@@ -122,6 +122,7 @@ export interface Answer {
 export interface Mistake {
   id: string;
   examId: string;
+  projectId?: string;
   topicId: string;
   topicName: string;
   question: string;
@@ -175,10 +176,18 @@ export interface LearningProfile {
   updatedAt: string;
 }
 
+export interface ChatMessage {
+  id: string;
+  role: "agent" | "student";
+  content: string;
+  flaggedMistake: boolean;
+  timestamp: string;
+}
+
 export interface Chat {
   id: string;
   projectId: string;
-  messages: Message[];
+  messages: ChatMessage[];
   createdAt: string;
   lastMessageAt: string | null;
 }

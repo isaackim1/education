@@ -1,9 +1,12 @@
-import type { Message } from "@/lib/types";
+import type { ChatMessage, Message } from "@/lib/types";
+
+type ThreadMessage = Message | ChatMessage;
 
 interface MessageBlockProps {
-  message: Message;
+  message: ThreadMessage;
   onSaveMistake?: (messageId: string) => void;
   isMistakeSaved?: boolean;
+  agentLabel?: string;
 }
 
 function formatTime(iso: string): string {
@@ -17,6 +20,7 @@ export default function MessageBlock({
   message,
   onSaveMistake,
   isMistakeSaved = false,
+  agentLabel = "Coach",
 }: MessageBlockProps) {
   const isAgent = message.role === "agent";
 
@@ -25,7 +29,7 @@ export default function MessageBlock({
       className={`flex flex-col ${isAgent ? "items-start" : "items-end"}`}
     >
       <span className="text-xs font-medium text-neutral-500 mb-1">
-        {isAgent ? "Coach" : "You"}
+        {isAgent ? agentLabel : "You"}
       </span>
       <div
         className={`max-w-[85%] border rounded px-3 py-2 text-sm whitespace-pre-wrap ${

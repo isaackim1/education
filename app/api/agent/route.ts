@@ -11,9 +11,14 @@ import type { MistakeCategory } from "@/lib/types";
 
 export const runtime = "nodejs";
 
+const MAX_SYSTEM_PROMPT_CHARS = 4000;
+const MAX_CONTEXT_MESSAGE_CHARS = 10000;
+
 interface AgentRequestBody {
   messages: { role: "user" | "assistant"; content: string }[];
-  context: AgentContext;
+  context?: AgentContext;
+  systemPrompt?: string;
+  contextMessage?: string;
 }
 
 export async function POST(request: Request) {
@@ -31,12 +36,20 @@ export async function POST(request: Request) {
 
     const anthropic = new Anthropic({ apiKey });
 
+    const projectPromptRequest = isProjectPromptRequest(body);
+    const system = projectPromptRequest
+      ? body.systemPrompt.trim()
+      : buildSystemPrompt();
+    const contextContent = projectPromptRequest
+      ? body.contextMessage.trim()
+      : buildContextMessage(body.context as AgentContext);
+
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 512,
-      system: buildSystemPrompt(),
+      system,
       messages: [
-        { role: "user", content: buildContextMessage(body.context) },
+        { role: "user", content: contextContent },
         { role: "assistant", content: "Understood." },
         ...body.messages.slice(-10),
       ],
@@ -75,9 +88,8 @@ export async function POST(request: Request) {
 function isAgentRequest(body: unknown): body is AgentRequestBody {
   if (typeof body !== "object" || body === null) return false;
   if (!("messages" in body) || !Array.isArray(body.messages)) return false;
-  if (!("context" in body) || !isAgentContext(body.context)) return false;
 
-  return body.messages.every(
+  const messagesValid = body.messages.every(
     (message) =>
       typeof message === "object" &&
       message !== null &&
@@ -85,6 +97,29 @@ function isAgentRequest(body: unknown): body is AgentRequestBody {
       (message.role === "user" || message.role === "assistant") &&
       "content" in message &&
       typeof message.content === "string"
+  );
+
+  if (!messagesValid) return false;
+
+  if (isProjectPromptRequest(body)) return true;
+
+  return "context" in body && isAgentContext(body.context);
+}
+
+function isProjectPromptRequest(
+  body: unknown
+): body is AgentRequestBody & { systemPrompt: string; contextMessage: string } {
+  if (typeof body !== "object" || body === null) return false;
+
+  return (
+    "systemPrompt" in body &&
+    typeof body.systemPrompt === "string" &&
+    body.systemPrompt.trim().length > 0 &&
+    body.systemPrompt.length <= MAX_SYSTEM_PROMPT_CHARS &&
+    "contextMessage" in body &&
+    typeof body.contextMessage === "string" &&
+    body.contextMessage.trim().length > 0 &&
+    body.contextMessage.length <= MAX_CONTEXT_MESSAGE_CHARS
   );
 }
 
