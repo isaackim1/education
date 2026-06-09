@@ -1,12 +1,20 @@
 import Link from "next/link";
 
-type WorkspaceNavItem = "overview" | "setup" | "materials" | "chat";
+type WorkspaceNavItem =
+  | "overview"
+  | "setup"
+  | "materials"
+  | "chat"
+  | "mistakes"
+  | "review";
 
 const NAV_ITEMS: { id: WorkspaceNavItem; label: string; suffix: string }[] = [
   { id: "overview", label: "Overview", suffix: "" },
   { id: "setup", label: "Topics", suffix: "/setup" },
   { id: "materials", label: "Materials", suffix: "/materials" },
   { id: "chat", label: "Chat", suffix: "/chat" },
+  { id: "mistakes", label: "Mistakes", suffix: "/mistakes" },
+  { id: "review", label: "Review", suffix: "/review" },
 ];
 
 export default function ProjectWorkspaceNav({

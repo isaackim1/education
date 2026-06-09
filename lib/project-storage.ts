@@ -173,6 +173,41 @@ export function saveProjectMistake(
   return saveProjectMistakes(projectId, mistakes);
 }
 
+export function updateProjectMistake(
+  projectId: string,
+  mistakeId: string,
+  patch: Partial<Mistake>
+): boolean {
+  const mistakes = getProjectMistakes(projectId);
+  const index = mistakes.findIndex((mistake) => mistake.id === mistakeId);
+  if (index < 0) return false;
+  mistakes[index] = { ...mistakes[index], ...patch };
+  return saveProjectMistakes(projectId, mistakes);
+}
+
+export function markProjectMistakeReviewed(
+  projectId: string,
+  mistakeId: string
+): boolean {
+  const current = getProjectMistakes(projectId).find(
+    (mistake) => mistake.id === mistakeId
+  );
+  if (!current) return false;
+  if (current.reviewed) return true;
+  return updateProjectMistake(projectId, mistakeId, {
+    reviewed: true,
+    reviewCount: current.reviewCount + 1,
+    lastReviewed: new Date().toISOString(),
+  });
+}
+
+export function resetProjectMistakeReview(
+  projectId: string,
+  mistakeId: string
+): boolean {
+  return updateProjectMistake(projectId, mistakeId, { reviewed: false });
+}
+
 function generateMistakeId(): string {
   if (
     typeof crypto !== "undefined" &&

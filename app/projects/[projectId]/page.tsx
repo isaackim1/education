@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
 import { useProject } from "@/hooks/useProject";
 import { useProjectMaterials } from "@/hooks/useProjectMaterials";
+import { getProjectMistakes } from "@/lib/project-storage";
+import type { Mistake } from "@/lib/types";
 
 function formatDate(dateString: string): string {
   const date = new Date(`${dateString}T00:00:00`);
@@ -43,8 +46,19 @@ export default function ProjectPage({
   const { materials, isLoaded: materialsLoaded } = useProjectMaterials(
     params.projectId
   );
+  const [mistakes, setMistakes] = useState<Mistake[]>([]);
+  const [mistakesLoaded, setMistakesLoaded] = useState(false);
 
-  const isLoaded = projectLoaded && materialsLoaded;
+  const refreshMistakes = useCallback(() => {
+    setMistakes(getProjectMistakes(params.projectId));
+  }, [params.projectId]);
+
+  useEffect(() => {
+    refreshMistakes();
+    setMistakesLoaded(true);
+  }, [refreshMistakes]);
+
+  const isLoaded = projectLoaded && materialsLoaded && mistakesLoaded;
 
   if (!isLoaded) {
     return (
@@ -77,6 +91,7 @@ export default function ProjectPage({
   );
   const hasTopics = topics.length > 0;
   const hasMaterials = hasSavedMaterials(materials);
+  const unreviewedCount = mistakes.filter((m) => !m.reviewed).length;
 
   return (
     <main className="min-h-screen bg-white">
@@ -129,6 +144,36 @@ export default function ProjectPage({
             </p>
           </div>
         </div>
+
+        <section className="border border-neutral-200 rounded p-4 mb-6">
+          <h2 className="text-sm font-semibold text-black">Mistakes</h2>
+          <div className="grid grid-cols-2 gap-4 mt-3">
+            <div>
+              <p className="text-xs font-medium text-neutral-500">Saved</p>
+              <p className="text-sm text-black mt-1">{mistakes.length}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-neutral-500">Unreviewed</p>
+              <p className="text-sm text-black mt-1">{unreviewedCount}</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3 mt-4">
+            <Link
+              href={`/projects/${params.projectId}/mistakes`}
+              className="text-sm text-neutral-500 hover:text-black transition-colors"
+            >
+              Mistake bank
+            </Link>
+            {mistakes.length > 0 ? (
+              <Link
+                href={`/projects/${params.projectId}/review`}
+                className="text-sm text-neutral-500 hover:text-black transition-colors"
+              >
+                Review mistakes
+              </Link>
+            ) : null}
+          </div>
+        </section>
 
         <section className="border border-neutral-200 rounded p-4">
           <h2 className="text-sm font-semibold text-black">Next action</h2>
