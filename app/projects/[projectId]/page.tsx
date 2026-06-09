@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useProjects } from "@/hooks/useProjects";
+import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
+import { useProject } from "@/hooks/useProject";
+import { useProjectMaterials } from "@/hooks/useProjectMaterials";
 
 function formatDate(dateString: string): string {
   const date = new Date(`${dateString}T00:00:00`);
@@ -13,13 +15,36 @@ function formatDate(dateString: string): string {
   });
 }
 
+function formatLastStudied(lastStudiedAt: string | null): string {
+  if (!lastStudiedAt) return "Not studied yet";
+  const date = new Date(lastStudiedAt);
+  if (Number.isNaN(date.getTime())) return "Not studied yet";
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function hasSavedMaterials(
+  materials: { content: string }[]
+): boolean {
+  return materials.some((m) => m.content.trim().length > 0);
+}
+
 export default function ProjectPage({
   params,
 }: {
   params: { projectId: string };
 }) {
-  const { projects, isLoaded } = useProjects();
-  const project = projects.find((item) => item.id === params.projectId);
+  const { project, topics, isLoaded: projectLoaded } = useProject(
+    params.projectId
+  );
+  const { materials, isLoaded: materialsLoaded } = useProjectMaterials(
+    params.projectId
+  );
+
+  const isLoaded = projectLoaded && materialsLoaded;
 
   if (!isLoaded) {
     return (
@@ -47,21 +72,28 @@ export default function ProjectPage({
     );
   }
 
+  const materialsWithContent = materials.filter(
+    (m) => m.content.trim().length > 0
+  );
+  const hasTopics = topics.length > 0;
+  const hasMaterials = hasSavedMaterials(materials);
+
   return (
     <main className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto px-4 py-12">
-        <Link
-          href="/projects"
-          className="text-sm text-neutral-500 hover:text-black transition-colors"
-        >
-          Back to projects
-        </Link>
+        <ProjectWorkspaceNav
+          projectId={params.projectId}
+          active="overview"
+        />
 
-        <header className="mt-6">
+        <header>
           <h1 className="text-2xl font-semibold tracking-tight text-black">
             {project.name}
           </h1>
           <p className="text-sm text-neutral-600 mt-2">{project.subject}</p>
+          <p className="text-sm text-neutral-600 mt-4">
+            This project is your AI training workspace for this exam.
+          </p>
         </header>
 
         <dl className="grid grid-cols-2 gap-4 border-y border-neutral-200 py-4 my-6">
@@ -79,26 +111,68 @@ export default function ProjectPage({
           </div>
         </dl>
 
-        <p className="text-sm text-neutral-600">
-          This project will become your AI training workspace for this exam.
-        </p>
-
-        <div className="flex gap-3 mt-6">
-          <button
-            type="button"
-            disabled
-            className="border border-neutral-200 text-sm text-neutral-400 px-4 py-2 rounded cursor-not-allowed"
-          >
-            Add materials
-          </button>
-          <button
-            type="button"
-            disabled
-            className="border border-neutral-200 text-sm text-neutral-400 px-4 py-2 rounded cursor-not-allowed"
-          >
-            Start chat
-          </button>
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="border border-neutral-200 rounded p-3">
+            <p className="text-xs font-medium text-neutral-500">Topics</p>
+            <p className="text-sm text-black mt-1">{topics.length}</p>
+          </div>
+          <div className="border border-neutral-200 rounded p-3">
+            <p className="text-xs font-medium text-neutral-500">Materials</p>
+            <p className="text-sm text-black mt-1">
+              {materialsWithContent.length}
+            </p>
+          </div>
+          <div className="border border-neutral-200 rounded p-3">
+            <p className="text-xs font-medium text-neutral-500">Last studied</p>
+            <p className="text-sm text-black mt-1">
+              {formatLastStudied(project.lastStudiedAt)}
+            </p>
+          </div>
         </div>
+
+        <section className="border border-neutral-200 rounded p-4">
+          <h2 className="text-sm font-semibold text-black">Next action</h2>
+
+          {!hasTopics ? (
+            <div className="mt-3">
+              <p className="text-sm text-neutral-600">
+                Add the topics your exam covers before dumping materials.
+              </p>
+              <Link
+                href={`/projects/${params.projectId}/setup`}
+                className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-4"
+              >
+                Add your exam topics
+              </Link>
+            </div>
+          ) : !hasMaterials ? (
+            <div className="mt-3">
+              <p className="text-sm text-neutral-600">
+                Paste your notes and past questions so StudyCoach knows what to
+                train you on.
+              </p>
+              <Link
+                href={`/projects/${params.projectId}/materials`}
+                className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-4"
+              >
+                Add your study materials
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-3">
+              <button
+                type="button"
+                disabled
+                className="border border-neutral-200 text-sm text-neutral-400 px-4 py-2 rounded cursor-not-allowed"
+              >
+                Start adaptive chat
+              </button>
+              <p className="text-xs text-neutral-500 mt-2">
+                Coming in the next phase
+              </p>
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );
