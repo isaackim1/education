@@ -137,3 +137,48 @@ export interface Mistake {
   nextReviewDate: string | null;
   createdAt: string;
 }
+
+// ─── Project-based types (Phase 1) ───────────────────────────────────────────
+
+export interface StudyProject {
+  id: string;
+  name: string;
+  subject: string;
+  examDate: string;
+  targetGrade: string;
+  createdAt: string;
+  lastStudiedAt: string | null;
+}
+
+export interface Material {
+  id: string;
+  projectId: string;
+  topicId: string;
+  title: string;
+  content: string;
+  aiSummary: string | null;
+  analyzedAt: string | null;
+  createdAt: string;
+}
+
+export type PreferredStudyMode =
+  | "quiz-first"
+  | "explanation-first"
+  | "example-first";
+
+export interface LearningProfile {
+  projectId: string;
+  preferredMode: PreferredStudyMode;
+  studyHoursPerDay: number;
+  confidenceLevel: 1 | 2 | 3 | 4 | 5;
+  rawAnswers: { question: string; answer: string }[];
+  updatedAt: string;
+}
+
+export interface Chat {
+  id: string;
+  projectId: string;
+  messages: Message[];
+  createdAt: string;
+  lastMessageAt: string | null;
+}
