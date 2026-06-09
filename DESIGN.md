@@ -1,6 +1,6 @@
 ---
 meta:
-  product: StudyCoach
+  product: Ivvy
   version: "1.0"
   aesthetic: calm-functional
   framework: tailwindcss-v3
@@ -123,11 +123,11 @@ breakpoints:
   # Do not target md/lg/xl breakpoints unless strictly needed for layout.
 ---
 
-# StudyCoach — Design System
+# Ivvy — Design System
 
 ## 1. Design Principles
 
-These five principles govern every visual decision in StudyCoach. When you are
+These five principles govern every visual decision in Ivvy. When you are
 unsure how to build something, return to these.
 
 **1. Exam-serious, not app-cheerful.**
@@ -161,7 +161,7 @@ under fluorescent exam-room lighting, it is wrong.
 
 ## 2. Visual Identity
 
-StudyCoach looks like **a sheet of white paper on a plain desk**. Everything
+Ivvy looks like **a sheet of white paper on a plain desk**. Everything
 unnecessary has been removed. The only things that exist on screen are what the
 student needs to read and act on right now.
 
@@ -514,7 +514,7 @@ No spinner. No dots. Plain text, neutral, calm.
 
 ### Redirect page (`/`)
 
-Invisible to the student. Shows a brief `Loading StudyCoach...` text while
+Invisible to the student. Shows a brief `Loading...` text while
 redirecting to `/setup` or `/plan`. No branded splash screen.
 
 ### Setup page (`/setup`)
@@ -558,7 +558,7 @@ or other topic data on this page.
 
 ## 8. Navigation Rules
 
-There is **no persistent navigation bar** in StudyCoach.
+There is **no persistent navigation bar** in Ivvy.
 
 Each page provides its own context-appropriate back link:
 - Back links use the pattern: `← Back to [page name]`

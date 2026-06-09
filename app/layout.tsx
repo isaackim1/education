@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "StudyCoach",
-  description: "Interactive AI study agent for exam preparation",
+  title: "Ivvy",
+  description: "AI-powered exam training workspace.",
 };
 
 export default function RootLayout({

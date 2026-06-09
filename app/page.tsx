@@ -27,7 +27,7 @@ export default function HomePage() {
   if (showLanding === null) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-sm text-neutral-600">Loading StudyCoach...</p>
+        <p className="text-sm text-neutral-600">Loading...</p>
       </main>
     );
   }

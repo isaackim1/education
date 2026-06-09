@@ -50,7 +50,7 @@ export default function ProjectSetupPage({
             Project topics
           </h1>
           <p className="text-sm text-neutral-600 mt-2">
-            Topics help StudyCoach organize your materials, mistakes, and future
+            Topics help Ivvy organize your materials, mistakes, and future
             training.
           </p>
         </header>

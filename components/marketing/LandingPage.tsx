@@ -38,7 +38,7 @@ function LogoMark() {
   return (
     <Link href="/" className="flex items-center gap-2">
       <span className="w-4 h-4 rounded bg-black" />
-      <span className="text-sm font-semibold text-black">StudyCoach</span>
+      <span className="text-sm font-semibold text-black">Ivvy</span>
     </Link>
   );
 }
@@ -47,7 +47,7 @@ function AnnouncementBanner() {
   return (
     <div className="w-full bg-neutral-100 border-b border-neutral-200 py-2 text-center">
       <p className="text-sm text-neutral-700">
-        StudyCoach is now free during beta —{" "}
+        Ivvy is now free during beta —{" "}
         <Link
           href="/projects/new"
           className="text-black underline hover:text-neutral-600 transition-colors"
@@ -106,12 +106,12 @@ function HeroMockup() {
         <span className="w-2 h-2 rounded bg-neutral-300" />
         <span className="w-2 h-2 rounded bg-neutral-300" />
         <div className="flex-1 bg-white border border-neutral-200 rounded px-3 py-1 text-xs text-neutral-400 text-center ml-2">
-          studycoach.app/session
+          ivvy.app/projects/[id]/chat
         </div>
       </div>
       <div className="p-4 space-y-3">
         <div className="bg-neutral-50 border border-neutral-200 rounded p-3">
-          <p className="text-xs font-medium text-neutral-500 mb-1">Coach</p>
+          <p className="text-xs font-medium text-neutral-500 mb-1">Ivvy</p>
           <p className="text-sm text-black">
             Let&apos;s start with monetary policy. Can you explain what happens
             to inflation when the central bank raises interest rates?
@@ -127,7 +127,7 @@ function HeroMockup() {
           </div>
         </div>
         <div className="bg-neutral-50 border border-neutral-200 rounded p-3">
-          <p className="text-xs font-medium text-neutral-500 mb-1">Coach</p>
+          <p className="text-xs font-medium text-neutral-500 mb-1">Ivvy</p>
           <p className="text-sm text-black">
             Good. Now, what would you expect to happen to unemployment in the
             short run?
@@ -150,25 +150,26 @@ function Hero() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-2 gap-12">
         <div className="flex flex-col justify-center gap-6">
           <p className="text-xs font-medium text-neutral-500">
-            AI-powered exam preparation
+            AI-powered exam training
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-black">
-            The AI coach that prepares you for exam day.
+            Your exam materials, turned into a personal AI trainer.
           </h1>
           <p className="text-sm text-neutral-600 max-w-md">
-            Set up your study plan, work through topics with an AI coach, track
-            your mistakes, and arrive at your exam fully prepared.
+            Dump your notes. Add your topics. Ivvy trains you on exactly what
+            your exam tests.
           </p>
           <div className="flex gap-3 flex-wrap">
             <PrimaryButtonLink href="/projects/new">
-              Start studying free →
+              Create your study project →
             </PrimaryButtonLink>
             <SecondaryButtonLink href="#how-it-works">
               See how it works
             </SecondaryButtonLink>
           </div>
           <p className="text-sm text-neutral-500">
-            Trusted by students preparing for GMAT, Bar Exam, USMLE, and CFA.
+            Built for exam prep across GMAT, Bar Exam, USMLE, CFA, university
+            finals, and resits.
           </p>
         </div>
         <div className="hidden md:flex items-center justify-center">
@@ -184,7 +185,7 @@ function LogoStrip() {
   return (
     <section className="w-full bg-neutral-50 border-y border-neutral-200 py-8">
       <p className="text-xs font-medium text-neutral-400 text-center mb-4">
-        Used by students preparing for
+        Built for
       </p>
       <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 px-4">
         {exams.map((exam) => (
@@ -211,14 +212,13 @@ function Features() {
     <section id="features" className="w-full bg-white py-16 border-b border-neutral-200">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <p className="text-xs font-medium text-neutral-500 text-center mb-4">
-          The StudyCoach platform
+          The Ivvy platform
         </p>
         <h2 className="text-2xl font-semibold tracking-tight text-black text-center mb-4">
-          Two ways to use your AI coach
+          Train on your materials, not generic answers
         </h2>
         <p className="text-center text-sm text-neutral-600 max-w-xl mx-auto mb-12">
-          Whether you&apos;re starting from scratch or reinforcing weak spots,
-          StudyCoach has a mode for you.
+          Claude answers your study questions. Ivvy trains you for the exam.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -356,20 +356,20 @@ function HowItWorks() {
     {
       n: "01",
       icon: <CalendarIcon />,
-      title: "Set up your exam",
-      body: "Enter your subject, exam date, study hours per day, and confidence level. Add your topics and any past exam questions.",
+      title: "Create your study project",
+      body: "Add your subject, exam date, target grade, and the topics your exam covers.",
     },
     {
       n: "02",
       icon: <ChatIcon />,
-      title: "Study with your AI coach",
-      body: "Work through your 14-day plan. The coach guides each session — explaining concepts, asking questions, and adapting to your answers in real time.",
+      title: "Dump your materials",
+      body: "Paste your notes, syllabus, past questions, marking criteria, and personal weak points.",
     },
     {
       n: "03",
       icon: <CheckIcon />,
-      title: "Fix every weak spot",
-      body: "Mistakes are saved automatically. The Mistake Bank lets you review and resolve every gap before exam day arrives.",
+      title: "Train for the exam",
+      body: "Ivvy uses your materials to test your understanding, adapt to your answers, and focus on weak areas.",
     },
   ];
 
@@ -380,10 +380,10 @@ function HowItWorks() {
           How it works
         </p>
         <h2 className="text-2xl font-semibold tracking-tight text-black text-center mt-4">
-          Set up once. Study every day.
+          From scattered materials to focused training.
         </h2>
         <p className="text-center text-sm text-neutral-500 max-w-lg mx-auto mt-3 mb-12">
-          Three steps from setup to exam-ready.
+          Three steps from project setup to exam-day practice.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {steps.map((step) => (
@@ -408,20 +408,13 @@ function Quote() {
   return (
     <section className="w-full bg-neutral-50 border-y border-neutral-200 py-16">
       <div className="max-w-2xl mx-auto px-4 text-center">
-        <p className="text-2xl font-semibold text-neutral-200 leading-none mb-4">
-          &ldquo;
-        </p>
         <p className="text-sm font-medium text-black">
-          I used StudyCoach for 6 weeks before my CFA Level 1 exam. Having the
-          coach flag my mistakes and drill me on them was the difference. I
-          passed on my first attempt.
+          Ivvy turns your exam materials into a personal AI training system.
         </p>
-        <div className="mt-6 space-y-1">
-          <p className="text-sm font-semibold text-black">Alex M.</p>
-          <p className="text-sm text-neutral-500">
-            CFA Level 1, passed first attempt
-          </p>
-        </div>
+        <p className="text-sm text-neutral-600 mt-3">
+          Add your topics, dump your notes, and train on what your exam actually
+          tests — not generic study chat.
+        </p>
       </div>
     </section>
   );
@@ -438,11 +431,13 @@ function FinalCTA() {
           Start preparing today.
         </h2>
         <p className="text-sm text-neutral-600 mt-4 max-w-md mx-auto">
-          Free during beta. No payment required. Set up your study plan in under
-          2 minutes.
+          Free during beta. No payment required. Create your study project in
+          under 2 minutes.
         </p>
         <div className="flex justify-center gap-4 mt-8 flex-wrap">
-          <PrimaryButtonLink href="/projects/new">Start studying free →</PrimaryButtonLink>
+          <PrimaryButtonLink href="/projects/new">
+            Create your study project →
+          </PrimaryButtonLink>
           <SecondaryButtonLink href="#how-it-works">
             See how it works
           </SecondaryButtonLink>
@@ -466,8 +461,8 @@ function Footer() {
           <div>
             <LogoMark />
             <p className="text-sm text-neutral-600 mt-2 max-w-xs">
-              AI-powered exam preparation. Built for students who take their
-              exams seriously.
+              AI-powered exam training workspace. Built for students who take
+              their exams seriously.
             </p>
           </div>
           <div>
@@ -499,10 +494,10 @@ function Footer() {
         </div>
         <div className="mt-8 pt-8 border-t border-neutral-200 flex justify-between items-center flex-wrap gap-4">
           <p className="text-xs text-neutral-400">
-            © 2026 StudyCoach. All rights reserved.
+            © 2026 Ivvy. All rights reserved.
           </p>
           <p className="text-xs text-neutral-400">
-            Built with an AI study coach inside.
+            Built for exam-day training, not generic Q&amp;A.
           </p>
         </div>
       </div>

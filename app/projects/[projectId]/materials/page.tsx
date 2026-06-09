@@ -91,8 +91,8 @@ export default function ProjectMaterialsPage({
             Materials
           </h1>
           <p className="text-sm text-neutral-600 mt-2">
-            Paste the notes, syllabus, past questions, and weak points
-            StudyCoach should use to train you.
+            Paste the notes, syllabus, past questions, and weak points Ivvy
+            should use to train you.
           </p>
         </header>
 

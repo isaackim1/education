@@ -60,8 +60,8 @@ export default function NewProjectPage() {
             Create study project
           </h1>
           <p className="text-sm text-neutral-600 mt-2">
-            A focused workspace where StudyCoach remembers your materials,
-            mistakes, and progress.
+            A focused workspace where Ivvy remembers your materials, mistakes,
+            and progress.
           </p>
         </header>
 

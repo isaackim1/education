@@ -148,8 +148,8 @@ export default function ProjectPage({
           ) : !hasMaterials ? (
             <div className="mt-3">
               <p className="text-sm text-neutral-600">
-                Paste your notes and past questions so StudyCoach knows what to
-                train you on.
+                Paste your notes and past questions so Ivvy knows what to train
+                you on.
               </p>
               <Link
                 href={`/projects/${params.projectId}/materials`}
