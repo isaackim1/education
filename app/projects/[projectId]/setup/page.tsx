@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import ProjectTopicManager from "@/components/project/ProjectTopicManager";
+import TopicSuggestionPanel from "@/components/project/TopicSuggestionPanel";
 import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
 import { useProject } from "@/hooks/useProject";
 
@@ -55,14 +56,23 @@ export default function ProjectSetupPage({
           </p>
         </header>
 
-        <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
-          <ProjectTopicManager
+        <div className="space-y-5">
+          <TopicSuggestionPanel
             projectId={params.projectId}
-            topics={topics}
+            subject={project.subject}
+            existingTopics={topics}
             onAddTopic={addTopic}
-            onDeleteTopic={deleteTopic}
           />
-        </section>
+
+          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
+            <ProjectTopicManager
+              projectId={params.projectId}
+              topics={topics}
+              onAddTopic={addTopic}
+              onDeleteTopic={deleteTopic}
+            />
+          </section>
+        </div>
       </div>
     </main>
   );
