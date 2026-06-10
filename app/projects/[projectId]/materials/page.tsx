@@ -105,9 +105,10 @@ export default function ProjectMaterialsPage({
             Ivvy uses these notes to ask better exam questions. Add lecture
             notes, summaries, syllabus points, or past questions per topic.
           </p>
-          <p className="mt-3 inline-flex items-center rounded-full bg-[#F1F3F4] px-3 py-1.5 text-xs text-[#5F6368]">
-            Text files only for now: .txt, .md, .csv, .json, .html. PDF and DOCX
-            support comes later.
+          <p className="mt-3 text-xs text-[#5F6368]">
+            Supported formats: TXT, MD, CSV, JSON, HTML, PDF, DOCX. PDF and DOCX
+            import selectable text only — scanned or image-only PDFs aren&apos;t
+            supported yet.
           </p>
         </header>
 

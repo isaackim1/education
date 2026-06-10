@@ -3,29 +3,10 @@
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import type { Material } from "@/lib/types";
 import type { SaveTopicMaterialInput } from "@/hooks/useProjectMaterials";
-
-const MAX_FILE_SIZE = 500 * 1024;
-
-const SUPPORTED_EXTENSIONS = [".txt", ".md", ".csv", ".json", ".html"] as const;
-
-const UNSUPPORTED_FILE_MESSAGE =
-  "This version supports text-based files only: .txt, .md, .csv, .json, .html. PDF and DOCX support will come later.";
+import { parseMaterialFile } from "@/lib/material-file-parser";
 
 const FIELD =
   "w-full rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15";
-
-function getFileExtension(fileName: string): string {
-  const dot = fileName.lastIndexOf(".");
-  if (dot === -1) return "";
-  return fileName.slice(dot).toLowerCase();
-}
-
-function isSupportedFile(file: File): boolean {
-  const ext = getFileExtension(file.name);
-  return SUPPORTED_EXTENSIONS.includes(
-    ext as (typeof SUPPORTED_EXTENSIONS)[number]
-  );
-}
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -58,7 +39,11 @@ export default function ProjectMaterialCard({
     null
   );
   const [fileError, setFileError] = useState<string | null>(null);
+  const [fileWarning, setFileWarning] = useState<string | null>(null);
+  const [parsingFileName, setParsingFileName] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
+
+  const isParsing = parsingFileName !== null;
 
   useEffect(() => {
     setTitle(material?.title ?? defaultTitle);
@@ -68,6 +53,8 @@ export default function ProjectMaterialCard({
     setFileType(material?.fileType ?? "");
     setUploadedFileSize(null);
     setFileError(null);
+    setFileWarning(null);
+    setParsingFileName(null);
   }, [
     material?.title,
     material?.content,
@@ -77,43 +64,41 @@ export default function ProjectMaterialCard({
     defaultTitle,
   ]);
 
-  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
     setFileError(null);
+    setFileWarning(null);
 
     if (!file) return;
 
-    if (file.size > MAX_FILE_SIZE) {
-      setFileError(
-        `File is too large. Maximum size is ${formatFileSize(MAX_FILE_SIZE)}.`
-      );
-      return;
-    }
+    // Capture size up front; parsing failures must not overwrite existing state.
+    const fileSize = file.size;
+    setParsingFileName(file.name);
 
-    if (!isSupportedFile(file)) {
-      setFileError(UNSUPPORTED_FILE_MESSAGE);
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = typeof reader.result === "string" ? reader.result : "";
-      setContent(text);
+    try {
+      const parsed = await parseMaterialFile(file);
+      setContent(parsed.content);
       setSource("file");
-      setFileName(file.name);
-      setFileType(file.type || "text/plain");
-      setUploadedFileSize(file.size);
+      setFileName(parsed.fileName);
+      setFileType(parsed.fileType || "text/plain");
+      setUploadedFileSize(fileSize);
+      setFileWarning(parsed.truncated || parsed.warning ? parsed.warning ?? null : null);
 
       const currentTitle = title.trim();
       if (!currentTitle || currentTitle === defaultTitle) {
-        setTitle(file.name);
+        setTitle(parsed.fileName);
       }
-    };
-    reader.onerror = () => {
-      setFileError("Could not read this file. Try a different file or paste the text.");
-    };
-    reader.readAsText(file);
+    } catch (err) {
+      // Preserve existing content, fileName, source, and fileType on failure.
+      setFileError(
+        err instanceof Error
+          ? err.message
+          : "Could not read this file. Try a different file or paste the text."
+      );
+    } finally {
+      setParsingFileName(null);
+    }
   }
 
   function handleSubmit(e: FormEvent) {
@@ -194,27 +179,43 @@ export default function ProjectMaterialCard({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".txt,.md,.csv,.json,.html,text/plain,text/markdown,text/csv,application/json,text/html"
+          accept=".txt,.md,.csv,.json,.html,.pdf,.docx,text/plain,text/markdown,text/csv,application/json,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           onChange={handleFileChange}
+          disabled={isParsing}
           className="sr-only"
           id={`material-file-${topicId}`}
         />
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="inline-flex items-center h-9 px-4 rounded-full border border-[#C4C7C5] text-sm text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+          disabled={isParsing}
+          className="inline-flex items-center h-9 px-4 rounded-full border border-[#C4C7C5] text-sm text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
         >
-          Choose file
+          {isParsing ? "Extracting…" : "Choose file"}
         </button>
         <p className="text-xs text-[#80868B] mt-1.5">
-          .txt, .md, .csv, .json, .html &mdash; max {formatFileSize(MAX_FILE_SIZE)}
+          TXT, MD, CSV, JSON, HTML &mdash; max 500 KB. PDF, DOCX &mdash; max 5 MB,
+          selectable text only.
         </p>
+        {isParsing ? (
+          <p className="mt-2 text-xs text-[#5F6368]" role="status">
+            Extracting text from {parsingFileName}…
+          </p>
+        ) : null}
         {fileError ? (
           <p
             className="mt-2 rounded-lg bg-[#F9DEDC] px-3 py-2 text-xs text-[#410E0B]"
             role="alert"
           >
             {fileError}
+          </p>
+        ) : null}
+        {fileWarning && !isParsing ? (
+          <p
+            className="mt-2 rounded-lg bg-[#FEEFC3] px-3 py-2 text-xs text-[#B06000]"
+            role="status"
+          >
+            {fileWarning}
           </p>
         ) : null}
         {showFileInfo ? (
@@ -239,15 +240,16 @@ export default function ProjectMaterialCard({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={8}
+          disabled={isParsing}
           placeholder="Lecture notes, syllabus points, past questions, summaries, weak areas..."
-          className={`${FIELD} py-3 resize-y`}
+          className={`${FIELD} py-3 resize-y disabled:opacity-60`}
         />
       </div>
 
       <div className="flex items-center gap-3">
         <button
           type="submit"
-          disabled={!isDirty && saveState === "idle"}
+          disabled={isParsing || (!isDirty && saveState === "idle")}
           className="inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
         >
           {saveState === "saved" ? "Saved" : "Save"}
