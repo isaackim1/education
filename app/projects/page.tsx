@@ -10,7 +10,7 @@ export default function ProjectsPage() {
   if (!isLoaded) {
     return (
       <main className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-sm text-neutral-600">Loading study projects...</p>
+        <p className="text-sm text-neutral-600">Loading...</p>
       </main>
     );
   }
@@ -21,18 +21,19 @@ export default function ProjectsPage() {
         <div className="max-w-lg mx-auto px-4 py-12">
           <header className="mb-8">
             <h1 className="text-2xl font-semibold tracking-tight text-black">
-              Study projects
+              Your training projects
             </h1>
             <p className="text-sm text-neutral-600 mt-2">
-              A study project stores your exam info, materials, chat history,
-              mistakes, and progress in one focused workspace.
+              No projects yet. Create one exam training project. Each project
+              holds your topics, materials, training chat, mistake bank, and
+              review queue for a single exam.
             </p>
           </header>
           <Link
             href="/projects/new"
             className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors"
           >
-            Create study project
+            Create project
           </Link>
         </div>
       </main>
@@ -45,18 +46,18 @@ export default function ProjectsPage() {
         <header className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-black">
-              Study projects
+              Your training projects
             </h1>
             <p className="text-sm text-neutral-600 mt-2 max-w-md">
-              Each project becomes a focused AI training workspace for one exam
-              or subject.
+              One exam per project. Topics, materials, chat, mistakes, and
+              review live together in each workspace.
             </p>
           </div>
           <Link
             href="/projects/new"
             className="inline-flex items-center border border-neutral-300 text-sm font-medium px-4 py-2 rounded hover:border-black transition-colors text-black shrink-0"
           >
-            Create study project
+            Create project
           </Link>
         </header>
 

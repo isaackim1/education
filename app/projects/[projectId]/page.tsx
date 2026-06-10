@@ -63,7 +63,7 @@ export default function ProjectPage({
   if (!isLoaded) {
     return (
       <main className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-sm text-neutral-600">Loading study project...</p>
+        <p className="text-sm text-neutral-600">Loading...</p>
       </main>
     );
   }
@@ -101,14 +101,11 @@ export default function ProjectPage({
           active="overview"
         />
 
-        <header>
+        <header className="mb-6">
           <h1 className="text-2xl font-semibold tracking-tight text-black">
             {project.name}
           </h1>
           <p className="text-sm text-neutral-600 mt-2">{project.subject}</p>
-          <p className="text-sm text-neutral-600 mt-4">
-            This project is your AI training workspace for this exam.
-          </p>
         </header>
 
         <dl className="grid grid-cols-2 gap-4 border-y border-neutral-200 py-4 my-6">
@@ -146,74 +143,96 @@ export default function ProjectPage({
         </div>
 
         <section className="border border-neutral-200 rounded p-4 mb-6">
-          <h2 className="text-sm font-semibold text-black">Mistakes</h2>
-          <div className="grid grid-cols-2 gap-4 mt-3">
-            <div>
-              <p className="text-xs font-medium text-neutral-500">Saved</p>
-              <p className="text-sm text-black mt-1">{mistakes.length}</p>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-neutral-500">Unreviewed</p>
-              <p className="text-sm text-black mt-1">{unreviewedCount}</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3 mt-4">
-            <Link
-              href={`/projects/${params.projectId}/mistakes`}
-              className="text-sm text-neutral-500 hover:text-black transition-colors"
-            >
-              Mistake bank
-            </Link>
-            {mistakes.length > 0 ? (
-              <Link
-                href={`/projects/${params.projectId}/review`}
-                className="text-sm text-neutral-500 hover:text-black transition-colors"
-              >
-                Review mistakes
-              </Link>
-            ) : null}
-          </div>
-        </section>
-
-        <section className="border border-neutral-200 rounded p-4">
-          <h2 className="text-sm font-semibold text-black">Next action</h2>
+          <h2 className="text-sm font-semibold text-black">Next step</h2>
 
           {!hasTopics ? (
             <div className="mt-3">
               <p className="text-sm text-neutral-600">
-                Add the topics your exam covers before dumping materials.
+                Add topics first. They define what Ivvy should train you on.
               </p>
               <Link
                 href={`/projects/${params.projectId}/setup`}
                 className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-4"
               >
-                Add your exam topics
+                Add topics
               </Link>
             </div>
           ) : !hasMaterials ? (
             <div className="mt-3">
               <p className="text-sm text-neutral-600">
-                Paste your notes and past questions so Ivvy knows what to train
-                you on.
+                Add materials so Ivvy can train from your notes.
               </p>
               <Link
                 href={`/projects/${params.projectId}/materials`}
                 className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-4"
               >
-                Add your study materials
+                Add materials
               </Link>
             </div>
-          ) : (
+          ) : mistakes.length === 0 ? (
             <div className="mt-3">
+              <p className="text-sm text-neutral-600">
+                Start training in chat. Ivvy will ask exam-style questions and
+                save mistakes when you slip.
+              </p>
               <Link
                 href={`/projects/${params.projectId}/chat`}
-                className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors"
+                className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-4"
               >
                 Start training
               </Link>
             </div>
+          ) : unreviewedCount > 0 ? (
+            <div className="mt-3">
+              <p className="text-sm text-neutral-600">
+                {unreviewedCount} unreviewed mistake
+                {unreviewedCount === 1 ? "" : "s"}. Review weak areas before
+                your next session.
+              </p>
+              <Link
+                href={`/projects/${params.projectId}/review`}
+                className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-4"
+              >
+                Review weak areas
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-3">
+              <p className="text-sm text-neutral-600">
+                Continue training. Your recent mistakes are reviewed.
+              </p>
+              <Link
+                href={`/projects/${params.projectId}/chat`}
+                className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-4"
+              >
+                Continue training
+              </Link>
+            </div>
           )}
         </section>
+
+        {mistakes.length > 0 ? (
+          <section className="border border-neutral-200 rounded p-4">
+            <h2 className="text-sm font-semibold text-black">Mistakes</h2>
+            <p className="text-sm text-neutral-600 mt-2">
+              {mistakes.length} saved · {unreviewedCount} unreviewed
+            </p>
+            <div className="flex flex-wrap gap-3 mt-4">
+              <Link
+                href={`/projects/${params.projectId}/mistakes`}
+                className="text-sm text-neutral-500 hover:text-black transition-colors"
+              >
+                Mistake bank
+              </Link>
+              <Link
+                href={`/projects/${params.projectId}/review`}
+                className="text-sm text-neutral-500 hover:text-black transition-colors"
+              >
+                Review queue
+              </Link>
+            </div>
+          </section>
+        ) : null}
       </div>
     </main>
   );

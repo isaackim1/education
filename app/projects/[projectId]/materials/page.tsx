@@ -63,7 +63,8 @@ export default function ProjectMaterialsPage({
               Materials
             </h1>
             <p className="text-sm text-neutral-600 mt-2">
-              Add topics before dumping study materials.
+              Add topics first. Ivvy needs topics before it can attach your
+              notes and ask focused questions.
             </p>
           </header>
 
@@ -71,7 +72,7 @@ export default function ProjectMaterialsPage({
             href={`/projects/${params.projectId}/setup`}
             className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors"
           >
-            Add your exam topics
+            Add topics
           </Link>
         </div>
       </main>
@@ -91,12 +92,12 @@ export default function ProjectMaterialsPage({
             Materials
           </h1>
           <p className="text-sm text-neutral-600 mt-2">
-            Paste or upload the notes, syllabus, past questions, and weak points
-            Ivvy should use to train you.
+            Ivvy uses these notes to ask better exam questions. Add lecture
+            notes, summaries, syllabus points, or past questions per topic.
           </p>
           <p className="text-xs text-neutral-500 mt-2">
-            For now, upload supports text-based files. PDF and DOCX extraction
-            will be added later.
+            Text files only for now: .txt, .md, .csv, .json, .html. PDF and
+            DOCX support comes later.
           </p>
         </header>
 

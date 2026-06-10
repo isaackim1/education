@@ -220,13 +220,9 @@ export default function ProjectMaterialCard({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={8}
-          placeholder="Paste or upload syllabus, lecture notes, past questions, marking criteria, textbook summaries, and personal weak points..."
+          placeholder="Lecture notes, syllabus points, past questions, summaries, weak areas..."
           className="w-full border border-neutral-300 rounded px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-black"
         />
-        <p className="text-xs text-neutral-400 mt-1">
-          Include syllabus, lecture notes, past questions, marking criteria,
-          textbook summaries, and weak points.
-        </p>
       </div>
 
       <div className="flex items-center gap-3">

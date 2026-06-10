@@ -142,6 +142,17 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
     [materials]
   );
 
+  const trainingContextParts = [
+    activeTopicName ?? "All topics",
+    materialsWithContent.length > 0 ? "materials" : "no materials yet",
+  ];
+  if (
+    getProjectMistakes(projectId).some((mistake) => !mistake.reviewed)
+  ) {
+    trainingContextParts.push("recent mistakes");
+  }
+  const trainingContextNote = `Training with: ${trainingContextParts.join(" · ")}`;
+
   const buildPromptOptions = useCallback(
     (activeTopic: string | null) => {
       if (!project) return null;
@@ -221,14 +232,15 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
       <div className="max-w-2xl mx-auto w-full px-4 py-6 flex flex-col flex-1 min-h-0">
         <ProjectWorkspaceNav projectId={projectId} active="chat" />
 
-        <div className="border border-neutral-200 rounded p-3 mb-4">
-          <p className="text-sm font-medium text-black">{project.name}</p>
-          <p className="text-sm text-neutral-600 mt-1">{project.subject}</p>
-          <p className="text-xs text-neutral-500 mt-2">
-            {topics.length} topics · {materialsWithContent.length} materials
-            with content
+        <header className="mb-4">
+          <h1 className="text-2xl font-semibold tracking-tight text-black">
+            Training
+          </h1>
+          <p className="text-sm text-neutral-600 mt-2">
+            Ivvy asks exam-style questions, saves your mistakes, and can use
+            recent unreviewed mistakes to guide what comes next.
           </p>
-        </div>
+        </header>
 
         {requizMistake ? (
           <div className="border border-neutral-200 rounded p-3 mb-4">
@@ -259,7 +271,7 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
               htmlFor="active-topic"
               className="block text-xs font-medium text-neutral-500 mb-1"
             >
-              Training focus
+              Topic focus
             </label>
             <select
               id="active-topic"
@@ -276,24 +288,34 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
                 </option>
               ))}
             </select>
+            <p className="text-xs text-neutral-500 mt-2">
+              {trainingContextNote}
+            </p>
           </div>
-        ) : null}
+        ) : (
+          <p className="text-xs text-neutral-500 mb-4">{trainingContextNote}</p>
+        )}
 
         <div className="flex flex-col flex-1 min-h-[28rem] border border-neutral-200 rounded">
           {messages.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
               <p className="text-sm font-medium text-black">
-                Ivvy is ready to train
+                Ready to train
               </p>
               <p className="text-sm text-neutral-600 mt-2 max-w-sm">
-                {project.subject} · {topics.length} topics ·{" "}
-                {materialsWithContent.length} materials saved
+                Ivvy will quiz you on {project.subject}. Wrong answers are saved
+                to your mistake bank. Nothing is sent until you start.
               </p>
-              <p className="text-xs text-neutral-500 mt-3 max-w-sm">
-                Ivvy will use your project materials to ask direct exam-style
-                questions. Click when you are ready — no messages are sent until
-                you do.
-              </p>
+              {topics.length === 0 ? (
+                <p className="text-xs text-neutral-500 mt-3 max-w-sm">
+                  Add topics and materials first for sharper questions.
+                </p>
+              ) : materialsWithContent.length === 0 ? (
+                <p className="text-xs text-neutral-500 mt-3 max-w-sm">
+                  Add materials per topic so Ivvy can ground questions in your
+                  notes.
+                </p>
+              ) : null}
               <button
                 type="button"
                 onClick={() => void handleSend(START_TRAINING_MESSAGE)}

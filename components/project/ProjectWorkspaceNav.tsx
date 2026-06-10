@@ -27,8 +27,8 @@ export default function ProjectWorkspaceNav({
   const base = `/projects/${projectId}`;
 
   return (
-    <nav className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-neutral-200 pb-4 mb-6">
-      <div className="flex flex-wrap gap-2">
+    <nav className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between border-b border-neutral-200 pb-4 mb-6">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2">
         {NAV_ITEMS.map((item) => {
           const href = `${base}${item.suffix}`;
           const isActive = active === item.id;

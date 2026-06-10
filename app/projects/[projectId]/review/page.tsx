@@ -120,56 +120,61 @@ function ProjectReviewContent({
 
         <header className="mb-8">
           <h1 className="text-2xl font-semibold tracking-tight text-black">
-            Review mistakes
+            Review
           </h1>
           <p className="text-sm text-neutral-600 mt-2">
-            Work through saved mistakes from your training chat.
+            Review queue for saved mistakes. Read each one, then use Requiz me
+            to test the same weakness again in chat.
           </p>
         </header>
 
         {reviewQueue.length === 0 ? (
           <div className="border border-neutral-200 rounded p-6 text-center">
             <p className="text-sm font-medium text-black">
-              No mistakes to review yet.
+              Nothing in the review queue yet.
+            </p>
+            <p className="text-sm text-neutral-600 mt-2">
+              Mistakes appear here after training. Ivvy saves them when you
+              answer incorrectly in chat.
             </p>
             <Link
               href={`/projects/${projectId}/chat`}
               className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-6"
             >
-              Go to chat
+              Start training
             </Link>
           </div>
         ) : currentMistake ? (
           <div className="border border-neutral-200 rounded p-4">
             <p className="text-xs text-neutral-500 mb-4">
-              Reviewing mistake {currentIndex + 1} of {reviewQueue.length}
+              Reviewing {currentIndex + 1} of {reviewQueue.length} mistakes
               {reviewQueue.filter((m) => !m.reviewed).length > 0
-                ? ` · ${reviewQueue.filter((m) => !m.reviewed).length} unreviewed`
+                ? ` · ${reviewQueue.filter((m) => !m.reviewed).length} unreviewed remaining`
                 : ""}
             </p>
 
             <ProjectMistakeCard mistake={currentMistake} />
 
             <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-neutral-200">
+              <Link
+                href={`/projects/${projectId}/chat?mistakeId=${currentMistake.id}`}
+                className="text-xs bg-black text-white rounded px-3 py-1.5 hover:bg-neutral-800 transition-colors"
+              >
+                Requiz me
+              </Link>
               {!currentMistake.reviewed ? (
                 <button
                   type="button"
                   onClick={handleMarkReviewed}
                   className="text-xs border border-neutral-300 rounded px-3 py-1.5 hover:border-black transition-colors"
                 >
-                  Mark as reviewed
+                  Mark reviewed
                 </button>
               ) : (
                 <span className="text-xs text-neutral-500 py-1.5">
-                  Already reviewed
+                  Reviewed
                 </span>
               )}
-              <Link
-                href={`/projects/${projectId}/chat?mistakeId=${currentMistake.id}`}
-                className="text-xs border border-neutral-300 rounded px-3 py-1.5 hover:border-black transition-colors"
-              >
-                Requiz me
-              </Link>
               {reviewQueue.length > 1 ? (
                 <button
                   type="button"

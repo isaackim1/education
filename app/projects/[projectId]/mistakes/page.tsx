@@ -93,37 +93,40 @@ export default function ProjectMistakesPage({
             Mistake bank
           </h1>
           <p className="text-sm text-neutral-600 mt-2">
-            Mistakes Ivvy saved from your training chat.
+            Mistakes saved during training. Unreviewed mistakes guide future
+            chat questions. Marking reviewed means you have looked at it — not
+            that you have mastered it.
           </p>
         </header>
 
         {sortedMistakes.length === 0 ? (
           <div className="border border-neutral-200 rounded p-6 text-center">
             <p className="text-sm font-medium text-black">
-              No saved mistakes yet.
+              No mistakes saved yet.
             </p>
             <p className="text-sm text-neutral-600 mt-2">
-              Train in chat and Ivvy will save mistakes here.
+              Train in chat. When you answer incorrectly, Ivvy saves the mistake
+              here for review.
             </p>
             <Link
               href={`/projects/${params.projectId}/chat`}
               className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-6"
             >
-              Go to chat
+              Start training
             </Link>
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between gap-4 mb-6">
-              <p className="text-sm text-neutral-600">
-                {sortedMistakes.length} mistake
-                {sortedMistakes.length === 1 ? "" : "s"} saved
-              </p>
+            <p className="text-sm text-neutral-600 mb-6">
+              {sortedMistakes.length} total ·{" "}
+              {sortedMistakes.filter((m) => !m.reviewed).length} unreviewed
+            </p>
+            <div className="flex justify-end mb-4">
               <Link
                 href={`/projects/${params.projectId}/review`}
                 className="text-sm text-neutral-500 hover:text-black transition-colors"
               >
-                Review mistakes
+                Review queue
               </Link>
             </div>
 

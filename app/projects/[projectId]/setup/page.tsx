@@ -47,11 +47,11 @@ export default function ProjectSetupPage({
 
         <header className="mb-8">
           <h1 className="text-2xl font-semibold tracking-tight text-black">
-            Project topics
+            Topics
           </h1>
           <p className="text-sm text-neutral-600 mt-2">
-            Topics help Ivvy organize your materials, mistakes, and future
-            training.
+            Topics define what Ivvy should train you on. Add what the exam
+            actually tests — smaller topics produce sharper questions.
           </p>
         </header>
 

@@ -17,11 +17,9 @@ export default function ProjectMistakeCard({
         <span className="text-xs bg-neutral-100 rounded px-2 py-0.5 text-neutral-700">
           {mistake.mistakeCategory}
         </span>
-        {mistake.reviewed ? (
-          <span className="text-xs text-neutral-500">Reviewed</span>
-        ) : (
-          <span className="text-xs text-neutral-500">Unreviewed</span>
-        )}
+        <span className="text-xs text-neutral-500">
+          {mistake.reviewed ? "Reviewed" : "Unreviewed"}
+        </span>
       </div>
 
       {showQuestion && mistake.question ? (

@@ -52,16 +52,16 @@ export default function NewProjectPage() {
         <header className="mb-8">
           <Link
             href="/projects"
-            className="text-sm text-neutral-500 hover:text-black transition-colors"
+            className="text-sm text-neutral-500 underline hover:text-black transition-colors"
           >
-            ← Study projects
+            ← Back to projects
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight text-black mt-4">
-            Create study project
+            Create training project
           </h1>
           <p className="text-sm text-neutral-600 mt-2">
-            A focused workspace where Ivvy remembers your materials, mistakes,
-            and progress.
+            Set up one exam. You will add topics and materials next, then train
+            in chat.
           </p>
         </header>
 
@@ -81,6 +81,9 @@ export default function NewProjectPage() {
               placeholder="Microeconomics final"
               className="w-full border border-neutral-300 rounded px-3 py-2 text-sm text-black placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-black"
             />
+            <p className="text-xs text-neutral-400 mt-1">
+              A name you will recognize when you return to train.
+            </p>
           </div>
 
           <div>
@@ -144,7 +147,7 @@ export default function NewProjectPage() {
             disabled={submitting}
             className="w-full bg-black text-white text-sm py-2.5 rounded font-medium hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            Create study project
+            Create project
           </button>
         </form>
       </div>
