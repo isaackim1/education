@@ -8,9 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Ivvy — AI exam training",
-  description:
-    "Turn your exam materials into a personal AI training system. Ivvy tests you, saves your mistakes, and brings weak areas back.",
+  title: "Ivvy",
+  description: "AI-powered exam training workspace.",
 };
 
 export default function RootLayout({
