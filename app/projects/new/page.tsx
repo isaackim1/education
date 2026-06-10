@@ -5,6 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useProjects } from "@/hooks/useProjects";
 
+const LABEL = "block text-sm font-medium text-[#1F1F1F] mb-1.5";
+const INPUT =
+  "w-full h-12 rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15";
+const HELPER = "text-xs text-[#5F6368] mt-1.5";
+
 export default function NewProjectPage() {
   const router = useRouter();
   const { createProject } = useProjects();
@@ -47,109 +52,104 @@ export default function NewProjectPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-lg mx-auto px-4 py-12">
-        <header className="mb-8">
-          <Link
-            href="/projects"
-            className="text-sm text-neutral-500 underline hover:text-black transition-colors"
-          >
-            ← Back to projects
-          </Link>
-          <h1 className="text-2xl font-semibold tracking-tight text-black mt-4">
+    <main className="min-h-screen bg-[#F8FAFD]">
+      <div className="max-w-lg mx-auto px-4 py-10 sm:py-12">
+        <Link
+          href="/projects"
+          className="inline-flex items-center h-9 -ml-3 px-3 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+        >
+          Back to projects
+        </Link>
+
+        <header className="mt-4 mb-6">
+          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
             Create training project
           </h1>
-          <p className="text-sm text-neutral-600 mt-2">
-            Set up one exam. You will add topics and materials next, then train
-            in chat.
+          <p className="text-sm text-[#5F6368] mt-2">
+            Set up one exam. You will add topics and materials next, then train in
+            chat.
           </p>
         </header>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="project-name"
-              className="block text-xs font-medium text-neutral-500 mb-1"
+        <div className="rounded-2xl border border-[#E1E3E1] bg-white p-6 sm:p-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="project-name" className={LABEL}>
+                Project name
+              </label>
+              <input
+                id="project-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Microeconomics final"
+                className={INPUT}
+              />
+              <p className={HELPER}>
+                A name you will recognize when you return to train.
+              </p>
+            </div>
+
+            <div>
+              <label htmlFor="subject" className={LABEL}>
+                Subject
+              </label>
+              <input
+                id="subject"
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Microeconomics"
+                className={INPUT}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="exam-date" className={LABEL}>
+                Exam date
+              </label>
+              <input
+                id="exam-date"
+                type="date"
+                value={examDate}
+                onChange={(e) => setExamDate(e.target.value)}
+                className={INPUT}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="target-grade" className={LABEL}>
+                Target grade
+              </label>
+              <input
+                id="target-grade"
+                type="text"
+                value={targetGrade}
+                onChange={(e) => setTargetGrade(e.target.value)}
+                placeholder="Pass, 80%+, A, etc."
+                className={INPUT}
+              />
+              <p className={HELPER}>Optional. Defaults to Pass.</p>
+            </div>
+
+            {error ? (
+              <p
+                className="rounded-lg bg-[#F9DEDC] px-3 py-2 text-sm text-[#410E0B]"
+                role="alert"
+              >
+                {error}
+              </p>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full h-11 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
             >
-              Project name
-            </label>
-            <input
-              id="project-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Microeconomics final"
-              className="w-full border border-neutral-300 rounded px-3 py-2 text-sm text-black placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-black"
-            />
-            <p className="text-xs text-neutral-400 mt-1">
-              A name you will recognize when you return to train.
-            </p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="subject"
-              className="block text-xs font-medium text-neutral-500 mb-1"
-            >
-              Subject
-            </label>
-            <input
-              id="subject"
-              type="text"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="Microeconomics"
-              className="w-full border border-neutral-300 rounded px-3 py-2 text-sm text-black placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-black"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="exam-date"
-              className="block text-xs font-medium text-neutral-500 mb-1"
-            >
-              Exam date
-            </label>
-            <input
-              id="exam-date"
-              type="date"
-              value={examDate}
-              onChange={(e) => setExamDate(e.target.value)}
-              className="w-full border border-neutral-300 rounded px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-black"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="target-grade"
-              className="block text-xs font-medium text-neutral-500 mb-1"
-            >
-              Target grade
-            </label>
-            <input
-              id="target-grade"
-              type="text"
-              value={targetGrade}
-              onChange={(e) => setTargetGrade(e.target.value)}
-              placeholder="Pass, 80%+, A, etc."
-              className="w-full border border-neutral-300 rounded px-3 py-2 text-sm text-black placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-black"
-            />
-          </div>
-
-          {error ? (
-            <p className="text-sm text-red-600" role="alert">
-              {error}
-            </p>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full bg-black text-white text-sm py-2.5 rounded font-medium hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Create project
-          </button>
-        </form>
+              Create project
+            </button>
+          </form>
+        </div>
       </div>
     </main>
   );

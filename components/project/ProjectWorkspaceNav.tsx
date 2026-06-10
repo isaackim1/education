@@ -27,8 +27,8 @@ export default function ProjectWorkspaceNav({
   const base = `/projects/${projectId}`;
 
   return (
-    <nav className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between border-b border-neutral-200 pb-4 mb-6">
-      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+    <nav className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-[#E1E3E1] pb-4 mb-6">
+      <div className="-mx-1 flex gap-1 overflow-x-auto px-1 sm:flex-wrap sm:overflow-visible">
         {NAV_ITEMS.map((item) => {
           const href = `${base}${item.suffix}`;
           const isActive = active === item.id;
@@ -37,10 +37,11 @@ export default function ProjectWorkspaceNav({
             <Link
               key={item.id}
               href={href}
-              className={`text-sm px-3 py-1.5 rounded border transition-colors ${
+              aria-current={isActive ? "page" : undefined}
+              className={`inline-flex items-center h-9 px-4 rounded-full text-sm whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2 ${
                 isActive
-                  ? "border-black text-black bg-neutral-50"
-                  : "border-transparent text-neutral-500 hover:text-black hover:border-neutral-300"
+                  ? "bg-[#E8EAED] text-[#1F1F1F] font-medium"
+                  : "text-[#5F6368] hover:bg-[#F1F3F4] hover:text-[#1F1F1F]"
               }`}
             >
               {item.label}
@@ -50,7 +51,7 @@ export default function ProjectWorkspaceNav({
       </div>
       <Link
         href="/projects"
-        className="text-sm text-neutral-500 hover:text-black transition-colors"
+        className="inline-flex items-center h-9 px-3 rounded-full text-sm text-[#5F6368] shrink-0 transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
       >
         Back to projects
       </Link>

@@ -40,6 +40,9 @@ const START_TRAINING_MESSAGE =
 const MAX_REQUIZ_QUESTION_CHARS = 300;
 const MAX_REQUIZ_ANSWER_CHARS = 200;
 
+const ACTION_CHIP =
+  "shrink-0 inline-flex items-center h-8 px-3 rounded-full border border-[#C4C7C5] text-xs text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
 function truncateForMessage(text: string, maxChars: number): string {
   const trimmed = text.trim();
   if (trimmed.length <= maxChars) return trimmed;
@@ -203,22 +206,22 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
 
   if (!isLoaded) {
     return (
-      <main className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-sm text-neutral-600">Loading training chat...</p>
+      <main className="min-h-screen bg-[#F8FAFD] flex items-center justify-center">
+        <p className="text-sm text-[#5F6368]">Loading training chat...</p>
       </main>
     );
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-[#F8FAFD]">
         <div className="max-w-lg mx-auto px-4 py-12">
-          <h1 className="text-2xl font-semibold tracking-tight text-black">
+          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
             Project not found
           </h1>
           <Link
             href="/projects"
-            className="inline-block text-sm text-neutral-500 hover:text-black transition-colors mt-4"
+            className="inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
           >
             Back to projects
           </Link>
@@ -228,37 +231,35 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
   }
 
   return (
-    <main className="min-h-screen bg-white flex flex-col">
-      <div className="max-w-2xl mx-auto w-full px-4 py-6 flex flex-col flex-1 min-h-0">
+    <main className="min-h-screen bg-[#F8FAFD] flex flex-col">
+      <div className="max-w-2xl mx-auto w-full px-4 py-8 flex flex-col flex-1 min-h-0">
         <ProjectWorkspaceNav projectId={projectId} active="chat" />
 
         <header className="mb-4">
-          <h1 className="text-2xl font-semibold tracking-tight text-black">
+          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
             Training
           </h1>
-          <p className="text-sm text-neutral-600 mt-2">
+          <p className="text-sm text-[#5F6368] mt-2">
             Ivvy asks exam-style questions, saves your mistakes, and can use
             recent unreviewed mistakes to guide what comes next.
           </p>
         </header>
 
         {requizMistake ? (
-          <div className="border border-neutral-200 rounded p-3 mb-4">
-            <p className="text-xs font-medium text-neutral-500">
-              Mistake review
-            </p>
-            <p className="text-sm text-black mt-1">
+          <div className="rounded-2xl border border-[#DADCE0] bg-[#F1F3F4] p-4 mb-4">
+            <p className="text-xs font-medium text-[#5F6368]">Mistake review</p>
+            <p className="text-sm text-[#1F1F1F] mt-1">
               Requiz on: {requizMistake.topicName} ·{" "}
               {requizMistake.mistakeCategory}
             </p>
-            <p className="text-xs text-neutral-500 mt-2 line-clamp-2">
+            <p className="text-xs text-[#5F6368] mt-2 line-clamp-2">
               {requizMistake.question}
             </p>
             <button
               type="button"
               onClick={handleStartRequiz}
               disabled={isSending}
-              className="mt-3 text-xs border border-neutral-300 rounded px-3 py-1.5 hover:border-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="mt-3 inline-flex items-center h-9 px-4 rounded-full bg-[#1F1F1F] text-white text-xs font-medium transition-colors hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
             >
               Start requiz
             </button>
@@ -269,7 +270,7 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
           <div className="mb-4">
             <label
               htmlFor="active-topic"
-              className="block text-xs font-medium text-neutral-500 mb-1"
+              className="block text-xs font-medium text-[#5F6368] mb-1.5"
             >
               Topic focus
             </label>
@@ -279,7 +280,7 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
               onChange={(e) =>
                 setActiveTopicName(e.target.value === "" ? null : e.target.value)
               }
-              className="w-full border border-neutral-300 rounded px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-black"
+              className="w-full h-11 rounded-lg border border-[#C4C7C5] bg-white px-3 text-sm text-[#1F1F1F] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15"
             >
               <option value="">All topics</option>
               {topics.map((topic) => (
@@ -288,30 +289,28 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
                 </option>
               ))}
             </select>
-            <p className="text-xs text-neutral-500 mt-2">
-              {trainingContextNote}
-            </p>
+            <p className="text-xs text-[#80868B] mt-2">{trainingContextNote}</p>
           </div>
         ) : (
-          <p className="text-xs text-neutral-500 mb-4">{trainingContextNote}</p>
+          <p className="text-xs text-[#80868B] mb-4">{trainingContextNote}</p>
         )}
 
-        <div className="flex flex-col flex-1 min-h-[28rem] border border-neutral-200 rounded">
+        <div className="flex flex-col flex-1 min-h-[28rem] rounded-2xl border border-[#E1E3E1] bg-white overflow-hidden">
           {messages.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
-              <p className="text-sm font-medium text-black">
+              <p className="text-base font-medium text-[#1F1F1F]">
                 Ready to train
               </p>
-              <p className="text-sm text-neutral-600 mt-2 max-w-sm">
+              <p className="text-sm text-[#5F6368] mt-2 max-w-sm">
                 Ivvy will quiz you on {project.subject}. Wrong answers are saved
                 to your mistake bank. Nothing is sent until you start.
               </p>
               {topics.length === 0 ? (
-                <p className="text-xs text-neutral-500 mt-3 max-w-sm">
+                <p className="text-xs text-[#80868B] mt-3 max-w-sm">
                   Add topics and materials first for sharper questions.
                 </p>
               ) : materialsWithContent.length === 0 ? (
-                <p className="text-xs text-neutral-500 mt-3 max-w-sm">
+                <p className="text-xs text-[#80868B] mt-3 max-w-sm">
                   Add materials per topic so Ivvy can ground questions in your
                   notes.
                 </p>
@@ -320,7 +319,7 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
                 type="button"
                 onClick={() => void handleSend(START_TRAINING_MESSAGE)}
                 disabled={isSending}
-                className="mt-6 bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="mt-6 inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
               >
                 Start training
               </button>
@@ -329,7 +328,7 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
             <MessageThread messages={messages} agentLabel="Ivvy" />
           )}
 
-          <div className="border-t border-neutral-200 p-4 space-y-3">
+          <div className="border-t border-[#E1E3E1] p-4 space-y-3">
             <div className="flex gap-2 overflow-x-auto pb-1">
               {PROJECT_ACTIONS.map(({ label, instruction }) => (
                 <button
@@ -337,7 +336,7 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
                   type="button"
                   onClick={() => handleAction(instruction)}
                   disabled={isSending}
-                  className="shrink-0 text-xs border border-neutral-300 rounded px-3 py-1.5 hover:border-black hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className={ACTION_CHIP}
                 >
                   {label}
                 </button>
@@ -364,8 +363,8 @@ export default function ProjectChatPage({
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-white flex items-center justify-center">
-          <p className="text-sm text-neutral-600">Loading training chat...</p>
+        <main className="min-h-screen bg-[#F8FAFD] flex items-center justify-center">
+          <p className="text-sm text-[#5F6368]">Loading training chat...</p>
         </main>
       }
     >

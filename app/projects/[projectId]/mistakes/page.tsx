@@ -12,6 +12,18 @@ import {
 } from "@/lib/project-storage";
 import type { Mistake } from "@/lib/types";
 
+const PRIMARY_ACTION =
+  "inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
+const OUTLINE_ACTION =
+  "inline-flex items-center h-9 px-4 rounded-full border border-[#C4C7C5] text-sm text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
+const TEXT_LINK =
+  "inline-flex items-center h-9 px-3 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
+const BACK_LINK =
+  "inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
 function sortMistakesNewestFirst(mistakes: Mistake[]): Mistake[] {
   return [...mistakes].sort(
     (a, b) =>
@@ -56,23 +68,20 @@ export default function ProjectMistakesPage({
 
   if (!isLoaded) {
     return (
-      <main className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-sm text-neutral-600">Loading mistakes...</p>
+      <main className="min-h-screen bg-[#F8FAFD] flex items-center justify-center">
+        <p className="text-sm text-[#5F6368]">Loading mistakes...</p>
       </main>
     );
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-[#F8FAFD]">
         <div className="max-w-lg mx-auto px-4 py-12">
-          <h1 className="text-2xl font-semibold tracking-tight text-black">
+          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
             Project not found
           </h1>
-          <Link
-            href="/projects"
-            className="inline-block text-sm text-neutral-500 hover:text-black transition-colors mt-4"
-          >
+          <Link href="/projects" className={BACK_LINK}>
             Back to projects
           </Link>
         </div>
@@ -80,19 +89,18 @@ export default function ProjectMistakesPage({
     );
   }
 
-  return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <ProjectWorkspaceNav
-          projectId={params.projectId}
-          active="mistakes"
-        />
+  const unreviewedCount = sortedMistakes.filter((m) => !m.reviewed).length;
 
-        <header className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight text-black">
+  return (
+    <main className="min-h-screen bg-[#F8FAFD]">
+      <div className="max-w-2xl mx-auto px-4 py-10 sm:py-12">
+        <ProjectWorkspaceNav projectId={params.projectId} active="mistakes" />
+
+        <header className="mb-6">
+          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
             Mistake bank
           </h1>
-          <p className="text-sm text-neutral-600 mt-2">
+          <p className="text-sm text-[#5F6368] mt-2">
             Mistakes saved during training. Unreviewed mistakes guide future
             chat questions. Marking reviewed means you have looked at it — not
             that you have mastered it.
@@ -100,46 +108,48 @@ export default function ProjectMistakesPage({
         </header>
 
         {sortedMistakes.length === 0 ? (
-          <div className="border border-neutral-200 rounded p-6 text-center">
-            <p className="text-sm font-medium text-black">
-              No mistakes saved yet.
-            </p>
-            <p className="text-sm text-neutral-600 mt-2">
+          <div className="rounded-2xl border border-[#E1E3E1] bg-white px-6 py-14 text-center">
+            <h2 className="text-base font-medium text-[#1F1F1F]">
+              No mistakes saved yet
+            </h2>
+            <p className="text-sm text-[#5F6368] mt-2 mx-auto max-w-sm">
               Train in chat. When you answer incorrectly, Ivvy saves the mistake
               here for review.
             </p>
             <Link
               href={`/projects/${params.projectId}/chat`}
-              className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-6"
+              className={`${PRIMARY_ACTION} mt-6`}
             >
               Start training
             </Link>
           </div>
         ) : (
           <>
-            <p className="text-sm text-neutral-600 mb-6">
-              {sortedMistakes.length} total ·{" "}
-              {sortedMistakes.filter((m) => !m.reviewed).length} unreviewed
-            </p>
-            <div className="flex justify-end mb-4">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <p className="text-sm text-[#5F6368]">
+                {sortedMistakes.length} total · {unreviewedCount} unreviewed
+              </p>
               <Link
                 href={`/projects/${params.projectId}/review`}
-                className="text-sm text-neutral-500 hover:text-black transition-colors"
+                className={TEXT_LINK}
               >
                 Review queue
               </Link>
             </div>
 
-            <ul className="divide-y divide-neutral-200 border border-neutral-200 rounded">
+            <div className="space-y-4">
               {sortedMistakes.map((mistake) => (
-                <li key={mistake.id} className="p-4">
+                <div
+                  key={mistake.id}
+                  className="rounded-2xl border border-[#E1E3E1] bg-white p-5"
+                >
                   <ProjectMistakeCard mistake={mistake} />
-                  <div className="flex flex-wrap gap-3 mt-4">
+                  <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-[#F1F3F4]">
                     {!mistake.reviewed ? (
                       <button
                         type="button"
                         onClick={() => handleMarkReviewed(mistake.id)}
-                        className="text-xs border border-neutral-300 rounded px-3 py-1.5 hover:border-black transition-colors"
+                        className={OUTLINE_ACTION}
                       >
                         Mark reviewed
                       </button>
@@ -147,21 +157,21 @@ export default function ProjectMistakesPage({
                       <button
                         type="button"
                         onClick={() => handleResetReview(mistake.id)}
-                        className="text-xs border border-neutral-300 rounded px-3 py-1.5 hover:border-black transition-colors"
+                        className={OUTLINE_ACTION}
                       >
                         Mark unresolved
                       </button>
                     )}
                     <Link
                       href={`/projects/${params.projectId}/review?mistakeId=${mistake.id}`}
-                      className="text-xs text-neutral-500 hover:text-black transition-colors py-1.5"
+                      className={TEXT_LINK}
                     >
                       Review this mistake
                     </Link>
                   </div>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </>
         )}
       </div>

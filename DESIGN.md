@@ -1,12 +1,12 @@
 ---
 version: alpha
 name: Ivvy Material Foundation
-description: "A Google / Material-style design foundation for Ivvy, an AI exam training workspace."
+description: "A neutral, Material-style design foundation for Ivvy, an AI exam training workspace. Material clarity and component discipline with a neutral (no-blue) palette. Branding comes later."
 colors:
-  primary: "#0B57D0"
+  primary: "#1F1F1F"
   on-primary: "#FFFFFF"
-  primary-container: "#D3E3FD"
-  on-primary-container: "#041E49"
+  primary-container: "#E8EAED"
+  on-primary-container: "#1F1F1F"
   secondary: "#5F6368"
   on-secondary: "#FFFFFF"
   secondary-container: "#E8EAED"
@@ -38,7 +38,7 @@ colors:
   outline-variant: "#E1E3E1"
   inverse-surface: "#303134"
   inverse-on-surface: "#F1F3F4"
-  focus-ring: "#0B57D0"
+  focus-ring: "#1F1F1F"
 typography:
   display-lg:
     fontFamily: "Google Sans, Roboto, Inter, system-ui, sans-serif"
@@ -121,7 +121,7 @@ components:
     height: 40px
     padding: 0 24px
   button-primary-hover:
-    backgroundColor: "#0842A0"
+    backgroundColor: "#000000"
   button-secondary:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.primary}"
@@ -203,7 +203,7 @@ Ivvy is an AI exam training workspace. It turns a student's exam materials into 
 
 The product positioning is: Claude answers your study questions. Ivvy trains you for the exam. The interface should make that difference visible. Ivvy is not a general chat window with notes attached; it is a calm training environment where every screen points the student toward practice, correction, and exam readiness.
 
-The visual direction is a Google / Material-style product foundation. Use clear surfaces, rounded Material shapes, purposeful color, accessible contrast, consistent controls, and generous but practical spacing. Branding will come later, so this foundation should feel polished and modern without becoming a literal Google clone.
+The visual direction is a Material-style product foundation with a neutral palette. Use clear surfaces, rounded Material shapes, accessible contrast, consistent controls, and generous but practical spacing. The system is intentionally neutral for now: charcoal for primary actions and focus, warm grays for tonal and active states, and restrained status colors only when they carry meaning. There is no brand color yet — and specifically no blue. Branding will come later, so this foundation should feel polished and modern without leaning on any accent hue.
 
 Ivvy should feel clear, helpful, trustworthy, calm, modern, accessible, polished, practical, and exam-focused. It should not feel luxury editorial, empty monochrome, like a boring admin tool, playful or gamified, like an overdesigned SaaS dashboard, or like an exact copy of Google.
 
@@ -215,11 +215,11 @@ Roadmap-aware design priorities:
 
 ## Colors
 
-The palette follows Material-style semantic roles: blue for primary actions and active states, neutral surfaces for content, green for confirmed progress, amber for caution, and red for errors. Color is functional, not decorative.
+The palette follows Material-style semantic roles, but the primary role is neutral rather than a brand hue: charcoal for primary actions and active states, neutral surfaces for content, green for confirmed progress, amber for caution, and red for errors. Color is functional, not decorative. Do not introduce blue (no Google blue #0B57D0, no primary-container blue #D3E3FD) or any other accent hue until branding is defined.
 
-- **Primary (#0B57D0):** Use for the main action on a screen, active navigation state, selected controls, focus indicators, and links. It should guide the student without making the whole UI feel blue.
-- **Primary Container (#D3E3FD):** Use for selected chips, quiet active states, and low-emphasis surfaces that need a blue relationship to the primary action.
-- **Surface (#FFFFFF) and Background (#F8FAFD):** Pages use a soft Google-style app background, with white cards and panels for content.
+- **Primary (#1F1F1F):** A near-black charcoal. Use for the main action on a screen, active navigation state, selected controls, focus indicators, and emphasis. Hover deepens to black (#000000). It should guide the student without flooding the UI with color.
+- **Primary Container / Tonal (#E8EAED):** A warm neutral gray for selected chips, active tabs, tonal buttons, and quiet active states. Hover deepens to #DADCE0. Use #F1F3F4 for the lightest tonal surfaces and hover backgrounds.
+- **Surface (#FFFFFF) and Background (#F8FAFD):** Pages use a soft, very light neutral app background, with white cards and panels for content.
 - **Surface Containers:** Use the container scale to separate messages, cards, filters, and elevated panels without relying on heavy borders.
 - **On Surface (#1F1F1F):** Primary text color. It should carry most of the product's seriousness.
 - **On Surface Variant (#5F6368):** Secondary text, helper text, metadata, captions, and less prominent navigation.
@@ -364,7 +364,8 @@ Prefer inline status, helper text, progress surfaces, and disabled states. Use s
 
 - Do use the Google design.md token structure as the source of truth: frontmatter tokens first, prose guidance second.
 - Do keep the UI Material-like: clear surfaces, rounded controls, accessible states, predictable components.
-- Do use blue for primary action and focus, green for completed/reviewed status, amber for caution, and red for errors.
+- Do use charcoal (#1F1F1F) for primary action and focus, neutral gray for tonal/active states, green for completed/reviewed status, amber for caution, and red for errors.
+- Don't use blue or any brand accent hue yet: no Google blue #0B57D0, no primary-container blue #D3E3FD, and no blue Tailwind utilities. The palette stays neutral until branding is defined.
 - Do keep study content more important than chrome, navigation, decoration, or dashboard widgets.
 - Do make every screen answer a student question: what should I do next, what did I get wrong, what should I review, or how ready am I?
 - Do use WCAG AA contrast for all body text and controls.

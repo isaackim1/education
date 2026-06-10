@@ -31,25 +31,25 @@ export default function ProjectTopicManager({
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row">
         <input
           type="text"
           aria-label="Topic name"
           value={topicName}
           onChange={(e) => setTopicName(e.target.value)}
           placeholder="e.g. Monetary policy"
-          className="flex-1 border border-neutral-300 rounded px-3 py-2 text-sm text-black placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-black"
+          className="flex-1 h-12 rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15"
         />
         <button
           type="submit"
-          className="border border-neutral-300 text-sm px-4 py-2 rounded hover:border-black transition-colors text-black shrink-0"
+          className="inline-flex items-center justify-center h-12 px-6 rounded-full bg-[#E8EAED] text-sm font-medium text-[#1F1F1F] shrink-0 transition-colors hover:bg-[#DADCE0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
         >
           Add topic
         </button>
       </form>
 
       {topics.length === 0 ? (
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-[#5F6368]">
           No topics yet. Add the areas your exam covers.
         </p>
       ) : (
@@ -57,13 +57,13 @@ export default function ProjectTopicManager({
           {topics.map((topic) => (
             <li
               key={topic.id}
-              className="flex items-center justify-between gap-4 border border-neutral-200 rounded px-3 py-2"
+              className="flex items-center justify-between gap-4 rounded-xl border border-[#E1E3E1] bg-[#F8FAFD] px-4 py-3"
             >
-              <span className="text-sm text-black">{topic.name}</span>
+              <span className="text-sm text-[#1F1F1F]">{topic.name}</span>
               <button
                 type="button"
                 onClick={() => handleDelete(topic.id)}
-                className="text-sm text-neutral-500 hover:text-black transition-colors shrink-0"
+                className="inline-flex items-center h-9 px-3 rounded-full text-sm text-[#5F6368] shrink-0 transition-colors hover:bg-[#E8EAED] hover:text-[#B3261E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
               >
                 Delete
               </button>
@@ -75,9 +75,9 @@ export default function ProjectTopicManager({
       {topics.length > 0 ? (
         <Link
           href={`/projects/${projectId}/materials`}
-          className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors"
+          className="inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
         >
-          Add materials →
+          Add materials
         </Link>
       ) : null}
     </div>

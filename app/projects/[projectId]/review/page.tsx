@@ -12,6 +12,21 @@ import {
 } from "@/lib/project-storage";
 import type { Mistake } from "@/lib/types";
 
+const PRIMARY_ACTION =
+  "inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
+const REQUIZ_ACTION =
+  "inline-flex items-center h-9 px-4 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
+const OUTLINE_ACTION =
+  "inline-flex items-center h-9 px-4 rounded-full border border-[#C4C7C5] text-sm text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
+const TEXT_LINK =
+  "inline-flex items-center h-9 px-3 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
+const BACK_LINK =
+  "inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
 function sortForReview(mistakes: Mistake[]): Mistake[] {
   return [...mistakes].sort((a, b) => {
     if (a.reviewed !== b.reviewed) {
@@ -89,23 +104,20 @@ function ProjectReviewContent({
 
   if (!isLoaded) {
     return (
-      <main className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-sm text-neutral-600">Loading review...</p>
+      <main className="min-h-screen bg-[#F8FAFD] flex items-center justify-center">
+        <p className="text-sm text-[#5F6368]">Loading review...</p>
       </main>
     );
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-[#F8FAFD]">
         <div className="max-w-lg mx-auto px-4 py-12">
-          <h1 className="text-2xl font-semibold tracking-tight text-black">
+          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
             Project not found
           </h1>
-          <Link
-            href="/projects"
-            className="inline-block text-sm text-neutral-500 hover:text-black transition-colors mt-4"
-          >
+          <Link href="/projects" className={BACK_LINK}>
             Back to projects
           </Link>
         </div>
@@ -113,91 +125,95 @@ function ProjectReviewContent({
     );
   }
 
+  const unreviewedRemaining = reviewQueue.filter((m) => !m.reviewed).length;
+
   return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-2xl mx-auto px-4 py-12">
+    <main className="min-h-screen bg-[#F8FAFD]">
+      <div className="max-w-2xl mx-auto px-4 py-10 sm:py-12">
         <ProjectWorkspaceNav projectId={projectId} active="review" />
 
-        <header className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight text-black">
+        <header className="mb-6">
+          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
             Review
           </h1>
-          <p className="text-sm text-neutral-600 mt-2">
-            Review queue for saved mistakes. Read each one, then use Requiz me
-            to test the same weakness again in chat.
+          <p className="text-sm text-[#5F6368] mt-2">
+            Review queue for saved mistakes. Read each one, then use Requiz me to
+            test the same weakness again in chat.
           </p>
         </header>
 
         {reviewQueue.length === 0 ? (
-          <div className="border border-neutral-200 rounded p-6 text-center">
-            <p className="text-sm font-medium text-black">
-              Nothing in the review queue yet.
-            </p>
-            <p className="text-sm text-neutral-600 mt-2">
+          <div className="rounded-2xl border border-[#E1E3E1] bg-white px-6 py-14 text-center">
+            <h2 className="text-base font-medium text-[#1F1F1F]">
+              Nothing in the review queue yet
+            </h2>
+            <p className="text-sm text-[#5F6368] mt-2 mx-auto max-w-sm">
               Mistakes appear here after training. Ivvy saves them when you
               answer incorrectly in chat.
             </p>
             <Link
               href={`/projects/${projectId}/chat`}
-              className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-6"
+              className={`${PRIMARY_ACTION} mt-6`}
             >
               Start training
             </Link>
           </div>
         ) : currentMistake ? (
-          <div className="border border-neutral-200 rounded p-4">
-            <p className="text-xs text-neutral-500 mb-4">
+          <>
+            <p className="text-sm text-[#5F6368] mb-4">
               Reviewing {currentIndex + 1} of {reviewQueue.length} mistakes
-              {reviewQueue.filter((m) => !m.reviewed).length > 0
-                ? ` · ${reviewQueue.filter((m) => !m.reviewed).length} unreviewed remaining`
+              {unreviewedRemaining > 0
+                ? ` · ${unreviewedRemaining} unreviewed remaining`
                 : ""}
             </p>
 
-            <ProjectMistakeCard mistake={currentMistake} />
+            <div className="rounded-2xl border border-[#E1E3E1] bg-white p-5">
+              <ProjectMistakeCard mistake={currentMistake} />
 
-            <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-neutral-200">
-              <Link
-                href={`/projects/${projectId}/chat?mistakeId=${currentMistake.id}`}
-                className="text-xs bg-black text-white rounded px-3 py-1.5 hover:bg-neutral-800 transition-colors"
-              >
-                Requiz me
-              </Link>
-              {!currentMistake.reviewed ? (
-                <button
-                  type="button"
-                  onClick={handleMarkReviewed}
-                  className="text-xs border border-neutral-300 rounded px-3 py-1.5 hover:border-black transition-colors"
+              <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-[#F1F3F4]">
+                <Link
+                  href={`/projects/${projectId}/chat?mistakeId=${currentMistake.id}`}
+                  className={REQUIZ_ACTION}
                 >
-                  Mark reviewed
-                </button>
-              ) : (
-                <span className="text-xs text-neutral-500 py-1.5">
-                  Reviewed
-                </span>
-              )}
-              {reviewQueue.length > 1 ? (
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="text-xs border border-neutral-300 rounded px-3 py-1.5 hover:border-black transition-colors"
+                  Requiz me
+                </Link>
+                {!currentMistake.reviewed ? (
+                  <button
+                    type="button"
+                    onClick={handleMarkReviewed}
+                    className={OUTLINE_ACTION}
+                  >
+                    Mark reviewed
+                  </button>
+                ) : (
+                  <span className="inline-flex items-center h-9 rounded-full bg-[#E6F4EA] px-3 text-xs font-medium text-[#137333]">
+                    Reviewed
+                  </span>
+                )}
+                {reviewQueue.length > 1 ? (
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className={OUTLINE_ACTION}
+                  >
+                    Next mistake
+                  </button>
+                ) : null}
+                <Link
+                  href={`/projects/${projectId}/mistakes`}
+                  className={TEXT_LINK}
                 >
-                  Next mistake
-                </button>
-              ) : null}
-              <Link
-                href={`/projects/${projectId}/mistakes`}
-                className="text-xs text-neutral-500 hover:text-black transition-colors py-1.5"
-              >
-                Mistake bank
-              </Link>
-              <Link
-                href={`/projects/${projectId}/chat`}
-                className="text-xs text-neutral-500 hover:text-black transition-colors py-1.5"
-              >
-                Back to chat
-              </Link>
+                  Mistake bank
+                </Link>
+                <Link
+                  href={`/projects/${projectId}/chat`}
+                  className={TEXT_LINK}
+                >
+                  Back to chat
+                </Link>
+              </div>
             </div>
-          </div>
+          </>
         ) : null}
       </div>
     </main>
@@ -212,8 +228,8 @@ export default function ProjectReviewPage({
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-white flex items-center justify-center">
-          <p className="text-sm text-neutral-600">Loading review...</p>
+        <main className="min-h-screen bg-[#F8FAFD] flex items-center justify-center">
+          <p className="text-sm text-[#5F6368]">Loading review...</p>
         </main>
       }
     >

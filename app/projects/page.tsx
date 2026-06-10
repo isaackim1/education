@@ -4,70 +4,64 @@ import Link from "next/link";
 import ProjectCard from "@/components/project/ProjectCard";
 import { useProjects } from "@/hooks/useProjects";
 
+const PRIMARY_ACTION =
+  "inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium shrink-0 transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
 export default function ProjectsPage() {
   const { projects, isLoaded, deleteProject } = useProjects();
 
   if (!isLoaded) {
     return (
-      <main className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-sm text-neutral-600">Loading...</p>
-      </main>
-    );
-  }
-
-  if (projects.length === 0) {
-    return (
-      <main className="min-h-screen bg-white">
-        <div className="max-w-lg mx-auto px-4 py-12">
-          <header className="mb-8">
-            <h1 className="text-2xl font-semibold tracking-tight text-black">
-              Your training projects
-            </h1>
-            <p className="text-sm text-neutral-600 mt-2">
-              No projects yet. Create one exam training project. Each project
-              holds your topics, materials, training chat, mistake bank, and
-              review queue for a single exam.
-            </p>
-          </header>
-          <Link
-            href="/projects/new"
-            className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors"
-          >
-            Create project
-          </Link>
-        </div>
+      <main className="min-h-screen bg-[#F8FAFD] flex items-center justify-center">
+        <p className="text-sm text-[#5F6368]">Loading...</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <header className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+    <main className="min-h-screen bg-[#F8FAFD]">
+      <div className="max-w-3xl mx-auto px-4 py-10 sm:py-12">
+        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-black">
+            <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
               Your training projects
             </h1>
-            <p className="text-sm text-neutral-600 mt-2 max-w-md">
-              One exam per project. Topics, materials, chat, mistakes, and
-              review live together in each workspace.
+            <p className="text-sm text-[#5F6368] mt-2 max-w-md">
+              One exam per project. Topics, materials, chat, mistakes, and review
+              live together in each workspace.
             </p>
           </div>
-          <Link
-            href="/projects/new"
-            className="inline-flex items-center border border-neutral-300 text-sm font-medium px-4 py-2 rounded hover:border-black transition-colors text-black shrink-0"
-          >
-            Create project
+          <Link href="/projects/new" className={PRIMARY_ACTION}>
+            New project
           </Link>
         </header>
 
-        <ul className="space-y-4">
-          {projects.map((project) => (
-            <li key={project.id}>
-              <ProjectCard project={project} onDelete={deleteProject} />
-            </li>
-          ))}
-        </ul>
+        {projects.length === 0 ? (
+          <div className="rounded-2xl border border-[#E1E3E1] bg-white px-6 py-14 text-center">
+            <h2 className="text-base font-medium text-[#1F1F1F]">
+              No projects yet
+            </h2>
+            <p className="text-sm text-[#5F6368] mt-2 mx-auto max-w-sm">
+              Create your first exam training project. Each one holds your topics,
+              materials, training chat, mistake bank, and review queue for a single
+              exam.
+            </p>
+            <Link
+              href="/projects/new"
+              className={`${PRIMARY_ACTION} mt-6`}
+            >
+              New project
+            </Link>
+          </div>
+        ) : (
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {projects.map((project) => (
+              <li key={project.id}>
+                <ProjectCard project={project} onDelete={deleteProject} />
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </main>
   );

@@ -10,7 +10,7 @@ function PrimaryButtonLink({
   return (
     <Link
       href={href}
-      className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors"
+      className="inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
     >
       {children}
     </Link>
@@ -27,7 +27,7 @@ function SecondaryButtonLink({
   return (
     <Link
       href={href}
-      className="inline-flex items-center border border-neutral-300 text-sm font-medium px-4 py-2 rounded hover:border-black transition-colors text-black"
+      className="inline-flex items-center justify-center h-10 px-6 rounded-full border border-[#C4C7C5] text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
     >
       {children}
     </Link>
@@ -36,21 +36,24 @@ function SecondaryButtonLink({
 
 function LogoMark() {
   return (
-    <Link href="/" className="flex items-center gap-2">
-      <span className="w-4 h-4 rounded bg-black" />
-      <span className="text-sm font-semibold text-black">Ivvy</span>
+    <Link
+      href="/"
+      className="flex items-center gap-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+    >
+      <span className="w-5 h-5 rounded-md bg-[#1F1F1F]" />
+      <span className="text-sm font-semibold text-[#1F1F1F]">Ivvy</span>
     </Link>
   );
 }
 
 function AnnouncementBanner() {
   return (
-    <div className="w-full bg-neutral-100 border-b border-neutral-200 py-2 text-center">
-      <p className="text-sm text-neutral-700">
+    <div className="w-full bg-[#F1F3F4] border-b border-[#E1E3E1] py-2 text-center">
+      <p className="text-sm text-[#5F6368]">
         Ivvy is now free during beta —{" "}
         <Link
           href="/projects/new"
-          className="text-black underline hover:text-neutral-600 transition-colors"
+          className="font-medium text-[#1F1F1F] underline underline-offset-2 transition-colors hover:text-black"
         >
           Start for free →
         </Link>
@@ -61,33 +64,33 @@ function AnnouncementBanner() {
 
 function Nav() {
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white border-b border-neutral-200">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+    <nav className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur border-b border-[#E1E3E1]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <LogoMark />
         <div className="hidden md:flex items-center gap-8">
           <a
             href="#how-it-works"
-            className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+            className="text-sm font-medium text-[#5F6368] hover:text-[#1F1F1F] transition-colors"
           >
             How it works
           </a>
           <a
             href="#features"
-            className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+            className="text-sm font-medium text-[#5F6368] hover:text-[#1F1F1F] transition-colors"
           >
             Features
           </a>
           <a
             href="#pricing"
-            className="text-sm font-medium text-neutral-500 hover:text-black transition-colors"
+            className="text-sm font-medium text-[#5F6368] hover:text-[#1F1F1F] transition-colors"
           >
             Pricing
           </a>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Link
             href="/projects/new"
-            className="hidden md:inline text-sm text-neutral-500 hover:text-black transition-colors"
+            className="hidden md:inline-flex items-center h-9 px-3 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
           >
             Get started
           </Link>
@@ -100,43 +103,43 @@ function Nav() {
 
 function HeroMockup() {
   return (
-    <div className="border border-neutral-200 rounded overflow-hidden bg-white w-full max-w-lg">
-      <div className="bg-neutral-100 border-b border-neutral-200 px-4 py-2 flex items-center gap-2">
-        <span className="w-2 h-2 rounded bg-neutral-300" />
-        <span className="w-2 h-2 rounded bg-neutral-300" />
-        <span className="w-2 h-2 rounded bg-neutral-300" />
-        <div className="flex-1 bg-white border border-neutral-200 rounded px-3 py-1 text-xs text-neutral-400 text-center ml-2">
+    <div className="border border-[#E1E3E1] rounded-2xl overflow-hidden bg-white w-full max-w-lg shadow-sm">
+      <div className="bg-[#F8FAFD] border-b border-[#E1E3E1] px-4 py-2.5 flex items-center gap-2">
+        <span className="w-2.5 h-2.5 rounded-full bg-[#DADCE0]" />
+        <span className="w-2.5 h-2.5 rounded-full bg-[#DADCE0]" />
+        <span className="w-2.5 h-2.5 rounded-full bg-[#DADCE0]" />
+        <div className="flex-1 bg-white border border-[#E1E3E1] rounded-full px-3 py-1 text-xs text-[#80868B] text-center ml-2">
           ivvy.app/projects/[id]/chat
         </div>
       </div>
       <div className="p-4 space-y-3">
-        <div className="bg-neutral-50 border border-neutral-200 rounded p-3">
-          <p className="text-xs font-medium text-neutral-500 mb-1">Ivvy</p>
-          <p className="text-sm text-black">
+        <div className="bg-[#F8FAFD] border border-[#E1E3E1] rounded-2xl p-3">
+          <p className="text-xs font-medium text-[#5F6368] mb-1">Ivvy</p>
+          <p className="text-sm text-[#1F1F1F]">
             Let&apos;s start with monetary policy. Can you explain what happens
             to inflation when the central bank raises interest rates?
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xs font-medium text-neutral-500 mb-1">You</p>
-          <div className="bg-white border border-neutral-300 rounded p-3 inline-block text-left max-w-[85%]">
-            <p className="text-sm text-black">
+          <p className="text-xs font-medium text-[#5F6368] mb-1">You</p>
+          <div className="bg-[#1F1F1F] rounded-2xl p-3 inline-block text-left max-w-[85%]">
+            <p className="text-sm text-white">
               When rates go up, borrowing becomes more expensive, so spending
               decreases and inflation falls.
             </p>
           </div>
         </div>
-        <div className="bg-neutral-50 border border-neutral-200 rounded p-3">
-          <p className="text-xs font-medium text-neutral-500 mb-1">Ivvy</p>
-          <p className="text-sm text-black">
+        <div className="bg-[#F8FAFD] border border-[#E1E3E1] rounded-2xl p-3">
+          <p className="text-xs font-medium text-[#5F6368] mb-1">Ivvy</p>
+          <p className="text-sm text-[#1F1F1F]">
             Good. Now, what would you expect to happen to unemployment in the
             short run?
           </p>
         </div>
       </div>
-      <div className="border-t border-neutral-200 px-4 py-3 flex justify-between items-center gap-3">
-        <span className="text-sm text-neutral-400">Type your answer...</span>
-        <span className="bg-black text-white px-3 py-1.5 text-xs rounded">
+      <div className="border-t border-[#E1E3E1] px-4 py-3 flex justify-between items-center gap-3">
+        <span className="text-sm text-[#80868B]">Type your answer...</span>
+        <span className="inline-flex items-center bg-[#1F1F1F] text-white px-4 py-1.5 text-xs rounded-full">
           Send
         </span>
       </div>
@@ -146,16 +149,16 @@ function HeroMockup() {
 
 function Hero() {
   return (
-    <section className="w-full bg-white pt-16 pb-16">
+    <section className="w-full bg-white pt-16 pb-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-2 gap-12">
         <div className="flex flex-col justify-center gap-6">
-          <p className="text-xs font-medium text-neutral-500">
+          <span className="inline-flex items-center self-start h-7 px-3 rounded-full bg-[#F1F3F4] text-xs font-medium text-[#5F6368]">
             AI-powered exam training
-          </p>
-          <h1 className="text-2xl font-semibold tracking-tight text-black">
+          </span>
+          <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-[#1F1F1F] leading-tight">
             Your exam materials, turned into a personal AI trainer.
           </h1>
-          <p className="text-sm text-neutral-600 max-w-md">
+          <p className="text-base text-[#5F6368] max-w-md">
             Dump your notes. Add your topics. Ivvy trains you on exactly what
             your exam tests.
           </p>
@@ -167,7 +170,7 @@ function Hero() {
               See how it works
             </SecondaryButtonLink>
           </div>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-[#80868B]">
             Built for exam prep across GMAT, Bar Exam, USMLE, CFA, university
             finals, and resits.
           </p>
@@ -183,13 +186,13 @@ function Hero() {
 function LogoStrip() {
   const exams = ["GMAT", "Bar Exam", "USMLE", "CFA", "LSAT"];
   return (
-    <section className="w-full bg-neutral-50 border-y border-neutral-200 py-8">
-      <p className="text-xs font-medium text-neutral-400 text-center mb-4">
+    <section className="w-full bg-[#F8FAFD] border-y border-[#E1E3E1] py-8">
+      <p className="text-xs font-medium uppercase tracking-wide text-[#80868B] text-center mb-4">
         Built for
       </p>
       <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12 px-4">
         {exams.map((exam) => (
-          <span key={exam} className="text-sm font-semibold text-neutral-400">
+          <span key={exam} className="text-sm font-semibold text-[#80868B]">
             {exam}
           </span>
         ))}
@@ -200,34 +203,36 @@ function LogoStrip() {
 
 function Bullet({ children }: { children: React.ReactNode }) {
   return (
-    <li className="flex items-start gap-2">
-      <span className="w-1 h-1 bg-neutral-400 mt-2 shrink-0" />
-      <span className="text-sm text-neutral-600">{children}</span>
+    <li className="flex items-start gap-2.5">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#80868B] mt-2 shrink-0" />
+      <span className="text-sm text-[#5F6368]">{children}</span>
     </li>
   );
 }
 
 function Features() {
   return (
-    <section id="features" className="w-full bg-white py-16 border-b border-neutral-200">
+    <section id="features" className="w-full bg-white py-20 border-b border-[#E1E3E1]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <p className="text-xs font-medium text-neutral-500 text-center mb-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-[#5F6368] text-center mb-4">
           The Ivvy platform
         </p>
-        <h2 className="text-2xl font-semibold tracking-tight text-black text-center mb-4">
+        <h2 className="text-3xl font-semibold tracking-tight text-[#1F1F1F] text-center mb-4">
           Train on your materials, not generic answers
         </h2>
-        <p className="text-center text-sm text-neutral-600 max-w-xl mx-auto mb-12">
+        <p className="text-center text-base text-[#5F6368] max-w-xl mx-auto mb-12">
           Claude answers your study questions. Ivvy trains you for the exam.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="border border-neutral-200 rounded p-6 flex flex-col gap-4">
+          <div className="border border-[#E1E3E1] rounded-2xl p-6 flex flex-col gap-4">
             <div>
-              <h3 className="text-sm font-semibold text-black">Study Sessions</h3>
-              <p className="text-sm text-neutral-500">Guided daily sessions</p>
+              <h3 className="text-base font-semibold text-[#1F1F1F]">
+                Study Sessions
+              </h3>
+              <p className="text-sm text-[#80868B]">Guided daily sessions</p>
             </div>
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-[#5F6368]">
               Work through your study plan day by day. The AI coach adapts to
               your level — explaining concepts, quizzing you, and flagging
               mistakes automatically.
@@ -238,7 +243,7 @@ function Features() {
               <Bullet>Automatic mistake detection and flagging</Bullet>
               <Bullet>Session summary with tomorrow&apos;s focus</Bullet>
             </ul>
-            <div className="border border-neutral-200 rounded p-3 flex gap-2 flex-wrap">
+            <div className="border border-[#E1E3E1] rounded-2xl p-3 flex gap-2 flex-wrap">
               {[
                 { label: "Learn", active: false },
                 { label: "Quiz", active: true },
@@ -247,10 +252,10 @@ function Features() {
               ].map((pill) => (
                 <span
                   key={pill.label}
-                  className={`text-xs rounded px-2 py-1 border ${
+                  className={`text-xs rounded-full px-3 py-1 ${
                     pill.active
-                      ? "border-black text-black bg-neutral-100"
-                      : "border-neutral-300 text-neutral-500"
+                      ? "bg-[#E8EAED] text-[#1F1F1F] font-medium"
+                      : "border border-[#E1E3E1] text-[#5F6368]"
                   }`}
                 >
                   {pill.label}
@@ -259,12 +264,14 @@ function Features() {
             </div>
           </div>
 
-          <div className="border border-neutral-200 rounded p-6 flex flex-col gap-4">
+          <div className="border border-[#E1E3E1] rounded-2xl p-6 flex flex-col gap-4">
             <div>
-              <h3 className="text-sm font-semibold text-black">Mistake Bank</h3>
-              <p className="text-sm text-neutral-500">Targeted review mode</p>
+              <h3 className="text-base font-semibold text-[#1F1F1F]">
+                Mistake Bank
+              </h3>
+              <p className="text-sm text-[#80868B]">Targeted review mode</p>
             </div>
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-[#5F6368]">
               Every time you get something wrong, it&apos;s saved. Come back to
               review it later — the coach drills you until you&apos;ve genuinely
               resolved the gap.
@@ -275,24 +282,24 @@ function Features() {
               <Bullet>Dedicated review mode per mistake</Bullet>
               <Bullet>Marked as resolved only when coach confirms it</Bullet>
             </ul>
-            <div className="border border-neutral-200 rounded p-3">
+            <div className="border border-[#E1E3E1] rounded-2xl p-3">
               <div className="flex justify-between items-center gap-2">
                 <div className="flex gap-2 flex-wrap">
-                  <span className="text-xs bg-neutral-100 rounded px-2 py-0.5 text-neutral-700">
+                  <span className="text-xs bg-[#F1F3F4] rounded-full px-3 py-0.5 text-[#5F6368]">
                     Macroeconomics
                   </span>
-                  <span className="text-xs bg-neutral-100 rounded px-2 py-0.5 text-neutral-700">
+                  <span className="text-xs bg-[#F1F3F4] rounded-full px-3 py-0.5 text-[#5F6368]">
                     conceptual
                   </span>
                 </div>
-                <span className="text-xs text-neutral-400 shrink-0">
+                <span className="text-xs text-[#80868B] shrink-0">
                   2 days ago
                 </span>
               </div>
-              <p className="text-xs text-neutral-600 truncate mt-1.5">
+              <p className="text-xs text-[#5F6368] truncate mt-1.5">
                 Can you explain what happens when the central bank raises rates?
               </p>
-              <p className="text-xs text-neutral-500 mt-1">Review now</p>
+              <p className="text-xs font-medium text-[#1F1F1F] mt-1">Review now</p>
             </div>
           </div>
         </div>
@@ -301,101 +308,50 @@ function Features() {
   );
 }
 
-function CalendarIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="black"
-      strokeWidth="2"
-      aria-hidden
-    >
-      <rect x="3" y="5" width="18" height="16" rx="1" />
-      <path d="M3 9h18M8 3v4M16 3v4" />
-    </svg>
-  );
-}
-
-function ChatIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="black"
-      strokeWidth="2"
-      aria-hidden
-    >
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="black"
-      strokeWidth="2"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8 12l3 3 5-6" />
-    </svg>
-  );
-}
-
 function HowItWorks() {
   const steps = [
     {
-      n: "01",
-      icon: <CalendarIcon />,
+      n: "1",
       title: "Create your study project",
       body: "Add your subject, exam date, target grade, and the topics your exam covers.",
     },
     {
-      n: "02",
-      icon: <ChatIcon />,
+      n: "2",
       title: "Dump your materials",
       body: "Paste your notes, syllabus, past questions, marking criteria, and personal weak points.",
     },
     {
-      n: "03",
-      icon: <CheckIcon />,
+      n: "3",
       title: "Train for the exam",
       body: "Ivvy uses your materials to test your understanding, adapt to your answers, and focus on weak areas.",
     },
   ];
 
   return (
-    <section id="how-it-works" className="w-full bg-white py-16">
+    <section id="how-it-works" className="w-full bg-white py-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <p className="text-xs font-medium text-neutral-500 text-center">
+        <p className="text-xs font-medium uppercase tracking-wide text-[#5F6368] text-center">
           How it works
         </p>
-        <h2 className="text-2xl font-semibold tracking-tight text-black text-center mt-4">
+        <h2 className="text-3xl font-semibold tracking-tight text-[#1F1F1F] text-center mt-4">
           From scattered materials to focused training.
         </h2>
-        <p className="text-center text-sm text-neutral-500 max-w-lg mx-auto mt-3 mb-12">
+        <p className="text-center text-base text-[#5F6368] max-w-lg mx-auto mt-3 mb-12">
           Three steps from project setup to exam-day practice.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {steps.map((step) => (
-            <div key={step.n}>
-              <p className="text-xs font-medium text-neutral-400 mb-4">
+            <div
+              key={step.n}
+              className="border border-[#E1E3E1] rounded-2xl p-6 bg-white"
+            >
+              <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-[#1F1F1F] text-white text-sm font-semibold">
                 {step.n}
-              </p>
-              <div className="w-10 h-10 bg-neutral-100 rounded flex items-center justify-center mb-4">
-                {step.icon}
-              </div>
-              <h3 className="text-sm font-semibold text-black">{step.title}</h3>
-              <p className="text-sm text-neutral-600 mt-2">{step.body}</p>
+              </span>
+              <h3 className="text-base font-semibold text-[#1F1F1F] mt-4">
+                {step.title}
+              </h3>
+              <p className="text-sm text-[#5F6368] mt-2">{step.body}</p>
             </div>
           ))}
         </div>
@@ -406,12 +362,12 @@ function HowItWorks() {
 
 function Quote() {
   return (
-    <section className="w-full bg-neutral-50 border-y border-neutral-200 py-16">
+    <section className="w-full bg-[#F8FAFD] border-y border-[#E1E3E1] py-16">
       <div className="max-w-2xl mx-auto px-4 text-center">
-        <p className="text-sm font-medium text-black">
+        <p className="text-lg font-medium text-[#1F1F1F]">
           Ivvy turns your exam materials into a personal AI training system.
         </p>
-        <p className="text-sm text-neutral-600 mt-3">
+        <p className="text-base text-[#5F6368] mt-3">
           Add your topics, dump your notes, and train on what your exam actually
           tests — not generic study chat.
         </p>
@@ -424,17 +380,17 @@ function FinalCTA() {
   return (
     <section
       id="pricing"
-      className="w-full bg-neutral-50 border-b border-neutral-200 py-16 text-center"
+      className="w-full bg-[#F8FAFD] border-b border-[#E1E3E1] py-20 text-center"
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <h2 className="text-2xl font-semibold tracking-tight text-black">
+        <h2 className="text-3xl font-semibold tracking-tight text-[#1F1F1F]">
           Start preparing today.
         </h2>
-        <p className="text-sm text-neutral-600 mt-4 max-w-md mx-auto">
+        <p className="text-base text-[#5F6368] mt-4 max-w-md mx-auto">
           Free during beta. No payment required. Create your study project in
           under 2 minutes.
         </p>
-        <div className="flex justify-center gap-4 mt-8 flex-wrap">
+        <div className="flex justify-center gap-3 mt-8 flex-wrap">
           <PrimaryButtonLink href="/projects/new">
             Create your study project →
           </PrimaryButtonLink>
@@ -455,25 +411,27 @@ function Footer() {
   ];
 
   return (
-    <footer className="w-full bg-white border-t border-neutral-200 py-12">
+    <footer className="w-full bg-white border-t border-[#E1E3E1] py-12">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row justify-between gap-8">
           <div>
             <LogoMark />
-            <p className="text-sm text-neutral-600 mt-2 max-w-xs">
+            <p className="text-sm text-[#5F6368] mt-3 max-w-xs">
               AI-powered exam training workspace. Built for students who take
               their exams seriously.
             </p>
           </div>
           <div>
-            <p className="text-xs font-medium text-neutral-500 mb-3">Product</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-[#80868B] mb-3">
+              Product
+            </p>
             <ul className="space-y-2">
               {productLinks.map((link) =>
                 link.href.startsWith("#") ? (
                   <li key={link.label}>
                     <a
                       href={link.href}
-                      className="text-sm text-neutral-600 hover:text-black transition-colors"
+                      className="text-sm text-[#5F6368] hover:text-[#1F1F1F] transition-colors"
                     >
                       {link.label}
                     </a>
@@ -482,7 +440,7 @@ function Footer() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-neutral-600 hover:text-black transition-colors"
+                      className="text-sm text-[#5F6368] hover:text-[#1F1F1F] transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -492,11 +450,11 @@ function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-8 pt-8 border-t border-neutral-200 flex justify-between items-center flex-wrap gap-4">
-          <p className="text-xs text-neutral-400">
+        <div className="mt-8 pt-8 border-t border-[#E1E3E1] flex justify-between items-center flex-wrap gap-4">
+          <p className="text-xs text-[#80868B]">
             © 2026 Ivvy. All rights reserved.
           </p>
-          <p className="text-xs text-neutral-400">
+          <p className="text-xs text-[#80868B]">
             Built for exam-day training, not generic Q&amp;A.
           </p>
         </div>
@@ -507,7 +465,7 @@ function Footer() {
 
 export default function LandingPage() {
   return (
-    <div className="bg-white text-black min-h-screen">
+    <div className="bg-white text-[#1F1F1F] min-h-screen">
       <AnnouncementBanner />
       <Nav />
       <Hero />

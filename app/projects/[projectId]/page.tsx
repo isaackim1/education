@@ -8,6 +8,12 @@ import { useProjectMaterials } from "@/hooks/useProjectMaterials";
 import { getProjectMistakes } from "@/lib/project-storage";
 import type { Mistake } from "@/lib/types";
 
+const PRIMARY_ACTION =
+  "inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
+const SECONDARY_LINK =
+  "inline-flex items-center h-9 px-4 rounded-full border border-[#C4C7C5] text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
 function formatDate(dateString: string): string {
   const date = new Date(`${dateString}T00:00:00`);
   if (Number.isNaN(date.getTime())) return dateString;
@@ -62,22 +68,22 @@ export default function ProjectPage({
 
   if (!isLoaded) {
     return (
-      <main className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-sm text-neutral-600">Loading...</p>
+      <main className="min-h-screen bg-[#F8FAFD] flex items-center justify-center">
+        <p className="text-sm text-[#5F6368]">Loading...</p>
       </main>
     );
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-[#F8FAFD]">
         <div className="max-w-lg mx-auto px-4 py-12">
-          <h1 className="text-2xl font-semibold tracking-tight text-black">
+          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
             Project not found
           </h1>
           <Link
             href="/projects"
-            className="inline-block text-sm text-neutral-500 hover:text-black transition-colors mt-4"
+            className="inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
           >
             Back to projects
           </Link>
@@ -94,116 +100,112 @@ export default function ProjectPage({
   const unreviewedCount = mistakes.filter((m) => !m.reviewed).length;
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <ProjectWorkspaceNav
-          projectId={params.projectId}
-          active="overview"
-        />
+    <main className="min-h-screen bg-[#F8FAFD]">
+      <div className="max-w-2xl mx-auto px-4 py-10 sm:py-12">
+        <ProjectWorkspaceNav projectId={params.projectId} active="overview" />
 
         <header className="mb-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-black">
+          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
             {project.name}
           </h1>
-          <p className="text-sm text-neutral-600 mt-2">{project.subject}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center h-7 px-3 rounded-full bg-[#F1F3F4] text-xs font-medium text-[#5F6368]">
+              {project.subject}
+            </span>
+            <span className="inline-flex items-center h-7 px-3 rounded-full bg-[#F1F3F4] text-xs font-medium text-[#5F6368]">
+              Exam {formatDate(project.examDate)}
+            </span>
+            <span className="inline-flex items-center h-7 px-3 rounded-full bg-[#F1F3F4] text-xs font-medium text-[#5F6368]">
+              Target {project.targetGrade}
+            </span>
+          </div>
         </header>
 
-        <dl className="grid grid-cols-2 gap-4 border-y border-neutral-200 py-4 my-6">
-          <div>
-            <dt className="text-xs font-medium text-neutral-500">Exam date</dt>
-            <dd className="text-sm text-black mt-1">
-              {formatDate(project.examDate)}
-            </dd>
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="rounded-2xl border border-[#E1E3E1] bg-white p-4">
+            <p className="text-xs font-medium text-[#5F6368]">Topics</p>
+            <p className="text-2xl font-semibold text-[#1F1F1F] mt-1">
+              {topics.length}
+            </p>
           </div>
-          <div>
-            <dt className="text-xs font-medium text-neutral-500">
-              Target grade
-            </dt>
-            <dd className="text-sm text-black mt-1">{project.targetGrade}</dd>
-          </div>
-        </dl>
-
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="border border-neutral-200 rounded p-3">
-            <p className="text-xs font-medium text-neutral-500">Topics</p>
-            <p className="text-sm text-black mt-1">{topics.length}</p>
-          </div>
-          <div className="border border-neutral-200 rounded p-3">
-            <p className="text-xs font-medium text-neutral-500">Materials</p>
-            <p className="text-sm text-black mt-1">
+          <div className="rounded-2xl border border-[#E1E3E1] bg-white p-4">
+            <p className="text-xs font-medium text-[#5F6368]">Materials</p>
+            <p className="text-2xl font-semibold text-[#1F1F1F] mt-1">
               {materialsWithContent.length}
             </p>
           </div>
-          <div className="border border-neutral-200 rounded p-3">
-            <p className="text-xs font-medium text-neutral-500">Last studied</p>
-            <p className="text-sm text-black mt-1">
+          <div className="rounded-2xl border border-[#E1E3E1] bg-white p-4">
+            <p className="text-xs font-medium text-[#5F6368]">Last studied</p>
+            <p className="text-sm text-[#1F1F1F] mt-2">
               {formatLastStudied(project.lastStudiedAt)}
             </p>
           </div>
         </div>
 
-        <section className="border border-neutral-200 rounded p-4 mb-6">
-          <h2 className="text-sm font-semibold text-black">Next step</h2>
+        <section className="rounded-2xl border border-[#DADCE0] bg-[#F1F3F4] p-5 mb-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-[#5F6368]">
+            Next step
+          </h2>
 
           {!hasTopics ? (
-            <div className="mt-3">
-              <p className="text-sm text-neutral-600">
+            <div className="mt-2">
+              <p className="text-sm text-[#1F1F1F]">
                 Add topics first. They define what Ivvy should train you on.
               </p>
               <Link
                 href={`/projects/${params.projectId}/setup`}
-                className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-4"
+                className={`${PRIMARY_ACTION} mt-4`}
               >
                 Add topics
               </Link>
             </div>
           ) : !hasMaterials ? (
-            <div className="mt-3">
-              <p className="text-sm text-neutral-600">
+            <div className="mt-2">
+              <p className="text-sm text-[#1F1F1F]">
                 Add materials so Ivvy can train from your notes.
               </p>
               <Link
                 href={`/projects/${params.projectId}/materials`}
-                className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-4"
+                className={`${PRIMARY_ACTION} mt-4`}
               >
                 Add materials
               </Link>
             </div>
           ) : mistakes.length === 0 ? (
-            <div className="mt-3">
-              <p className="text-sm text-neutral-600">
+            <div className="mt-2">
+              <p className="text-sm text-[#1F1F1F]">
                 Start training in chat. Ivvy will ask exam-style questions and
                 save mistakes when you slip.
               </p>
               <Link
                 href={`/projects/${params.projectId}/chat`}
-                className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-4"
+                className={`${PRIMARY_ACTION} mt-4`}
               >
                 Start training
               </Link>
             </div>
           ) : unreviewedCount > 0 ? (
-            <div className="mt-3">
-              <p className="text-sm text-neutral-600">
+            <div className="mt-2">
+              <p className="text-sm text-[#1F1F1F]">
                 {unreviewedCount} unreviewed mistake
-                {unreviewedCount === 1 ? "" : "s"}. Review weak areas before
-                your next session.
+                {unreviewedCount === 1 ? "" : "s"}. Review weak areas before your
+                next session.
               </p>
               <Link
                 href={`/projects/${params.projectId}/review`}
-                className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-4"
+                className={`${PRIMARY_ACTION} mt-4`}
               >
                 Review weak areas
               </Link>
             </div>
           ) : (
-            <div className="mt-3">
-              <p className="text-sm text-neutral-600">
+            <div className="mt-2">
+              <p className="text-sm text-[#1F1F1F]">
                 Continue training. Your recent mistakes are reviewed.
               </p>
               <Link
                 href={`/projects/${params.projectId}/chat`}
-                className="inline-flex items-center bg-black text-white text-sm font-medium px-4 py-2 rounded hover:bg-neutral-800 transition-colors mt-4"
+                className={`${PRIMARY_ACTION} mt-4`}
               >
                 Continue training
               </Link>
@@ -212,21 +214,21 @@ export default function ProjectPage({
         </section>
 
         {mistakes.length > 0 ? (
-          <section className="border border-neutral-200 rounded p-4">
-            <h2 className="text-sm font-semibold text-black">Mistakes</h2>
-            <p className="text-sm text-neutral-600 mt-2">
-              {mistakes.length} saved · {unreviewedCount} unreviewed
+          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5">
+            <h2 className="text-sm font-semibold text-[#1F1F1F]">Mistakes</h2>
+            <p className="text-sm text-[#5F6368] mt-1">
+              {mistakes.length} saved &middot; {unreviewedCount} unreviewed
             </p>
-            <div className="flex flex-wrap gap-3 mt-4">
+            <div className="flex flex-wrap gap-2 mt-4">
               <Link
                 href={`/projects/${params.projectId}/mistakes`}
-                className="text-sm text-neutral-500 hover:text-black transition-colors"
+                className={SECONDARY_LINK}
               >
                 Mistake bank
               </Link>
               <Link
                 href={`/projects/${params.projectId}/review`}
-                className="text-sm text-neutral-500 hover:text-black transition-colors"
+                className={SECONDARY_LINK}
               >
                 Review queue
               </Link>
