@@ -8,11 +8,115 @@ import { parseMaterialFile } from "@/lib/material-file-parser";
 const FIELD =
   "w-full rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15";
 
+const BATCH_FILE_LIMIT = 20;
+const BATCH_TEXT_LIMIT = 300_000;
+
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+// ─── Multi-file composition helper ──────────────────────────────────────────
+
+type ParsedResult = {
+  name: string;
+  content: string;
+  fileType: string;
+  fileSize: number;
+  warning?: string;
+};
+
+type ComposedImport = {
+  nextContent: string;
+  includedFiles: ParsedResult[];
+  omittedFiles: string[];
+  warnings: string[];
+  includedSize: number;
+};
+
+function composeImport(
+  existingContent: string,
+  results: ParsedResult[]
+): ComposedImport {
+  const SEPARATOR_EXISTING = "\n\n-- Imported files --\n\n";
+  const SEPARATOR_BETWEEN = "\n\n";
+  const sourceHeader = (name: string) => `-- Source: ${name} --\n\n`;
+
+  // Existing content is never trimmed or truncated.
+  // Budget = chars available for imported text only.
+  const budget =
+    existingContent.length > 0
+      ? BATCH_TEXT_LIMIT - existingContent.length - SEPARATOR_EXISTING.length
+      : BATCH_TEXT_LIMIT;
+
+  if (budget <= 0) {
+    return {
+      nextContent: existingContent,
+      includedFiles: [],
+      omittedFiles: results.map((r) => r.name),
+      warnings: [
+        `Existing content fills the ${BATCH_TEXT_LIMIT.toLocaleString()}-character limit. No files were imported.`,
+      ],
+      includedSize: 0,
+    };
+  }
+
+  const includedFiles: ParsedResult[] = [];
+  const omittedFiles: string[] = [];
+  const blockParts: string[] = [];
+  const warnings: string[] = [];
+  let usedBudget = 0;
+
+  for (const r of results) {
+    const block = sourceHeader(r.name) + r.content;
+    // No separator before the first included block; "\n\n" between subsequent ones.
+    const sep = blockParts.length === 0 ? "" : SEPARATOR_BETWEEN;
+    const chunk = sep + block;
+
+    if (usedBudget + chunk.length <= budget) {
+      blockParts.push(chunk);
+      usedBudget += chunk.length;
+      includedFiles.push(r);
+    } else {
+      omittedFiles.push(r.name);
+    }
+  }
+
+  if (includedFiles.length === 0) {
+    return {
+      nextContent: existingContent,
+      includedFiles: [],
+      omittedFiles: results.map((r) => r.name),
+      warnings: [
+        `Imported text exceeds the available space (${BATCH_TEXT_LIMIT.toLocaleString()}-character limit). No files were imported.`,
+      ],
+      includedSize: 0,
+    };
+  }
+
+  const importedText = blockParts.join("");
+  const nextContent =
+    existingContent.length > 0
+      ? existingContent + SEPARATOR_EXISTING + importedText
+      : importedText;
+
+  for (const r of includedFiles) {
+    if (r.warning) warnings.push(`${r.name}: ${r.warning}`);
+  }
+
+  if (omittedFiles.length > 0) {
+    warnings.push(
+      `${omittedFiles.length} file${omittedFiles.length > 1 ? "s" : ""} omitted — combined text limit reached: ${omittedFiles.join(", ")}.`
+    );
+  }
+
+  const includedSize = includedFiles.reduce((sum, r) => sum + r.fileSize, 0);
+
+  return { nextContent, includedFiles, omittedFiles, warnings, includedSize };
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ProjectMaterialCard({
   topicName,
@@ -35,15 +139,16 @@ export default function ProjectMaterialCard({
   );
   const [fileName, setFileName] = useState(material?.fileName ?? "");
   const [fileType, setFileType] = useState(material?.fileType ?? "");
-  const [uploadedFileSize, setUploadedFileSize] = useState<number | null>(
-    null
-  );
+  const [uploadedFileSize, setUploadedFileSize] = useState<number | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [fileWarning, setFileWarning] = useState<string | null>(null);
-  const [parsingFileName, setParsingFileName] = useState<string | null>(null);
+  const [parsingFiles, setParsingFiles] = useState<{
+    count: number;
+    firstName: string;
+  } | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saved">("idle");
 
-  const isParsing = parsingFileName !== null;
+  const isParsing = parsingFiles !== null;
 
   useEffect(() => {
     setTitle(material?.title ?? defaultTitle);
@@ -54,7 +159,7 @@ export default function ProjectMaterialCard({
     setUploadedFileSize(null);
     setFileError(null);
     setFileWarning(null);
-    setParsingFileName(null);
+    setParsingFiles(null);
   }, [
     material?.title,
     material?.content,
@@ -65,40 +170,128 @@ export default function ProjectMaterialCard({
   ]);
 
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files ?? []);
     e.target.value = "";
     setFileError(null);
     setFileWarning(null);
 
-    if (!file) return;
+    if (files.length === 0) return;
 
-    // Capture size up front; parsing failures must not overwrite existing state.
-    const fileSize = file.size;
-    setParsingFileName(file.name);
+    if (files.length > BATCH_FILE_LIMIT) {
+      setFileError(
+        `Too many files selected. Choose up to ${BATCH_FILE_LIMIT} files at a time.`
+      );
+      return;
+    }
+
+    if (files.length === 1) {
+      // Single-file path — existing behavior preserved exactly.
+      const file = files[0];
+      const fileSize = file.size;
+      setParsingFiles({ count: 1, firstName: file.name });
+      try {
+        const parsed = await parseMaterialFile(file);
+        setContent(parsed.content);
+        setSource("file");
+        setFileName(parsed.fileName);
+        setFileType(parsed.fileType || "text/plain");
+        setUploadedFileSize(fileSize);
+        setFileWarning(
+          parsed.truncated || parsed.warning ? (parsed.warning ?? null) : null
+        );
+        const currentTitle = title.trim();
+        if (!currentTitle || currentTitle === defaultTitle) {
+          setTitle(parsed.fileName);
+        }
+      } catch (err) {
+        setFileError(
+          err instanceof Error
+            ? err.message
+            : "Could not read this file. Try a different file or paste the text."
+        );
+      } finally {
+        setParsingFiles(null);
+      }
+      return;
+    }
+
+    // Multi-file path
+    setParsingFiles({ count: files.length, firstName: files[0].name });
+
+    type FileFailure = { name: string; error: string };
+    const results: ParsedResult[] = [];
+    const failed: FileFailure[] = [];
 
     try {
-      const parsed = await parseMaterialFile(file);
-      setContent(parsed.content);
-      setSource("file");
-      setFileName(parsed.fileName);
-      setFileType(parsed.fileType || "text/plain");
-      setUploadedFileSize(fileSize);
-      setFileWarning(parsed.truncated || parsed.warning ? parsed.warning ?? null : null);
-
-      const currentTitle = title.trim();
-      if (!currentTitle || currentTitle === defaultTitle) {
-        setTitle(parsed.fileName);
+      for (const file of files) {
+        try {
+          const parsed = await parseMaterialFile(file);
+          results.push({
+            name: file.name,
+            content: parsed.content,
+            fileType: parsed.fileType,
+            fileSize: file.size,
+            warning: parsed.warning,
+          });
+        } catch (err) {
+          failed.push({
+            name: file.name,
+            error:
+              err instanceof Error
+                ? err.message
+                : "Could not read this file.",
+          });
+        }
       }
-    } catch (err) {
-      // Preserve existing content, fileName, source, and fileType on failure.
-      setFileError(
-        err instanceof Error
-          ? err.message
-          : "Could not read this file. Try a different file or paste the text."
-      );
     } finally {
-      setParsingFileName(null);
+      setParsingFiles(null);
     }
+
+    if (results.length === 0) {
+      // All failed — preserve existing content, fileName, source, and fileType.
+      const lines = [
+        `All ${files.length} files failed to import. No changes were made.`,
+        "",
+        ...failed.map((f) => `${f.name} — ${f.error}`),
+      ];
+      setFileError(lines.join("\n"));
+      return;
+    }
+
+    // Build imported text incrementally; existing content is never modified.
+    const composed = composeImport(content, results);
+
+    if (composed.includedFiles.length === 0) {
+      // Nothing could fit — preserve all existing state.
+      const lines: string[] = [...composed.warnings];
+      if (failed.length > 0) {
+        lines.push(
+          `Also failed to parse: ${failed.map((f) => f.name).join(", ")}.`
+        );
+      }
+      setFileError(lines.join("\n"));
+      return;
+    }
+
+    setContent(composed.nextContent);
+    setSource("file");
+    setUploadedFileSize(composed.includedSize);
+
+    if (composed.includedFiles.length === 1) {
+      setFileName(composed.includedFiles[0].name);
+      setFileType(composed.includedFiles[0].fileType || "text/plain");
+    } else {
+      setFileName("Multiple files");
+      setFileType("multiple");
+    }
+
+    const warnings = [...composed.warnings];
+    if (failed.length > 0) {
+      warnings.push(
+        `${failed.length} file${failed.length > 1 ? "s" : ""} failed to import: ${failed.map((f) => f.name).join(", ")}.`
+      );
+    }
+    setFileWarning(warnings.length > 0 ? warnings.join("\n") : null);
   }
 
   function handleSubmit(e: FormEvent) {
@@ -174,11 +367,12 @@ export default function ProjectMaterialCard({
 
       <div>
         <span className="block text-xs font-medium text-[#5F6368] mb-1.5">
-          Upload file
+          Import files
         </span>
         <input
           ref={fileInputRef}
           type="file"
+          multiple
           accept=".txt,.md,.csv,.json,.html,.pdf,.docx,text/plain,text/markdown,text/csv,application/json,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           onChange={handleFileChange}
           disabled={isParsing}
@@ -191,20 +385,23 @@ export default function ProjectMaterialCard({
           disabled={isParsing}
           className="inline-flex items-center h-9 px-4 rounded-full border border-[#C4C7C5] text-sm text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
         >
-          {isParsing ? "Extracting…" : "Choose file"}
+          {isParsing ? "Extracting…" : "Choose files"}
         </button>
         <p className="text-xs text-[#80868B] mt-1.5">
-          TXT, MD, CSV, JSON, HTML &mdash; max 500 KB. PDF, DOCX &mdash; max 5 MB,
-          selectable text only.
+          TXT, MD, CSV, JSON, HTML &mdash; max 500 KB each. PDF, DOCX &mdash;
+          max 5 MB each, selectable text only. Up to {BATCH_FILE_LIMIT} files at
+          once.
         </p>
         {isParsing ? (
           <p className="mt-2 text-xs text-[#5F6368]" role="status">
-            Extracting text from {parsingFileName}…
+            {parsingFiles!.count === 1
+              ? `Extracting text from ${parsingFiles!.firstName}…`
+              : `Extracting text from ${parsingFiles!.count} files…`}
           </p>
         ) : null}
         {fileError ? (
           <p
-            className="mt-2 rounded-lg bg-[#F9DEDC] px-3 py-2 text-xs text-[#410E0B]"
+            className="mt-2 rounded-lg bg-[#F9DEDC] px-3 py-2 text-xs text-[#410E0B] whitespace-pre-line"
             role="alert"
           >
             {fileError}
@@ -212,7 +409,7 @@ export default function ProjectMaterialCard({
         ) : null}
         {fileWarning && !isParsing ? (
           <p
-            className="mt-2 rounded-lg bg-[#FEEFC3] px-3 py-2 text-xs text-[#B06000]"
+            className="mt-2 rounded-lg bg-[#FEEFC3] px-3 py-2 text-xs text-[#B06000] whitespace-pre-line"
             role="status"
           >
             {fileWarning}
