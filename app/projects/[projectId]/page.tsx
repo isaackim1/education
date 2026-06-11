@@ -296,6 +296,12 @@ export default function ProjectPage({
                 Materials
               </Link>
               <Link
+                href={`/projects/${params.projectId}/train`}
+                className={SECONDARY_LINK}
+              >
+                Train
+              </Link>
+              <Link
                 href={`/projects/${params.projectId}/chat`}
                 className={SECONDARY_LINK}
               >

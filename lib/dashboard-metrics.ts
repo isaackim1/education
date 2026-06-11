@@ -448,7 +448,7 @@ export function computeTodaysPlan(
       add({
         title: "Start training",
         description: "Answer focused exam questions and begin finding weak areas.",
-        href: `${base}/chat`,
+        href: `${base}/train`,
         kind: "training",
       });
     }
@@ -493,7 +493,7 @@ export function computeTodaysPlan(
       add({
         title: `Train your focus topic: ${focusTopicToTrain.name}`,
         description: "You marked this as a priority for the exam.",
-        href: `${base}/chat`,
+        href: `${base}/train?topic=${encodeURIComponent(focusTopicToTrain.id)}`,
         kind: "training",
       });
     }
@@ -525,7 +525,7 @@ export function computeTodaysPlan(
         description: `${weakest.count} unreviewed mistake${
           weakest.count === 1 ? "" : "s"
         } point${weakest.count === 1 ? "s" : ""} to this topic.`,
-        href: `${base}/chat`,
+        href: `${base}/train?topic=${encodeURIComponent(weakest.topic.id)}`,
         kind: "training",
       });
     }
@@ -543,7 +543,7 @@ export function computeTodaysPlan(
     add({
       title: "Keep training",
       description: "Continue with focused exam questions to maintain momentum.",
-      href: `${base}/chat`,
+      href: `${base}/train`,
       kind: "training",
     });
   }

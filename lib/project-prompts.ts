@@ -4,7 +4,7 @@ export interface ProjectChatContext {
   examDate: string;
   daysRemaining: number;
   targetGrade: string;
-  topics: { name: string; masteryScore: number }[];
+  topics: { name: string; masteryScore?: number }[];
   activeTopic: string | null;
   materials: { topicName: string; content: string; fileName?: string }[];
   recentUnreviewedMistakes?: {
@@ -80,6 +80,17 @@ RESOLVED SIGNAL: When a previously missed concept is genuinely fixed, start with
 TONE: Direct, calm, serious, focused. No emoji. No hollow praise. Plain text only. Max 4 lines per response.`;
 }
 
+export function buildTrainingSessionSystemPrompt(): string {
+  return `${buildProjectSystemPrompt()}
+
+GUIDED SESSION RULES:
+- Ask exactly one exam-style question at a time.
+- When told to begin or ask the next question, reply with only one question. Do not include feedback or an answer.
+- When the student answers, give concise feedback on that answer only. Do not ask the next question until explicitly told.
+- Focus on the active topic when one is provided. Ground questions in the project materials and recent mistakes.
+- Keep using the existing [MISTAKE:category] and [RESOLVED] signals exactly as defined above. Do not invent another signal format.`;
+}
+
 export function buildProjectContextMessage(context: ProjectChatContext): string {
   const lines = [
     `Project: ${context.projectName}`,
@@ -90,7 +101,11 @@ export function buildProjectContextMessage(context: ProjectChatContext): string 
     `Topics: ${
       context.topics.length > 0
         ? context.topics
-            .map((t) => `${t.name} (mastery ${t.masteryScore}/5)`)
+            .map((t) =>
+              typeof t.masteryScore === "number"
+                ? `${t.name} (mastery ${t.masteryScore}/5)`
+                : t.name
+            )
             .join(", ")
         : "none yet"
     }`,
