@@ -7,14 +7,18 @@ import ReadinessBand from "@/components/project/dashboard/ReadinessBand";
 import ReviewProgressRing from "@/components/project/dashboard/ReviewProgressRing";
 import TodaysPlan from "@/components/project/dashboard/TodaysPlan";
 import TopicCoverageList from "@/components/project/dashboard/TopicCoverageList";
+import GoalProgressCard from "@/components/project/goals/GoalProgressCard";
 import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
 import { useProject } from "@/hooks/useProject";
+import { useProjectGoals } from "@/hooks/useProjectGoals";
 import { useProjectMaterials } from "@/hooks/useProjectMaterials";
+import { useTrainingLog } from "@/hooks/useTrainingLog";
 import {
   computeActivity,
   computeReadiness,
   computeTodaysPlan,
   computeTopicCoverage,
+  computeWeeklyProgress,
   daysUntil,
 } from "@/lib/dashboard-metrics";
 import { getProjectChat, getProjectMistakes } from "@/lib/project-storage";
@@ -68,6 +72,8 @@ export default function ProjectPage({
   const { materials, isLoaded: materialsLoaded } = useProjectMaterials(
     params.projectId
   );
+  const { goals, isLoaded: goalsLoaded } = useProjectGoals(params.projectId);
+  const { sessions, isLoaded: logLoaded } = useTrainingLog(params.projectId);
   const [mistakes, setMistakes] = useState<Mistake[]>([]);
   const [chat, setChat] = useState<Chat | null>(null);
   const [dashboardDataLoaded, setDashboardDataLoaded] = useState(false);
@@ -87,22 +93,48 @@ export default function ProjectPage({
     [topics, materials, mistakes]
   );
   const activity = useMemo(
-    () => computeActivity(chat, mistakes),
-    [chat, mistakes]
+    () => computeActivity(chat, mistakes, 84, sessions),
+    [chat, mistakes, sessions]
   );
   const topicCoverage = useMemo(
     () => computeTopicCoverage(topics, materials, mistakes),
     [topics, materials, mistakes]
   );
+  const weeklyProgress = useMemo(
+    () => computeWeeklyProgress(goals, sessions, mistakes),
+    [goals, sessions, mistakes]
+  );
   const todaysPlan = useMemo(
     () =>
       project
-        ? computeTodaysPlan(project, topics, materials, mistakes)
+        ? computeTodaysPlan(
+            project,
+            topics,
+            materials,
+            mistakes,
+            goals,
+            weeklyProgress
+          )
         : null,
-    [project, topics, materials, mistakes]
+    [project, topics, materials, mistakes, goals, weeklyProgress]
   );
 
-  const isLoaded = projectLoaded && materialsLoaded && dashboardDataLoaded;
+  const focusTopicNames = useMemo(() => {
+    if (!goals) return [];
+    const focusTopicIds = Array.isArray(goals.focusTopicIds)
+      ? goals.focusTopicIds
+      : [];
+    return topics
+      .filter((topic) => focusTopicIds.includes(topic.id))
+      .map((topic) => topic.name);
+  }, [goals, topics]);
+
+  const isLoaded =
+    projectLoaded &&
+    materialsLoaded &&
+    dashboardDataLoaded &&
+    goalsLoaded &&
+    logLoaded;
 
   if (!isLoaded) {
     return (
@@ -185,6 +217,12 @@ export default function ProjectPage({
           <ReadinessBand readiness={readiness} />
 
           <TodaysPlan plan={todaysPlan} />
+
+          <GoalProgressCard
+            projectId={params.projectId}
+            weeklyProgress={weeklyProgress}
+            focusTopicNames={focusTopicNames}
+          />
 
           <section
             className="grid grid-cols-2 gap-3 sm:grid-cols-4"

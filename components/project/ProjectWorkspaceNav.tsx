@@ -6,7 +6,9 @@ type WorkspaceNavItem =
   | "materials"
   | "chat"
   | "mistakes"
-  | "review";
+  | "review"
+  | "goals"
+  | "log";
 
 const NAV_ITEMS: { id: WorkspaceNavItem; label: string; suffix: string }[] = [
   { id: "overview", label: "Overview", suffix: "" },
@@ -15,6 +17,8 @@ const NAV_ITEMS: { id: WorkspaceNavItem; label: string; suffix: string }[] = [
   { id: "chat", label: "Chat", suffix: "/chat" },
   { id: "mistakes", label: "Mistakes", suffix: "/mistakes" },
   { id: "review", label: "Review", suffix: "/review" },
+  { id: "goals", label: "Goals", suffix: "/goals" },
+  { id: "log", label: "Log", suffix: "/log" },
 ];
 
 export default function ProjectWorkspaceNav({

@@ -2,8 +2,10 @@ import type {
   Chat,
   Material,
   Mistake,
+  ProjectGoals,
   StudyProject,
   Topic,
+  TrainingSession,
 } from "./types";
 
 export type ReadinessBand =
@@ -58,6 +60,17 @@ export interface TodaysPlanAction {
 export interface TodaysPlanMetrics {
   primary: TodaysPlanAction;
   secondary: TodaysPlanAction[];
+}
+
+export interface WeeklyProgressMetrics {
+  sessionsDone: number;
+  sessionGoal: number;
+  sessionPercent: number;
+  reviewsDone: number;
+  reviewGoal: number;
+  reviewPercent: number;
+  sessionsMet: boolean;
+  reviewsMet: boolean;
 }
 
 function clamp(value: number, min = 0, max = 1): number {
@@ -124,6 +137,76 @@ export function daysUntil(examDate?: string): number | null {
   return Math.ceil(difference / 86_400_000);
 }
 
+/** Local Monday 00:00 of the current week. */
+function startOfCurrentWeek(): Date {
+  const now = new Date();
+  const date = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  // getDay(): 0 = Sunday … 6 = Saturday. Shift so Monday is the first day.
+  const dayFromMonday = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - dayFromMonday);
+  return date;
+}
+
+function isInCurrentWeek(
+  value?: string | null,
+  weekStart?: Date,
+  now = new Date()
+): boolean {
+  const date = parseDate(value);
+  if (!date) return false;
+  const start = weekStart ?? startOfCurrentWeek();
+  return date.getTime() >= start.getTime() && date.getTime() <= now.getTime();
+}
+
+function safeNonNegativeInteger(value: number): number {
+  return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+}
+
+/**
+ * Weekly goal progress. Sessions come from the manual training log; reviews are
+ * derived from existing mistake review timestamps. Returns null when no goals
+ * are set so callers can fall back to pre-12B behavior.
+ */
+export function computeWeeklyProgress(
+  goals: ProjectGoals | null,
+  sessions: TrainingSession[],
+  mistakes: Mistake[]
+): WeeklyProgressMetrics | null {
+  if (!goals) return null;
+
+  const weekStart = startOfCurrentWeek();
+  const now = new Date();
+  const sessionGoal = safeNonNegativeInteger(goals.weeklySessionGoal);
+  const reviewGoal = safeNonNegativeInteger(goals.weeklyReviewGoal);
+
+  const sessionsDone = sessions.filter((session) =>
+    isInCurrentWeek(session.loggedAt, weekStart, now)
+  ).length;
+  const reviewsDone = mistakes.filter((mistake) =>
+    isInCurrentWeek(mistake.lastReviewed, weekStart, now)
+  ).length;
+
+  const sessionPercent =
+    sessionGoal === 0
+      ? 100
+      : Math.min(100, Math.round((sessionsDone / sessionGoal) * 100));
+  const reviewPercent =
+    reviewGoal === 0
+      ? 100
+      : Math.min(100, Math.round((reviewsDone / reviewGoal) * 100));
+
+  return {
+    sessionsDone,
+    sessionGoal,
+    sessionPercent,
+    reviewsDone,
+    reviewGoal,
+    reviewPercent,
+    sessionsMet: sessionGoal === 0 || sessionsDone >= sessionGoal,
+    reviewsMet: reviewGoal === 0 || reviewsDone >= reviewGoal,
+  };
+}
+
 export function computeReadiness(
   topics: Topic[],
   materials: Material[],
@@ -174,7 +257,8 @@ export function computeReadiness(
 export function computeActivity(
   chat: Chat | null,
   mistakes: Mistake[],
-  days = 84
+  days = 84,
+  sessions: TrainingSession[] = []
 ): ActivityCell[] {
   const safeDays = Math.max(1, Math.floor(Number.isFinite(days) ? days : 84));
   const counts = new Map<string, number>();
@@ -194,6 +278,10 @@ export function computeActivity(
   for (const mistake of mistakes) {
     increment(mistake.createdAt);
     increment(mistake.lastReviewed);
+  }
+
+  for (const session of sessions) {
+    increment(session.loggedAt);
   }
 
   const today = new Date();
@@ -319,11 +407,18 @@ export function computeTodaysPlan(
   project: StudyProject,
   topics: Topic[],
   materials: Material[],
-  mistakes: Mistake[]
+  mistakes: Mistake[],
+  goals: ProjectGoals | null = null,
+  weeklyProgress: WeeklyProgressMetrics | null = null
 ): TodaysPlanMetrics {
   const base = `/projects/${project.id}`;
   const materialIds = materialTopicIds(materials);
   const unreviewedMistakes = mistakes.filter((mistake) => !mistake.reviewed);
+  const focusTopicIds =
+    goals && Array.isArray(goals.focusTopicIds) ? goals.focusTopicIds : [];
+  const focusTopics = goals
+    ? topics.filter((topic) => focusTopicIds.includes(topic.id))
+    : [];
   const actions: TodaysPlanAction[] = [];
 
   function add(action: TodaysPlanAction) {
@@ -359,13 +454,47 @@ export function computeTodaysPlan(
     }
 
     if (unreviewedMistakes.length > 0) {
+      if (goals && weeklyProgress && !weeklyProgress.reviewsMet) {
+        add({
+          title: `Review toward your weekly goal (${weeklyProgress.reviewsDone} of ${weeklyProgress.reviewGoal})`,
+          description: "Keep your review streak on pace for this week.",
+          href: `${base}/review`,
+          kind: "review",
+        });
+      } else {
+        add({
+          title: `Review ${unreviewedMistakes.length} mistake${
+            unreviewedMistakes.length === 1 ? "" : "s"
+          }`,
+          description: "Retry saved mistakes before they fade from memory.",
+          href: `${base}/review`,
+          kind: "review",
+        });
+      }
+    }
+
+    // Goal-aware: focus topics chosen in goals take priority over generic gaps.
+    const focusTopicWithoutMaterials = focusTopics.find(
+      (topic) => !materialIds.has(topic.id)
+    );
+    if (focusTopicWithoutMaterials) {
       add({
-        title: `Review ${unreviewedMistakes.length} mistake${
-          unreviewedMistakes.length === 1 ? "" : "s"
-        }`,
-        description: "Retry saved mistakes before they fade from memory.",
-        href: `${base}/review`,
-        kind: "review",
+        title: `Add materials for ${focusTopicWithoutMaterials.name}`,
+        description: "This is one of your focus topics — give Ivvy something to train on.",
+        href: `${base}/materials`,
+        kind: "materials",
+      });
+    }
+
+    const focusTopicToTrain = focusTopics.find((topic) =>
+      materialIds.has(topic.id)
+    );
+    if (focusTopicToTrain) {
+      add({
+        title: `Train your focus topic: ${focusTopicToTrain.name}`,
+        description: "You marked this as a priority for the exam.",
+        href: `${base}/chat`,
+        kind: "training",
       });
     }
 
@@ -397,6 +526,16 @@ export function computeTodaysPlan(
           weakest.count === 1 ? "" : "s"
         } point${weakest.count === 1 ? "s" : ""} to this topic.`,
         href: `${base}/chat`,
+        kind: "training",
+      });
+    }
+
+    // Goal-aware: remind the student to log effort toward the weekly session goal.
+    if (weeklyProgress && !weeklyProgress.sessionsMet) {
+      add({
+        title: `Log a session toward your weekly goal (${weeklyProgress.sessionsDone} of ${weeklyProgress.sessionGoal})`,
+        description: "Record study, chat, or review time to track your week.",
+        href: `${base}/log`,
         kind: "training",
       });
     }

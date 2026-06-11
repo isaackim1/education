@@ -195,3 +195,33 @@ export interface Chat {
   createdAt: string;
   lastMessageAt: string | null;
 }
+
+// ─── Goals + training log (Phase 12B) ────────────────────────────────────────
+// Note: examDate and targetGrade live on StudyProject and remain the single
+// source of truth — they are intentionally NOT duplicated here.
+
+export interface ProjectGoals {
+  projectId: string;
+  weeklySessionGoal: number;
+  weeklyReviewGoal: number;
+  focusTopicIds: string[];
+  currentConfidence: 1 | 2 | 3 | 4 | 5;
+  updatedAt: string;
+}
+
+export type TrainingSessionType =
+  | "studied-materials"
+  | "trained-chat"
+  | "reviewed-mistakes"
+  | "other";
+
+export interface TrainingSession {
+  id: string;
+  projectId: string;
+  type: TrainingSessionType;
+  topicId: string | null;
+  durationMinutes: number;
+  note: string;
+  confidenceAfter: 1 | 2 | 3 | 4 | 5 | null;
+  loggedAt: string;
+}

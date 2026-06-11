@@ -5,8 +5,10 @@ import type {
   Material,
   Mistake,
   MistakeCategory,
+  ProjectGoals,
   StudyProject,
   Topic,
+  TrainingSession,
 } from "./types";
 
 const PROJECTS_KEY = "sc_projects";
@@ -29,6 +31,124 @@ function projectMistakesKey(projectId: string): string {
 
 function projectProfileKey(projectId: string): string {
   return `sc_profile_${projectId}`;
+}
+
+function projectGoalsKey(projectId: string): string {
+  return `sc_goals_${projectId}`;
+}
+
+function trainingLogKey(projectId: string): string {
+  return `sc_training_log_${projectId}`;
+}
+
+const MAX_WEEKLY_SESSION_GOAL = 50;
+const MAX_WEEKLY_REVIEW_GOAL = 200;
+const MAX_SESSION_DURATION_MINUTES = 600;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function clampFiniteInteger(value: unknown, max: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+  return Math.min(max, Math.max(0, Math.floor(value)));
+}
+
+function isConfidence(value: unknown): value is 1 | 2 | 3 | 4 | 5 {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 1 &&
+    value <= 5
+  );
+}
+
+function isValidTimestamp(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.trim().length > 0 &&
+    !Number.isNaN(new Date(value).getTime())
+  );
+}
+
+function normalizeProjectGoals(
+  value: unknown,
+  projectId: string
+): ProjectGoals | null {
+  if (!isRecord(value) || value.projectId !== projectId) return null;
+  if (
+    typeof value.weeklySessionGoal !== "number" ||
+    !Number.isFinite(value.weeklySessionGoal) ||
+    typeof value.weeklyReviewGoal !== "number" ||
+    !Number.isFinite(value.weeklyReviewGoal)
+  ) {
+    return null;
+  }
+
+  const focusTopicIds =
+    Array.isArray(value.focusTopicIds) &&
+    value.focusTopicIds.every((topicId) => typeof topicId === "string")
+      ? Array.from(new Set(value.focusTopicIds))
+      : [];
+
+  return {
+    projectId,
+    weeklySessionGoal: clampFiniteInteger(
+      value.weeklySessionGoal,
+      MAX_WEEKLY_SESSION_GOAL
+    ),
+    weeklyReviewGoal: clampFiniteInteger(
+      value.weeklyReviewGoal,
+      MAX_WEEKLY_REVIEW_GOAL
+    ),
+    focusTopicIds,
+    currentConfidence: isConfidence(value.currentConfidence)
+      ? value.currentConfidence
+      : 3,
+    updatedAt: isValidTimestamp(value.updatedAt)
+      ? value.updatedAt
+      : new Date().toISOString(),
+  };
+}
+
+function normalizeTrainingSession(
+  value: unknown,
+  projectId: string
+): TrainingSession | null {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== "string" ||
+    value.id.trim().length === 0 ||
+    value.projectId !== projectId ||
+    !isValidTimestamp(value.loggedAt)
+  ) {
+    return null;
+  }
+
+  if (
+    value.type !== "studied-materials" &&
+    value.type !== "trained-chat" &&
+    value.type !== "reviewed-mistakes" &&
+    value.type !== "other"
+  ) {
+    return null;
+  }
+
+  return {
+    id: value.id,
+    projectId,
+    type: value.type,
+    topicId: typeof value.topicId === "string" ? value.topicId : null,
+    durationMinutes: clampFiniteInteger(
+      value.durationMinutes,
+      MAX_SESSION_DURATION_MINUTES
+    ),
+    note: typeof value.note === "string" ? value.note : "",
+    confidenceAfter: isConfidence(value.confidenceAfter)
+      ? value.confidenceAfter
+      : null,
+    loggedAt: value.loggedAt,
+  };
 }
 
 function isBrowser(): boolean {
@@ -317,6 +437,59 @@ export function saveProjectProfile(
   writeJson(projectProfileKey(projectId), profile);
 }
 
+// ─── Project goals (Phase 12B) ───────────────────────────────────────────────
+
+export function getProjectGoals(projectId: string): ProjectGoals | null {
+  return normalizeProjectGoals(
+    readJson<unknown>(projectGoalsKey(projectId), null),
+    projectId
+  );
+}
+
+export function saveProjectGoals(
+  projectId: string,
+  goals: ProjectGoals
+): boolean {
+  return writeJson(projectGoalsKey(projectId), goals);
+}
+
+// ─── Training log (Phase 12B) ────────────────────────────────────────────────
+
+export function getTrainingLog(projectId: string): TrainingSession[] {
+  const raw = readJson<unknown>(trainingLogKey(projectId), []);
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .map((session) => normalizeTrainingSession(session, projectId))
+    .filter((session): session is TrainingSession => session !== null);
+}
+
+function saveTrainingLog(
+  projectId: string,
+  sessions: TrainingSession[]
+): boolean {
+  return writeJson(trainingLogKey(projectId), sessions);
+}
+
+export function addTrainingSession(
+  projectId: string,
+  session: TrainingSession
+): boolean {
+  const sessions = getTrainingLog(projectId);
+  sessions.push(session);
+  return saveTrainingLog(projectId, sessions);
+}
+
+export function deleteTrainingSession(
+  projectId: string,
+  sessionId: string
+): boolean {
+  return saveTrainingLog(
+    projectId,
+    getTrainingLog(projectId).filter((session) => session.id !== sessionId)
+  );
+}
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 export function clearProjectData(projectId: string): void {
@@ -325,4 +498,6 @@ export function clearProjectData(projectId: string): void {
   removeItem(projectChatKey(projectId));
   removeItem(projectMistakesKey(projectId));
   removeItem(projectProfileKey(projectId));
+  removeItem(projectGoalsKey(projectId));
+  removeItem(trainingLogKey(projectId));
 }

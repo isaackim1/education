@@ -6,6 +6,7 @@ import {
   getProject,
   getProjectMaterials,
   getProjectTopics,
+  saveProject,
   saveProjectMaterials,
   saveProjectTopics,
 } from "@/lib/project-storage";
@@ -85,6 +86,19 @@ export function useProject(projectId: string) {
     [projectId]
   );
 
+  // Safe partial update of the existing StudyProject — keeps it as the single
+  // source of truth for fields like examDate and targetGrade (Phase 12B).
+  const updateProject = useCallback(
+    (updates: Partial<Pick<StudyProject, "examDate" | "targetGrade">>) => {
+      const current = getProject(projectId);
+      if (!current) return;
+      const next: StudyProject = { ...current, ...updates };
+      saveProject(next);
+      setProject(next);
+    },
+    [projectId]
+  );
+
   const updateTopic = useCallback(
     (topicId: string, updates: Partial<Topic>) => {
       const current = getProjectTopics(projectId);
@@ -106,6 +120,7 @@ export function useProject(projectId: string) {
     addTopic,
     deleteTopic,
     updateTopic,
+    updateProject,
     refreshProject,
   };
 }
