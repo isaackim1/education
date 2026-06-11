@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChangeEvent, useMemo, useRef, useState } from "react";
 import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
 import { useProject } from "@/hooks/useProject";
@@ -13,6 +14,13 @@ import {
   type ImportSource,
   type MaterialSegment,
 } from "@/lib/material-segmenter";
+import {
+  getProjectMaterials,
+  getProjectTopics,
+  saveProjectMaterials,
+  saveProjectTopics,
+} from "@/lib/project-storage";
+import type { Material, Topic } from "@/lib/types";
 
 const MATERIAL_TEXT_LIMIT = 12_000;
 const FILE_ACCEPT =
@@ -93,7 +101,28 @@ function isAssignmentsResponse(
   );
 }
 
+// A kept, named topic that has at least one assigned segment — the only
+// buckets we persist on accept. Empty buckets, dropped topics, and unsorted
+// segments are intentionally excluded.
+type AcceptBucket = { name: string; segments: MaterialSegment[] };
+
+function buildAcceptBuckets(review: ReviewState): AcceptBucket[] {
+  const buckets: AcceptBucket[] = [];
+  for (const topic of review.topics) {
+    if (!topic.keep) continue;
+    const name = topic.name.trim();
+    if (!name) continue;
+    const segments = review.segments.filter(
+      (segment) => review.assignment[segment.id] === topic.id
+    );
+    if (segments.length === 0) continue;
+    buckets.push({ name, segments });
+  }
+  return buckets;
+}
+
 function ImportContent({ projectId }: { projectId: string }) {
+  const router = useRouter();
   const { project, topics, isLoaded } = useProject(projectId);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -107,6 +136,9 @@ function ImportContent({ projectId }: { projectId: string }) {
   const [organizeError, setOrganizeError] = useState("");
   const [sortDegraded, setSortDegraded] = useState(false);
   const [review, setReview] = useState<ReviewState | null>(null);
+
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [acceptError, setAcceptError] = useState("");
 
   const combinedText = useMemo(() => {
     const parts = [
@@ -335,6 +367,114 @@ function ImportContent({ projectId }: { projectId: string }) {
     });
   }
 
+  // ─── Accept — the only point at which anything is persisted ───────────────
+  function handleAccept() {
+    if (!review || isAccepting) return;
+
+    const buckets = buildAcceptBuckets(review);
+    if (buckets.length === 0) {
+      setAcceptError(
+        "Keep at least one named topic with material before accepting."
+      );
+      return;
+    }
+
+    setIsAccepting(true);
+    setAcceptError("");
+
+    try {
+      const existingTopics = getProjectTopics(projectId);
+      const existingMaterials = getProjectMaterials(projectId);
+
+      const nextTopics: Topic[] = [...existingTopics];
+      // Reuse an existing topic when names match (case-insensitive) instead of
+      // creating a duplicate; this map also dedupes buckets within one accept.
+      const topicByNormalized = new Map<string, Topic>(
+        existingTopics.map((topic) => [
+          topic.name.trim().toLocaleLowerCase(),
+          topic,
+        ])
+      );
+
+      // topicId -> concatenated segment texts. Buckets that resolve to the same
+      // topic (e.g. a rename collides with an existing topic) merge here so we
+      // still save exactly one material per topic.
+      const contentByTopicId = new Map<string, string[]>();
+      const titleByTopicId = new Map<string, string>();
+
+      for (const bucket of buckets) {
+        const normalized = bucket.name.toLocaleLowerCase();
+        let topic = topicByNormalized.get(normalized);
+        if (!topic) {
+          topic = {
+            id: generateId(),
+            examId: projectId,
+            name: bucket.name,
+            masteryScore: 0,
+            isWeakTopic: false,
+            mistakeCount: 0,
+            lastStudied: null,
+            masteryHistory: [],
+            notes: "",
+            pastQuestions: "",
+          };
+          nextTopics.push(topic);
+          topicByNormalized.set(normalized, topic);
+        }
+        const texts = contentByTopicId.get(topic.id) ?? [];
+        for (const segment of bucket.segments) texts.push(segment.text);
+        contentByTopicId.set(topic.id, texts);
+        if (!titleByTopicId.has(topic.id)) {
+          titleByTopicId.set(topic.id, topic.name);
+        }
+      }
+
+      const now = new Date().toISOString();
+      const nextMaterials: Material[] = [...existingMaterials];
+
+      for (const [topicId, texts] of Array.from(contentByTopicId.entries())) {
+        const content = texts.join("\n\n");
+        if (content.trim().length === 0) continue; // never create empty material
+        const title = titleByTopicId.get(topicId) ?? "Imported notes";
+        // The material lookup expects one material per topic, so overwrite the
+        // topic's existing material rather than appending a second.
+        const index = nextMaterials.findIndex((m) => m.topicId === topicId);
+        if (index >= 0) {
+          nextMaterials[index] = {
+            ...nextMaterials[index],
+            title: nextMaterials[index].title.trim() || title,
+            content,
+            source: "paste",
+            fileName: undefined,
+            fileType: undefined,
+          };
+        } else {
+          nextMaterials.push({
+            id: generateId(),
+            projectId,
+            topicId,
+            title,
+            content,
+            aiSummary: null,
+            analyzedAt: null,
+            createdAt: now,
+            source: "paste",
+          });
+        }
+      }
+
+      saveProjectTopics(projectId, nextTopics);
+      saveProjectMaterials(projectId, nextMaterials);
+    } catch {
+      setIsAccepting(false);
+      setAcceptError("Ivvy could not save your training map. Try again.");
+      return;
+    }
+
+    // Keep isAccepting true through navigation so the button stays locked.
+    router.push(`/projects/${projectId}`);
+  }
+
   if (!isLoaded) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#F8FAFD]">
@@ -377,11 +517,14 @@ function ImportContent({ projectId }: { projectId: string }) {
           <ReviewPanel
             review={review}
             sortDegraded={sortDegraded}
+            isAccepting={isAccepting}
+            acceptError={acceptError}
             onToggleKeep={toggleKeep}
             onRename={renameTopic}
             onMove={moveSegment}
             onRemove={removeSegment}
             onStartOver={resetToInput}
+            onAccept={handleAccept}
           />
         ) : (
           <section className="space-y-5">
@@ -523,22 +666,29 @@ function ImportContent({ projectId }: { projectId: string }) {
 function ReviewPanel({
   review,
   sortDegraded,
+  isAccepting,
+  acceptError,
   onToggleKeep,
   onRename,
   onMove,
   onRemove,
   onStartOver,
+  onAccept,
 }: {
   review: ReviewState;
   sortDegraded: boolean;
+  isAccepting: boolean;
+  acceptError: string;
   onToggleKeep: (topicId: string) => void;
   onRename: (topicId: string, name: string) => void;
   onMove: (segmentId: string, target: string) => void;
   onRemove: (segmentId: string) => void;
   onStartOver: () => void;
+  onAccept: () => void;
 }) {
   const keptTopics = review.topics.filter((topic) => topic.keep);
   const keptIds = new Set(keptTopics.map((topic) => topic.id));
+  const canAccept = buildAcceptBuckets(review).length > 0;
 
   function segmentsFor(topicId: string): MaterialSegment[] {
     return review.segments.filter(
@@ -569,7 +719,12 @@ function ReviewPanel({
               {unsortedSegments.length} unsorted
             </p>
           </div>
-          <button type="button" onClick={onStartOver} className={OUTLINE_ACTION}>
+          <button
+            type="button"
+            onClick={onStartOver}
+            disabled={isAccepting}
+            className={OUTLINE_ACTION}
+          >
             Start over
           </button>
         </div>
@@ -672,17 +827,28 @@ function ReviewPanel({
       <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
         <button
           type="button"
-          disabled
-          aria-disabled="true"
-          title="Available in the next update"
-          className={`${PRIMARY_ACTION}`}
+          onClick={onAccept}
+          disabled={!canAccept || isAccepting}
+          className={PRIMARY_ACTION}
         >
-          Coming next: Accept training map
+          {isAccepting ? "Saving…" : "Accept training map"}
         </button>
         <p className="mt-2 text-xs text-[#80868B]">
-          Reviewing only — nothing is saved yet. Accepting will create topics and
-          materials in a later update.
+          Creates topics and study materials from your reviewed buckets.
         </p>
+        {!canAccept && !isAccepting ? (
+          <p className="mt-2 text-xs text-[#80868B]">
+            Keep at least one named topic with material to accept.
+          </p>
+        ) : null}
+        {acceptError ? (
+          <p
+            className="mt-3 rounded-lg bg-[#FCE8E6] px-3 py-2 text-sm text-[#C5221F]"
+            role="alert"
+          >
+            {acceptError}
+          </p>
+        ) : null}
       </section>
     </div>
   );
