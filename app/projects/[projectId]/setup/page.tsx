@@ -54,6 +54,12 @@ export default function ProjectSetupPage({
             Topics define what Ivvy should train you on. Add what the exam
             actually tests &mdash; smaller topics produce sharper questions.
           </p>
+          <Link
+            href={`/projects/${params.projectId}/import`}
+            className="inline-flex items-center h-9 -ml-1 mt-3 px-3 rounded-full text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+          >
+            Upload once and organize materials &rarr;
+          </Link>
         </header>
 
         <div className="space-y-5">
