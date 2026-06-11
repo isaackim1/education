@@ -20,6 +20,7 @@ import {
   buildProjectContextMessage,
   buildTrainingSessionSystemPrompt,
   type ProjectChatContext,
+  type TrainingMode,
 } from "@/lib/project-prompts";
 import {
   createProjectMistakeFromChat,
@@ -87,6 +88,60 @@ function isAbortError(err: unknown): boolean {
 
 const TIMEOUT_MESSAGE =
   "Ivvy timed out after 30 seconds. Try again, or end the session.";
+
+const TRAINING_MODES: { value: TrainingMode; label: string; hint: string }[] = [
+  {
+    value: "written",
+    label: "Written answer",
+    hint: "Short exam-style written responses.",
+  },
+  {
+    value: "multiple-choice",
+    label: "Multiple choice",
+    hint: "Pick from A–D options.",
+  },
+  {
+    value: "solve",
+    label: "Solve / calculate",
+    hint: "Work through a calculation or problem.",
+  },
+];
+
+type ParsedChoice = { letter: string; text: string };
+type ParsedMultipleChoice = { stem: string; options: ParsedChoice[] };
+
+// Matches lines like "A) text", "(B) text", "C. text", "D - text".
+const OPTION_LINE = /^\s*\(?([A-Da-d])[).:\-]\s+(.*\S)\s*$/;
+
+// Parse an A/B/C/D multiple-choice question only when it is clearly formatted.
+// Returns null on any uncertainty so the UI safely falls back to text input.
+function parseMultipleChoice(reply: string): ParsedMultipleChoice | null {
+  const stemLines: string[] = [];
+  const options: ParsedChoice[] = [];
+  let inOptions = false;
+
+  for (const line of reply.split("\n")) {
+    const match = line.match(OPTION_LINE);
+    if (match) {
+      inOptions = true;
+      options.push({ letter: match[1].toUpperCase(), text: match[2].trim() });
+    } else if (!inOptions) {
+      stemLines.push(line);
+    }
+  }
+
+  const letters = options.map((option) => option.letter);
+  const isExactABCD =
+    options.length === 4 &&
+    ["A", "B", "C", "D"].every((letter, index) => letters[index] === letter);
+  if (!isExactABCD) return null;
+  if (options.some((option) => option.text.length === 0)) return null;
+
+  const stem = stemLines.join("\n").trim();
+  if (!stem) return null;
+
+  return { stem, options };
+}
 
 function getRecentUnreviewedMistakes(mistakes: Mistake[]) {
   return mistakes
@@ -158,6 +213,7 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
   const [selectedTopicId, setSelectedTopicId] = useState<string>("");
   const [selectionInitialized, setSelectionInitialized] = useState(false);
   const [questionTarget, setQuestionTarget] = useState(DEFAULT_QUESTION_COUNT);
+  const [trainingMode, setTrainingMode] = useState<TrainingMode>("written");
   const [status, setStatus] = useState<SessionStatus>("setup");
   const [messages, setMessages] = useState<ApiMessage[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState("");
@@ -235,6 +291,15 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
   const isLoaded =
     projectLoaded && materialsLoaded && goalsLoaded && logLoaded && mistakesLoaded;
 
+  // Only attempt to parse choices in multiple-choice mode; null = text fallback.
+  const parsedChoices = useMemo(
+    () =>
+      trainingMode === "multiple-choice"
+        ? parseMultipleChoice(currentQuestion)
+        : null,
+    [trainingMode, currentQuestion]
+  );
+
   const requestAgent = useCallback(
     async (nextMessages: ApiMessage[]): Promise<AgentResponse> => {
       if (!project) throw new Error("Project not found");
@@ -255,7 +320,7 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             messages: toApiMessages(nextMessages),
-            systemPrompt: buildTrainingSessionSystemPrompt(),
+            systemPrompt: buildTrainingSessionSystemPrompt(trainingMode),
             contextMessage: buildProjectContextMessage(context),
           }),
           signal: controller.signal,
@@ -289,7 +354,7 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
         clearTimeout(timeoutId);
       }
     },
-    [materials, mistakes, project, selectedTopic?.name, topics]
+    [materials, mistakes, project, selectedTopic?.name, topics, trainingMode]
   );
 
   const finishSession = useCallback(
@@ -362,9 +427,8 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
     );
   }
 
-  async function handleAnswer(event: FormEvent) {
-    event.preventDefault();
-    const trimmed = answer.trim();
+  async function submitAnswer(rawAnswer: string) {
+    const trimmed = rawAnswer.trim();
     if (!trimmed || !currentQuestion || requestInFlightRef.current) return;
 
     requestInFlightRef.current = true;
@@ -427,6 +491,16 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
       requestInFlightRef.current = false;
       setIsRequesting(false);
     }
+  }
+
+  function handleAnswer(event: FormEvent) {
+    event.preventDefault();
+    void submitAnswer(answer);
+  }
+
+  function handleSelectChoice(choice: ParsedChoice) {
+    // Send the chosen option plus its text so feedback is grounded.
+    void submitAnswer(`${choice.letter}) ${choice.text}`);
   }
 
   function handleNextQuestion() {
@@ -529,6 +603,40 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
               </select>
             </label>
 
+            <fieldset className="mt-5">
+              <legend className="text-sm font-medium text-[#1F1F1F]">
+                Training mode
+              </legend>
+              <p className="mt-1 text-sm text-[#5F6368]">
+                Choose how Ivvy should format its questions.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {TRAINING_MODES.map((mode) => {
+                  const isSelected = trainingMode === mode.value;
+                  return (
+                    <button
+                      key={mode.value}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => setTrainingMode(mode.value)}
+                      className={`rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2 ${
+                        isSelected
+                          ? "border-[#1F1F1F] bg-[#F1F3F4]"
+                          : "border-[#C4C7C5] bg-white hover:bg-[#F8FAFD]"
+                      }`}
+                    >
+                      <span className="block text-sm font-medium text-[#1F1F1F]">
+                        {mode.label}
+                      </span>
+                      <span className="mt-1 block text-xs text-[#5F6368]">
+                        {mode.hint}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+
             <button type="button" onClick={handleStart} className={`${PRIMARY_ACTION} mt-6`}>
               Start active training
             </button>
@@ -629,7 +737,7 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
                     Ivvy&apos;s question
                   </p>
                   <p className="mt-2 whitespace-pre-wrap text-base text-[#1F1F1F]">
-                    {currentQuestion}
+                    {parsedChoices ? parsedChoices.stem : currentQuestion}
                   </p>
                 </div>
               ) : (
@@ -646,27 +754,58 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
               )}
 
               {currentQuestion && !feedback ? (
-                <form onSubmit={handleAnswer} className="mt-6">
-                  <label className="block space-y-1.5">
-                    <span className="text-sm font-medium text-[#1F1F1F]">
-                      Your answer
-                    </span>
-                    <textarea
-                      value={answer}
-                      onChange={(event) => setAnswer(event.target.value)}
-                      rows={5}
-                      disabled={isRequesting}
-                      className="w-full rounded-lg border border-[#C4C7C5] bg-white px-4 py-3 text-sm text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15"
-                    />
-                  </label>
-                  <button
-                    type="submit"
-                    disabled={isRequesting || !answer.trim()}
-                    className={`${PRIMARY_ACTION} mt-4`}
-                  >
-                    Submit answer
-                  </button>
-                </form>
+                parsedChoices ? (
+                  <div className="mt-6">
+                    <p className="text-sm font-medium text-[#1F1F1F]">
+                      Choose an answer
+                    </p>
+                    <div className="mt-3 grid gap-2">
+                      {parsedChoices.options.map((choice) => (
+                        <button
+                          key={choice.letter}
+                          type="button"
+                          onClick={() => handleSelectChoice(choice)}
+                          disabled={isRequesting}
+                          className="flex items-start gap-3 rounded-lg border border-[#C4C7C5] bg-white px-4 py-3 text-left text-sm text-[#1F1F1F] transition-colors hover:bg-[#F8FAFD] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+                        >
+                          <span className="font-semibold text-[#1F1F1F]">
+                            {choice.letter}
+                          </span>
+                          <span className="flex-1">{choice.text}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleAnswer} className="mt-6">
+                    <label className="block space-y-1.5">
+                      <span className="text-sm font-medium text-[#1F1F1F]">
+                        {trainingMode === "solve"
+                          ? "Your working and final answer"
+                          : "Your answer"}
+                      </span>
+                      <textarea
+                        value={answer}
+                        onChange={(event) => setAnswer(event.target.value)}
+                        rows={5}
+                        disabled={isRequesting}
+                        placeholder={
+                          trainingMode === "solve"
+                            ? "Show your working, then state your final answer."
+                            : undefined
+                        }
+                        className="w-full rounded-lg border border-[#C4C7C5] bg-white px-4 py-3 text-sm text-[#1F1F1F] placeholder:text-[#80868B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15"
+                      />
+                    </label>
+                    <button
+                      type="submit"
+                      disabled={isRequesting || !answer.trim()}
+                      className={`${PRIMARY_ACTION} mt-4`}
+                    >
+                      Submit answer
+                    </button>
+                  </form>
+                )
               ) : null}
 
               {feedback ? (

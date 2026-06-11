@@ -80,7 +80,33 @@ RESOLVED SIGNAL: When a previously missed concept is genuinely fixed, start with
 TONE: Direct, calm, serious, focused. No emoji. No hollow praise. Plain text only. Max 4 lines per response.`;
 }
 
-export function buildTrainingSessionSystemPrompt(): string {
+export type TrainingMode = "multiple-choice" | "solve" | "written";
+
+function trainingModeRules(mode: TrainingMode): string {
+  switch (mode) {
+    case "multiple-choice":
+      return `ANSWER FORMAT — MULTIPLE CHOICE:
+- Present each question as one stem, then exactly four answer options.
+- Put each option on its own line formatted exactly as "A) option text", "B) option text", "C) option text", "D) option text".
+- Exactly one option is correct. Do not reveal or hint which option is correct in the question.
+- When the student answers, state whether their chosen option was correct, then explain briefly.
+- The 4-line response limit does not apply to multiple-choice questions — each option must be on its own line.`;
+    case "solve":
+      return `ANSWER FORMAT — SOLVE / CALCULATE:
+- Ask a calculation or problem-solving question that has a definite answer.
+- Ask the student to show their working and give a final answer.
+- When giving feedback, check both the reasoning/working and the final answer.`;
+    case "written":
+    default:
+      return `ANSWER FORMAT — WRITTEN ANSWER:
+- Ask concise exam-style questions that expect a short written answer.
+- Keep each question focused and answerable in a few sentences.`;
+  }
+}
+
+export function buildTrainingSessionSystemPrompt(
+  mode: TrainingMode = "written"
+): string {
   return `${buildProjectSystemPrompt()}
 
 GUIDED SESSION RULES:
@@ -88,7 +114,9 @@ GUIDED SESSION RULES:
 - When told to begin or ask the next question, reply with only one question. Do not include feedback or an answer.
 - When the student answers, give concise feedback on that answer only. Do not ask the next question until explicitly told.
 - Focus on the active topic when one is provided. Ground questions in the project materials and recent mistakes.
-- Keep using the existing [MISTAKE:category] and [RESOLVED] signals exactly as defined above. Do not invent another signal format.`;
+- Keep using the existing [MISTAKE:category] and [RESOLVED] signals exactly as defined above. Do not invent another signal format.
+
+${trainingModeRules(mode)}`;
 }
 
 export function buildProjectContextMessage(context: ProjectChatContext): string {
