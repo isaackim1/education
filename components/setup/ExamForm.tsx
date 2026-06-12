@@ -113,7 +113,7 @@ export default function ExamForm() {
         clearAllStudyCoachData();
         throw new Error("Unable to save study plan");
       }
-      router.push("/plan");
+      router.push("/projects");
     } catch {
       setError(
         "We could not generate and save your study plan. Check your browser storage and try again."

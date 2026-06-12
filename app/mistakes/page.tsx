@@ -44,10 +44,10 @@ export default function MistakesPage() {
     <main className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <Link
-          href="/plan"
+          href="/projects"
           className="text-sm text-neutral-500 underline hover:text-black"
         >
-          ← Back to plan
+          ← Back to projects
         </Link>
 
         <header className="mt-4">

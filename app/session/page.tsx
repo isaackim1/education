@@ -570,10 +570,10 @@ function SessionContent() {
             Session day not found.
           </p>
           <Link
-            href="/plan"
+            href="/projects"
             className="inline-block bg-black text-white text-sm px-4 py-2 rounded hover:bg-neutral-800"
           >
-            Back to plan
+            Back to projects
           </Link>
         </div>
       </main>
@@ -607,10 +607,10 @@ function SessionContent() {
           </p>
           {sessionError && (
             <Link
-              href="/plan"
+              href="/projects"
               className="inline-block bg-black text-white text-sm px-4 py-2 rounded hover:bg-neutral-800"
             >
-              Back to plan
+              Back to projects
             </Link>
           )}
         </div>
@@ -623,10 +623,10 @@ function SessionContent() {
       <div className="border-b border-neutral-200 px-4 py-3 flex items-center justify-between shrink-0">
         <p className="text-sm font-semibold">StudyCoach</p>
         <Link
-          href="/plan"
+          href="/projects"
           className="text-xs text-neutral-500 underline hover:text-black"
         >
-          ← Back to plan
+          ← Back to projects
         </Link>
       </div>
 
@@ -740,7 +740,7 @@ function SessionContent() {
         open={summaryOpen}
         summary={sessionSummary}
         onClose={() => setSummaryOpen(false)}
-        onBackToPlan={() => router.push("/plan")}
+        onBackToPlan={() => router.push("/projects")}
       />
     </main>
   );

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import DemoChat from "@/components/marketing/DemoChat";
 
 const primaryCta =
   "inline-flex h-11 items-center justify-center rounded-full bg-[#1A1A17] px-6 text-sm font-medium text-white transition-colors duration-200 hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]";
@@ -37,6 +38,12 @@ function Nav() {
         <LogoMark />
         <div className="hidden items-center gap-8 md:flex">
           <a
+            href="#demo"
+            className="text-sm font-medium text-[#56524B] transition-colors hover:text-[#1A1A17]"
+          >
+            Try the tutor
+          </a>
+          <a
             href="#how"
             className="text-sm font-medium text-[#56524B] transition-colors hover:text-[#1A1A17]"
           >
@@ -73,10 +80,10 @@ function Hero() {
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <Link href="/projects" className={primaryCta}>
-              Start with your materials
+              Open workspace
             </Link>
-            <a href="#how" className={secondaryCta}>
-              See how it works
+            <a href="#demo" className={secondaryCta}>
+              Try the tutor
             </a>
           </div>
           <p className="mt-6 text-sm text-[#7A766D]">
@@ -120,6 +127,29 @@ function Hero() {
   );
 }
 
+function DemoSection() {
+  return (
+    <section id="demo" className="w-full border-b border-[#E7E3DA] bg-white">
+      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-20 sm:px-8 lg:grid-cols-12">
+        <div className="lg:col-span-5">
+          <Eyebrow>Try the tutor</Eyebrow>
+          <h2 className="mt-3 font-serif text-[32px] leading-tight tracking-[-0.01em] text-[#1A1A17] sm:text-[40px]">
+            Ask a question. See how Ivvy teaches.
+          </h2>
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-[#56524B]">
+            This is a quick preview — a few free questions, no sign-up. The full
+            tutor trains you on your own materials, saves your mistakes, and
+            tracks your readiness for exam day.
+          </p>
+        </div>
+        <div className="lg:col-span-7">
+          <DemoChat />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function HowItWorks() {
   const steps = [
     {
@@ -134,11 +164,16 @@ function HowItWorks() {
     },
     {
       n: "03",
-      title: "Train",
-      body: "Practice exam-style questions, teach a topic back, or generate a study sheet. Mistakes are saved automatically.",
+      title: "Train actively",
+      body: "Practice exam-style questions and teach topics back. Ivvy adapts to your answers and finds the gaps.",
     },
     {
       n: "04",
+      title: "Review mistakes",
+      body: "Flagged mistakes are saved to a mistake bank and resurfaced until you've genuinely closed the gap.",
+    },
+    {
+      n: "05",
       title: "Track progress",
       body: "A command-center dashboard shows readiness, weak topics, and what to train next as your exam approaches.",
     },
@@ -147,12 +182,12 @@ function HowItWorks() {
   return (
     <section id="how" className="w-full border-b border-[#E7E3DA]">
       <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8">
-        <Eyebrow>How it works</Eyebrow>
+        <Eyebrow>The loop</Eyebrow>
         <h2 className="mt-3 max-w-2xl font-serif text-[32px] leading-tight tracking-[-0.01em] text-[#1A1A17] sm:text-[40px]">
           From scattered materials to focused training.
         </h2>
 
-        <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-[#E7E3DA] bg-[#E7E3DA] sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-[#E7E3DA] bg-[#E7E3DA] sm:grid-cols-2 lg:grid-cols-5">
           {steps.map((step) => (
             <div key={step.n} className="flex flex-col bg-[#FAF8F4] p-6">
               <span className="font-serif text-[15px] text-[#A8A299] tabular-nums">
@@ -192,20 +227,28 @@ function PositioningQuote() {
 function StudySystem() {
   const modes = [
     {
-      title: "Train",
+      title: "Training map",
+      body: "Your materials become a structured map of topics — the backbone every study mode trains against.",
+    },
+    {
+      title: "Active questions",
       body: "Guided, exam-style questions with feedback. Wrong answers flow straight into your mistake bank.",
     },
     {
-      title: "Teach back",
+      title: "Teach Back",
       body: "Explain a topic in your own words and let Ivvy find the gaps in your understanding.",
     },
     {
-      title: "Study sheet",
+      title: "Study Sheet",
       body: "Turn a topic's material into a structured, exam-ready summary in one click.",
     },
     {
       title: "Mistake bank",
-      body: "Every mistake is saved and resurfaced until you've genuinely closed the gap.",
+      body: "Flagged mistakes are saved and resurfaced until you've genuinely closed the gap.",
+    },
+    {
+      title: "Progress dashboard",
+      body: "A command center for readiness, weak topics, training activity, and what to do next.",
     },
   ];
 
@@ -218,12 +261,12 @@ function StudySystem() {
             More than a chat. A study operating system.
           </h2>
           <p className="mt-4 text-[15px] leading-relaxed text-[#56524B]">
-            Four modes work from the same topic map and materials, so every
+            Six modules work from the same topic map and materials, so every
             session builds on the last.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {modes.map((mode) => (
             <div
               key={mode.title}
@@ -255,12 +298,12 @@ function FinalCta() {
           training map in minutes.
         </p>
         <div className="mt-9 flex justify-center gap-3">
-          <Link href="/projects" className={primaryCta}>
+          <Link href="/signup" className={primaryCta}>
+            Start with your materials
+          </Link>
+          <Link href="/projects" className={secondaryCta}>
             Open workspace
           </Link>
-          <a href="#how" className={secondaryCta}>
-            See how it works
-          </a>
         </div>
       </div>
     </section>
@@ -285,6 +328,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#FAF8F4] text-[#1A1A17]">
       <Nav />
       <Hero />
+      <DemoSection />
       <HowItWorks />
       <PositioningQuote />
       <StudySystem />

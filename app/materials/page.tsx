@@ -26,10 +26,10 @@ export default function MaterialsPage() {
       <main className="min-h-screen bg-white">
         <div className="border-b border-neutral-200 px-4 py-4">
           <Link
-            href="/plan"
+            href="/projects"
             className="text-sm text-neutral-500 underline hover:text-black"
           >
-            ← Back to plan
+            ← Back to projects
           </Link>
         </div>
         <div className="max-w-2xl mx-auto px-4 py-8">
@@ -47,10 +47,10 @@ export default function MaterialsPage() {
     <main className="min-h-screen bg-white">
       <div className="border-b border-neutral-200 px-4 py-4 flex items-center justify-between">
         <Link
-          href="/plan"
+          href="/projects"
           className="text-sm text-neutral-500 underline hover:text-black"
         >
-          ← Back to plan
+          ← Back to projects
         </Link>
         <h1 className="text-sm font-semibold">Materials</h1>
         <div className="w-24" />

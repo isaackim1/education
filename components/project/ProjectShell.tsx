@@ -78,7 +78,7 @@ export default function ProjectShell({
   projectId,
   active,
   children,
-  width = "max-w-6xl",
+  width = "max-w-5xl",
 }: {
   projectId: string;
   active: ProjectNavId;

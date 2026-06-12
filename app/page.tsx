@@ -16,7 +16,7 @@ export default function HomePage() {
     const topics = getTopics();
 
     if (exam && plan && topics.length > 0) {
-      router.replace("/plan");
+      router.replace("/projects");
     } else if (getProjects().length > 0) {
       router.replace("/projects");
     } else {
