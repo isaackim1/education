@@ -3,24 +3,25 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
+import ProjectShell from "@/components/project/ProjectShell";
+import { PageHeader } from "@/components/ui/primitives";
 import { useProject } from "@/hooks/useProject";
 import { DEFAULT_GOAL_VALUES, useProjectGoals } from "@/hooks/useProjectGoals";
 
 const FIELD =
-  "h-12 w-full rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15";
+  "h-12 w-full rounded-lg border border-[#D8D3C8] bg-white px-4 text-sm text-[#1A1A17] placeholder:text-[#7A766D] transition-colors focus-visible:outline-none focus-visible:border-[#1A1A17] focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15";
 
 const PRIMARY_ACTION =
-  "inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1A1A17] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const SECONDARY_ACTION =
-  "inline-flex items-center justify-center h-10 px-6 rounded-full border border-[#C4C7C5] text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex items-center justify-center h-10 px-6 rounded-full border border-[#D8D3C8] text-sm font-medium text-[#1A1A17] transition-colors hover:bg-[#EFEBE2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const CONFIDENCE_LEVELS: (1 | 2 | 3 | 4 | 5)[] = [1, 2, 3, 4, 5];
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <span className="block text-sm font-medium text-[#1F1F1F]">{children}</span>
+    <span className="block text-sm font-medium text-[#1A1A17]">{children}</span>
   );
 }
 
@@ -107,22 +108,22 @@ export default function GoalsPage({
 
   if (!isLoaded) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F8FAFD]">
-        <p className="text-sm text-[#5F6368]">Loading...</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF8F4]">
+        <p className="text-sm text-[#56524B]">Loading...</p>
       </main>
     );
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-[#F8FAFD]">
+      <main className="min-h-screen bg-[#FAF8F4]">
         <div className="mx-auto max-w-lg px-4 py-12">
-          <h1 className="text-[28px] font-semibold tracking-tight text-[#1F1F1F]">
+          <h1 className="text-[28px] font-semibold tracking-tight text-[#1A1A17]">
             Project not found
           </h1>
           <Link
             href="/projects"
-            className="mt-4 inline-flex h-9 items-center rounded-full px-3 text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F]"
+            className="mt-4 inline-flex h-9 items-center rounded-full px-3 text-sm text-[#56524B] transition-colors hover:bg-[#EFEBE2] hover:text-[#1A1A17]"
           >
             Back to projects
           </Link>
@@ -132,23 +133,16 @@ export default function GoalsPage({
   }
 
   return (
-    <main className="min-h-screen bg-[#F8FAFD]">
-      <div className="mx-auto max-w-2xl px-4 py-10 sm:py-12">
-        <ProjectWorkspaceNav projectId={params.projectId} active="goals" />
+    <ProjectShell projectId={params.projectId} active="goals" width="max-w-3xl">
+      <PageHeader
+        eyebrow="Targets"
+        title="Study goals"
+        description="These keep your dashboard and today's plan focused. You can change them anytime."
+      />
 
-        <header className="mb-6">
-          <h1 className="text-[28px] font-semibold tracking-tight text-[#1F1F1F]">
-            Study goals
-          </h1>
-          <p className="mt-2 text-sm text-[#5F6368]">
-            These keep your dashboard and today&apos;s plan focused. You can
-            change them anytime.
-          </p>
-        </header>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
-            <h2 className="text-base font-semibold text-[#1F1F1F]">Exam</h2>
+      <form onSubmit={handleSubmit} className="space-y-5">
+          <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
+            <h2 className="text-base font-semibold text-[#1A1A17]">Exam</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <label className="space-y-1.5">
                 <Label>Exam date</Label>
@@ -172,14 +166,14 @@ export default function GoalsPage({
             </div>
           </section>
 
-          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
-            <h2 className="text-base font-semibold text-[#1F1F1F]">
+          <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
+            <h2 className="text-base font-semibold text-[#1A1A17]">
               Weekly goals
             </h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <label className="space-y-1.5">
                 <Label>Sessions per week</Label>
-                <span className="block text-xs text-[#80868B]">
+                <span className="block text-xs text-[#7A766D]">
                   How many training sessions are you aiming for?
                 </span>
                 <input
@@ -195,7 +189,7 @@ export default function GoalsPage({
               </label>
               <label className="space-y-1.5">
                 <Label>Reviews per week</Label>
-                <span className="block text-xs text-[#80868B]">
+                <span className="block text-xs text-[#7A766D]">
                   Mistakes you want to review each week.
                 </span>
                 <input
@@ -212,15 +206,15 @@ export default function GoalsPage({
             </div>
           </section>
 
-          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
-            <h2 className="text-base font-semibold text-[#1F1F1F]">
+          <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
+            <h2 className="text-base font-semibold text-[#1A1A17]">
               Focus topics
             </h2>
-            <p className="mt-1 text-sm text-[#5F6368]">
+            <p className="mt-1 text-sm text-[#56524B]">
               Pick the topics you want to prioritise this exam.
             </p>
             {topics.length === 0 ? (
-              <p className="mt-4 rounded-xl bg-[#F8FAFD] border border-[#E8EAED] px-4 py-3 text-sm text-[#5F6368]">
+              <p className="mt-4 rounded-xl bg-[#FAF8F4] border border-[#E7E3DA] px-4 py-3 text-sm text-[#56524B]">
                 Add topics first to choose focus areas.
               </p>
             ) : (
@@ -233,10 +227,10 @@ export default function GoalsPage({
                       type="button"
                       aria-pressed={selected}
                       onClick={() => toggleFocusTopic(topic.id)}
-                      className={`inline-flex items-center h-9 px-4 rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2 ${
+                      className={`inline-flex items-center h-9 px-4 rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 ${
                         selected
-                          ? "bg-[#1F1F1F] text-white"
-                          : "border border-[#C4C7C5] text-[#1F1F1F] hover:bg-[#F1F3F4]"
+                          ? "bg-[#1A1A17] text-white"
+                          : "border border-[#D8D3C8] text-[#1A1A17] hover:bg-[#EFEBE2]"
                       }`}
                     >
                       {topic.name}
@@ -247,11 +241,11 @@ export default function GoalsPage({
             )}
           </section>
 
-          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
-            <h2 className="text-base font-semibold text-[#1F1F1F]">
+          <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
+            <h2 className="text-base font-semibold text-[#1A1A17]">
               Confidence right now
             </h2>
-            <p className="mt-1 text-sm text-[#5F6368]">
+            <p className="mt-1 text-sm text-[#56524B]">
               How prepared do you feel today? 1 = not at all, 5 = very.
             </p>
             <div className="mt-4 flex gap-2">
@@ -263,10 +257,10 @@ export default function GoalsPage({
                     type="button"
                     aria-pressed={selected}
                     onClick={() => setCurrentConfidence(level)}
-                    className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2 ${
+                    className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 ${
                       selected
-                        ? "bg-[#1F1F1F] text-white"
-                        : "border border-[#C4C7C5] text-[#1F1F1F] hover:bg-[#F1F3F4]"
+                        ? "bg-[#1A1A17] text-white"
+                        : "border border-[#D8D3C8] text-[#1A1A17] hover:bg-[#EFEBE2]"
                     }`}
                   >
                     {level}
@@ -288,7 +282,6 @@ export default function GoalsPage({
             </Link>
           </div>
         </form>
-      </div>
-    </main>
+    </ProjectShell>
   );
 }

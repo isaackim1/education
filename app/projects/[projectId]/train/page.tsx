@@ -11,7 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
-import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
+import ProjectShell from "@/components/project/ProjectShell";
 import { useProject } from "@/hooks/useProject";
 import { useProjectGoals } from "@/hooks/useProjectGoals";
 import { useProjectMaterials } from "@/hooks/useProjectMaterials";
@@ -41,10 +41,10 @@ const DEFAULT_QUESTION_COUNT = 5;
 const MAX_QUESTION_COUNT = 8;
 
 const PRIMARY_ACTION =
-  "inline-flex h-10 items-center justify-center rounded-full bg-[#1F1F1F] px-6 text-sm font-medium text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex h-10 items-center justify-center rounded-full bg-[#1A1A17] px-6 text-sm font-medium text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const OUTLINE_ACTION =
-  "inline-flex h-10 items-center justify-center rounded-full border border-[#C4C7C5] px-5 text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex h-10 items-center justify-center rounded-full border border-[#D8D3C8] px-5 text-sm font-medium text-[#1A1A17] transition-colors hover:bg-[#EFEBE2] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 type ApiMessage = { role: "user" | "assistant"; content: string };
 
@@ -512,17 +512,17 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
 
   if (!isLoaded) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F8FAFD]">
-        <p className="text-sm text-[#5F6368]">Loading active training...</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF8F4]">
+        <p className="text-sm text-[#56524B]">Loading active training...</p>
       </main>
     );
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-[#F8FAFD]">
+      <main className="min-h-screen bg-[#FAF8F4]">
         <div className="mx-auto max-w-lg px-4 py-12">
-          <h1 className="text-[28px] font-semibold text-[#1F1F1F]">
+          <h1 className="text-[28px] font-semibold text-[#1A1A17]">
             Project not found
           </h1>
           <Link href="/projects" className={`${OUTLINE_ACTION} mt-5`}>
@@ -536,38 +536,38 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
   const savedMistakes = rounds.filter((round) => round.mistakeSaved).length;
 
   return (
-    <main className="min-h-screen bg-[#F8FAFD]">
-      <div className="mx-auto max-w-2xl px-4 py-10 sm:py-12">
-        <ProjectWorkspaceNav projectId={projectId} active="train" />
-
-        <header className="mb-6">
-          <h1 className="text-[28px] font-semibold tracking-tight text-[#1F1F1F]">
+    <ProjectShell projectId={projectId} active="train" width="max-w-3xl">
+        <header className="mb-8">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#7A766D]">
+            Train
+          </p>
+          <h1 className="mt-2.5 font-serif text-[34px] leading-[1.08] tracking-[-0.01em] text-[#1A1A17] sm:text-[40px]">
             Active training
           </h1>
-          <p className="mt-2 text-sm text-[#5F6368]">
+          <p className="mt-3.5 text-[15px] leading-relaxed text-[#56524B]">
             Work through a short guided session, one exam-style question at a
             time.
           </p>
         </header>
 
         {status === "setup" ? (
-          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
-            <h2 className="text-base font-semibold text-[#1F1F1F]">
+          <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
+            <h2 className="text-base font-semibold text-[#1A1A17]">
               Set your focus
             </h2>
-            <p className="mt-1 text-sm text-[#5F6368]">
+            <p className="mt-1 text-sm text-[#56524B]">
               Ivvy recommends a focus using your goals, materials, and
               unreviewed mistakes.
             </p>
 
             <label className="mt-5 block space-y-1.5">
-              <span className="text-sm font-medium text-[#1F1F1F]">
+              <span className="text-sm font-medium text-[#1A1A17]">
                 Focus topic
               </span>
               <select
                 value={selectedTopicId}
                 onChange={(event) => setSelectedTopicId(event.target.value)}
-                className="h-12 w-full rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15"
+                className="h-12 w-full rounded-lg border border-[#D8D3C8] bg-white px-4 text-sm text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15"
               >
                 <option value="">General exam training</option>
                 {topics.map((topic) => (
@@ -579,7 +579,7 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
             </label>
 
             <label className="mt-5 block space-y-1.5">
-              <span className="text-sm font-medium text-[#1F1F1F]">
+              <span className="text-sm font-medium text-[#1A1A17]">
                 Session length
               </span>
               <select
@@ -595,7 +595,7 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
                       : DEFAULT_QUESTION_COUNT
                   );
                 }}
-                className="h-12 w-full rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15"
+                className="h-12 w-full rounded-lg border border-[#D8D3C8] bg-white px-4 text-sm text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15"
               >
                 <option value={3}>3 questions</option>
                 <option value={DEFAULT_QUESTION_COUNT}>5 questions</option>
@@ -604,10 +604,10 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
             </label>
 
             <fieldset className="mt-5">
-              <legend className="text-sm font-medium text-[#1F1F1F]">
+              <legend className="text-sm font-medium text-[#1A1A17]">
                 Training mode
               </legend>
-              <p className="mt-1 text-sm text-[#5F6368]">
+              <p className="mt-1 text-sm text-[#56524B]">
                 Choose how Ivvy should format its questions.
               </p>
               <div className="mt-3 grid gap-2 sm:grid-cols-3">
@@ -619,16 +619,16 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
                       type="button"
                       aria-pressed={isSelected}
                       onClick={() => setTrainingMode(mode.value)}
-                      className={`rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2 ${
+                      className={`rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 ${
                         isSelected
-                          ? "border-[#1F1F1F] bg-[#F1F3F4]"
-                          : "border-[#C4C7C5] bg-white hover:bg-[#F8FAFD]"
+                          ? "border-[#1A1A17] bg-[#EFEBE2]"
+                          : "border-[#D8D3C8] bg-white hover:bg-[#FAF8F4]"
                       }`}
                     >
-                      <span className="block text-sm font-medium text-[#1F1F1F]">
+                      <span className="block text-sm font-medium text-[#1A1A17]">
                         {mode.label}
                       </span>
-                      <span className="mt-1 block text-xs text-[#5F6368]">
+                      <span className="mt-1 block text-xs text-[#56524B]">
                         {mode.hint}
                       </span>
                     </button>
@@ -642,31 +642,31 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
             </button>
           </section>
         ) : status === "complete" ? (
-          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-6 text-center sm:p-8">
-            <span className="inline-flex rounded-full bg-[#F1F3F4] px-3 py-1 text-xs font-medium text-[#5F6368]">
+          <section className="rounded-2xl border border-[#E7E3DA] bg-white p-6 text-center sm:p-8">
+            <span className="inline-flex rounded-full bg-[#EFEBE2] px-3 py-1 text-xs font-medium text-[#56524B]">
               Session summary
             </span>
-            <h2 className="mt-4 text-xl font-semibold text-[#1F1F1F]">
+            <h2 className="mt-4 text-xl font-semibold text-[#1A1A17]">
               Training complete
             </h2>
             <div className="mx-auto mt-5 grid max-w-md grid-cols-3 gap-3">
-              <div className="rounded-xl bg-[#F1F3F4] p-3">
-                <p className="text-xl font-semibold text-[#1F1F1F]">
+              <div className="rounded-xl bg-[#EFEBE2] p-3">
+                <p className="text-xl font-semibold text-[#1A1A17]">
                   {rounds.length}
                 </p>
-                <p className="text-xs text-[#5F6368]">Answered</p>
+                <p className="text-xs text-[#56524B]">Answered</p>
               </div>
-              <div className="rounded-xl bg-[#F1F3F4] p-3">
-                <p className="text-xl font-semibold text-[#1F1F1F]">
+              <div className="rounded-xl bg-[#EFEBE2] p-3">
+                <p className="text-xl font-semibold text-[#1A1A17]">
                   {savedMistakes}
                 </p>
-                <p className="text-xs text-[#5F6368]">Mistakes saved</p>
+                <p className="text-xs text-[#56524B]">Mistakes saved</p>
               </div>
-              <div className="rounded-xl bg-[#F1F3F4] p-3">
-                <p className="text-xl font-semibold text-[#1F1F1F]">
+              <div className="rounded-xl bg-[#EFEBE2] p-3">
+                <p className="text-xl font-semibold text-[#1A1A17]">
                   {summaryDuration}
                 </p>
-                <p className="text-xs text-[#5F6368]">Minutes</p>
+                <p className="text-xs text-[#56524B]">Minutes</p>
               </div>
             </div>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -680,14 +680,14 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
           </section>
         ) : (
           <div className="space-y-4">
-            <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
+            <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-medium text-[#5F6368]">
+                  <p className="text-xs font-medium text-[#56524B]">
                     Question {Math.min(rounds.length + 1, questionTarget)} of{" "}
                     {questionTarget}
                   </p>
-                  <p className="mt-1 text-sm text-[#80868B]">
+                  <p className="mt-1 text-sm text-[#7A766D]">
                     Focus: {selectedTopic?.name ?? "General exam training"}
                   </p>
                 </div>
@@ -702,7 +702,7 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
               </div>
 
               <div
-                className="mt-4 h-2 overflow-hidden rounded-full bg-[#E8EAED]"
+                className="mt-4 h-2 overflow-hidden rounded-full bg-[#E7E3DA]"
                 role="progressbar"
                 aria-label="Training session progress"
                 aria-valuenow={rounds.length}
@@ -728,15 +728,15 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
               ) : null}
 
               {isRequesting && !currentQuestion ? (
-                <p className="mt-6 text-sm text-[#5F6368]">
+                <p className="mt-6 text-sm text-[#56524B]">
                   Ivvy is preparing your question...
                 </p>
               ) : currentQuestion ? (
                 <div className="mt-6">
-                  <p className="text-xs font-medium uppercase tracking-wide text-[#5F6368]">
+                  <p className="text-xs font-medium uppercase tracking-wide text-[#56524B]">
                     Ivvy&apos;s question
                   </p>
-                  <p className="mt-2 whitespace-pre-wrap text-base text-[#1F1F1F]">
+                  <p className="mt-2 whitespace-pre-wrap text-base text-[#1A1A17]">
                     {parsedChoices ? parsedChoices.stem : currentQuestion}
                   </p>
                 </div>
@@ -756,7 +756,7 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
               {currentQuestion && !feedback ? (
                 parsedChoices ? (
                   <div className="mt-6">
-                    <p className="text-sm font-medium text-[#1F1F1F]">
+                    <p className="text-sm font-medium text-[#1A1A17]">
                       Choose an answer
                     </p>
                     <div className="mt-3 grid gap-2">
@@ -766,9 +766,9 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
                           type="button"
                           onClick={() => handleSelectChoice(choice)}
                           disabled={isRequesting}
-                          className="flex items-start gap-3 rounded-lg border border-[#C4C7C5] bg-white px-4 py-3 text-left text-sm text-[#1F1F1F] transition-colors hover:bg-[#F8FAFD] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+                          className="flex items-start gap-3 rounded-lg border border-[#D8D3C8] bg-white px-4 py-3 text-left text-sm text-[#1A1A17] transition-colors hover:bg-[#FAF8F4] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
                         >
-                          <span className="font-semibold text-[#1F1F1F]">
+                          <span className="font-semibold text-[#1A1A17]">
                             {choice.letter}
                           </span>
                           <span className="flex-1">{choice.text}</span>
@@ -779,7 +779,7 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
                 ) : (
                   <form onSubmit={handleAnswer} className="mt-6">
                     <label className="block space-y-1.5">
-                      <span className="text-sm font-medium text-[#1F1F1F]">
+                      <span className="text-sm font-medium text-[#1A1A17]">
                         {trainingMode === "solve"
                           ? "Your working and final answer"
                           : "Your answer"}
@@ -794,7 +794,7 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
                             ? "Show your working, then state your final answer."
                             : undefined
                         }
-                        className="w-full rounded-lg border border-[#C4C7C5] bg-white px-4 py-3 text-sm text-[#1F1F1F] placeholder:text-[#80868B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15"
+                        className="w-full rounded-lg border border-[#D8D3C8] bg-white px-4 py-3 text-sm text-[#1A1A17] placeholder:text-[#7A766D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15"
                       />
                     </label>
                     <button
@@ -809,11 +809,11 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
               ) : null}
 
               {feedback ? (
-                <div className="mt-6 rounded-xl bg-[#F1F3F4] p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-[#5F6368]">
+                <div className="mt-6 rounded-xl bg-[#EFEBE2] p-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-[#56524B]">
                     Feedback
                   </p>
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-[#1F1F1F]">
+                  <p className="mt-2 whitespace-pre-wrap text-sm text-[#1A1A17]">
                     {feedback}
                   </p>
                   {rounds.at(-1)?.mistakeSaved ? (
@@ -836,8 +836,7 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
             </section>
           </div>
         )}
-      </div>
-    </main>
+    </ProjectShell>
   );
 }
 
@@ -849,8 +848,8 @@ export default function ActiveTrainingPage({
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-[#F8FAFD]">
-          <p className="text-sm text-[#5F6368]">Loading active training...</p>
+        <main className="flex min-h-screen items-center justify-center bg-[#FAF8F4]">
+          <p className="text-sm text-[#56524B]">Loading active training...</p>
         </main>
       }
     >

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
+import ProjectShell from "@/components/project/ProjectShell";
 import { useProject } from "@/hooks/useProject";
 import { useProjectMaterials } from "@/hooks/useProjectMaterials";
 import { useTrainingLog } from "@/hooks/useTrainingLog";
@@ -12,13 +12,13 @@ import {
 } from "@/lib/project-prompts";
 
 const PRIMARY_ACTION =
-  "inline-flex h-10 items-center justify-center rounded-full bg-[#1F1F1F] px-6 text-sm font-medium text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex h-10 items-center justify-center rounded-full bg-[#1A1A17] px-6 text-sm font-medium text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const BACK_LINK =
-  "inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#56524B] transition-colors hover:bg-[#EFEBE2] hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const FIELD =
-  "w-full rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15";
+  "w-full rounded-lg border border-[#D8D3C8] bg-white px-4 text-sm text-[#1A1A17] placeholder:text-[#7A766D] transition-colors focus-visible:outline-none focus-visible:border-[#1A1A17] focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15";
 
 const REQUEST_TIMEOUT_MS = 30000;
 
@@ -92,8 +92,8 @@ function FeedbackSection({
 }) {
   return (
     <div>
-      <h3 className="text-sm font-semibold text-[#1F1F1F]">{label}</h3>
-      <p className="mt-1 whitespace-pre-wrap text-sm text-[#5F6368]">{body}</p>
+      <h3 className="text-sm font-semibold text-[#1A1A17]">{label}</h3>
+      <p className="mt-1 whitespace-pre-wrap text-sm text-[#56524B]">{body}</p>
     </div>
   );
 }
@@ -212,17 +212,17 @@ export default function TeachBackPage({
 
   if (!isLoaded) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F8FAFD]">
-        <p className="text-sm text-[#5F6368]">Loading teach back...</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF8F4]">
+        <p className="text-sm text-[#56524B]">Loading teach back...</p>
       </main>
     );
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-[#F8FAFD]">
+      <main className="min-h-screen bg-[#FAF8F4]">
         <div className="mx-auto max-w-lg px-4 py-12">
-          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
+          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1A1A17]">
             Project not found
           </h1>
           <Link href="/projects" className={BACK_LINK}>
@@ -234,21 +234,18 @@ export default function TeachBackPage({
   }
 
   return (
-    <main className="min-h-screen bg-[#F8FAFD]">
-      <div className="mx-auto max-w-2xl px-4 py-10 sm:py-12">
-        <ProjectWorkspaceNav projectId={projectId} active="study" />
-
+    <ProjectShell projectId={projectId} active="study" width="max-w-3xl">
         <header className="mb-6">
           <Link
             href={`/projects/${projectId}/study`}
-            className="inline-flex items-center h-8 -ml-3 px-3 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+            className="inline-flex items-center h-8 -ml-3 px-3 rounded-full text-sm text-[#56524B] transition-colors hover:bg-[#EFEBE2] hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
           >
             &larr; Study modes
           </Link>
-          <h1 className="mt-2 text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
+          <h1 className="mt-2 font-serif text-[34px] leading-[1.08] tracking-[-0.01em] text-[#1A1A17] sm:text-[40px]">
             Teach it back. Ivvy checks the gaps.
           </h1>
-          <p className="mt-2 text-sm text-[#5F6368]">
+          <p className="mt-2 text-sm text-[#56524B]">
             Pick a topic and explain it in your own words, as if you were
             teaching it to someone else. Ivvy reviews what you got right, what is
             missing, and what to work on next.
@@ -256,11 +253,11 @@ export default function TeachBackPage({
         </header>
 
         {topics.length === 0 ? (
-          <section className="rounded-2xl border border-[#E1E3E1] bg-white px-6 py-14 text-center">
-            <h2 className="text-lg font-semibold text-[#1F1F1F]">
+          <section className="rounded-2xl border border-[#E7E3DA] bg-white px-6 py-14 text-center">
+            <h2 className="text-lg font-semibold text-[#1A1A17]">
               Build your training workspace first
             </h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-[#5F6368]">
+            <p className="mx-auto mt-2 max-w-md text-sm text-[#56524B]">
               Upload your materials once and Ivvy will create topics you can
               teach back.
             </p>
@@ -273,10 +270,10 @@ export default function TeachBackPage({
           </section>
         ) : (
           <div className="space-y-5">
-            <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
+            <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
               <label
                 htmlFor="teach-topic"
-                className="block text-sm font-medium text-[#1F1F1F]"
+                className="block text-sm font-medium text-[#1A1A17]"
               >
                 Topic
               </label>
@@ -296,7 +293,7 @@ export default function TeachBackPage({
 
               <label
                 htmlFor="teach-explanation"
-                className="mt-5 block text-sm font-medium text-[#1F1F1F]"
+                className="mt-5 block text-sm font-medium text-[#1A1A17]"
               >
                 Explain this topic as if you were teaching it to someone else.
               </label>
@@ -320,7 +317,7 @@ export default function TeachBackPage({
                   {status === "loading" ? "Checking..." : "Get feedback"}
                 </button>
                 {status === "loading" ? (
-                  <span className="text-sm text-[#5F6368]" role="status">
+                  <span className="text-sm text-[#56524B]" role="status">
                     Ivvy is reviewing your explanation...
                   </span>
                 ) : null}
@@ -338,10 +335,10 @@ export default function TeachBackPage({
 
             {status === "done" ? (
               <section
-                className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6"
+                className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6"
                 aria-label="Ivvy's feedback"
               >
-                <h2 className="text-base font-semibold text-[#1F1F1F]">
+                <h2 className="text-base font-semibold text-[#1A1A17]">
                   Ivvy&apos;s feedback
                 </h2>
                 {feedback ? (
@@ -378,11 +375,11 @@ export default function TeachBackPage({
                     ) : null}
                   </div>
                 ) : (
-                  <p className="mt-3 whitespace-pre-wrap text-sm text-[#5F6368]">
+                  <p className="mt-3 whitespace-pre-wrap text-sm text-[#56524B]">
                     {rawFeedback}
                   </p>
                 )}
-                <p className="mt-5 text-xs text-[#80868B]">
+                <p className="mt-5 text-xs text-[#7A766D]">
                   Want to go again? Refine your explanation above and get fresh
                   feedback.
                 </p>
@@ -390,7 +387,6 @@ export default function TeachBackPage({
             ) : null}
           </div>
         )}
-      </div>
-    </main>
+    </ProjectShell>
   );
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
+import ProjectShell from "@/components/project/ProjectShell";
 import { useProject } from "@/hooks/useProject";
 import { useProjectMaterials } from "@/hooks/useProjectMaterials";
 import { useTrainingLog } from "@/hooks/useTrainingLog";
@@ -12,16 +12,16 @@ import {
 } from "@/lib/project-prompts";
 
 const PRIMARY_ACTION =
-  "inline-flex h-10 items-center justify-center rounded-full bg-[#1F1F1F] px-6 text-sm font-medium text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex h-10 items-center justify-center rounded-full bg-[#1A1A17] px-6 text-sm font-medium text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const SECONDARY_LINK =
-  "inline-flex h-9 items-center justify-center rounded-full border border-[#C4C7C5] px-4 text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex h-9 items-center justify-center rounded-full border border-[#D8D3C8] px-4 text-sm font-medium text-[#1A1A17] transition-colors hover:bg-[#EFEBE2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const BACK_LINK =
-  "inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#56524B] transition-colors hover:bg-[#EFEBE2] hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const FIELD =
-  "w-full rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15";
+  "w-full rounded-lg border border-[#D8D3C8] bg-white px-4 text-sm text-[#1A1A17] placeholder:text-[#7A766D] transition-colors focus-visible:outline-none focus-visible:border-[#1A1A17] focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15";
 
 const REQUEST_TIMEOUT_MS = 30000;
 
@@ -92,8 +92,8 @@ function SheetTextSection({ label, body }: { label: string; body: string }) {
   if (!body.trim()) return null;
   return (
     <div>
-      <h3 className="text-sm font-semibold text-[#1F1F1F]">{label}</h3>
-      <p className="mt-1 whitespace-pre-wrap text-sm text-[#5F6368]">{body}</p>
+      <h3 className="text-sm font-semibold text-[#1A1A17]">{label}</h3>
+      <p className="mt-1 whitespace-pre-wrap text-sm text-[#56524B]">{body}</p>
     </div>
   );
 }
@@ -103,8 +103,8 @@ function SheetListSection({ label, body }: { label: string; body: string }) {
   if (items.length === 0) return null;
   return (
     <div>
-      <h3 className="text-sm font-semibold text-[#1F1F1F]">{label}</h3>
-      <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-[#5F6368] marker:text-[#80868B]">
+      <h3 className="text-sm font-semibold text-[#1A1A17]">{label}</h3>
+      <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-[#56524B] marker:text-[#7A766D]">
         {items.map((item, index) => (
           <li key={index}>{item}</li>
         ))}
@@ -241,17 +241,17 @@ export default function StudySheetPage({
 
   if (!isLoaded) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F8FAFD]">
-        <p className="text-sm text-[#5F6368]">Loading study sheet...</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF8F4]">
+        <p className="text-sm text-[#56524B]">Loading study sheet...</p>
       </main>
     );
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-[#F8FAFD]">
+      <main className="min-h-screen bg-[#FAF8F4]">
         <div className="mx-auto max-w-lg px-4 py-12">
-          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
+          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1A1A17]">
             Project not found
           </h1>
           <Link href="/projects" className={BACK_LINK}>
@@ -263,21 +263,18 @@ export default function StudySheetPage({
   }
 
   return (
-    <main className="min-h-screen bg-[#F8FAFD]">
-      <div className="mx-auto max-w-2xl px-4 py-10 sm:py-12">
-        <ProjectWorkspaceNav projectId={projectId} active="study" />
-
+    <ProjectShell projectId={projectId} active="study" width="max-w-3xl">
         <header className="mb-6">
           <Link
             href={`/projects/${projectId}/study`}
-            className="inline-flex items-center h-8 -ml-3 px-3 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+            className="inline-flex items-center h-8 -ml-3 px-3 rounded-full text-sm text-[#56524B] transition-colors hover:bg-[#EFEBE2] hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
           >
             &larr; Study modes
           </Link>
-          <h1 className="mt-2 text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
+          <h1 className="mt-2 font-serif text-[34px] leading-[1.08] tracking-[-0.01em] text-[#1A1A17] sm:text-[40px]">
             One topic in, one exam-ready sheet out.
           </h1>
-          <p className="mt-2 text-sm text-[#5F6368]">
+          <p className="mt-2 text-sm text-[#56524B]">
             Pick a topic and Ivvy turns its saved material into a structured
             study sheet: the core idea, key terms, exam points, common mistakes,
             a checklist, and a practice question.
@@ -285,11 +282,11 @@ export default function StudySheetPage({
         </header>
 
         {topics.length === 0 ? (
-          <section className="rounded-2xl border border-[#E1E3E1] bg-white px-6 py-14 text-center">
-            <h2 className="text-lg font-semibold text-[#1F1F1F]">
+          <section className="rounded-2xl border border-[#E7E3DA] bg-white px-6 py-14 text-center">
+            <h2 className="text-lg font-semibold text-[#1A1A17]">
               Build your training workspace first
             </h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-[#5F6368]">
+            <p className="mx-auto mt-2 max-w-md text-sm text-[#56524B]">
               Upload your materials once and Ivvy will create topics you can turn
               into study sheets.
             </p>
@@ -302,10 +299,10 @@ export default function StudySheetPage({
           </section>
         ) : (
           <div className="space-y-5">
-            <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
+            <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
               <label
                 htmlFor="sheet-topic"
-                className="block text-sm font-medium text-[#1F1F1F]"
+                className="block text-sm font-medium text-[#1A1A17]"
               >
                 Topic
               </label>
@@ -336,17 +333,17 @@ export default function StudySheetPage({
                       : "Generate study sheet"}
                   </button>
                   {status === "loading" ? (
-                    <span className="text-sm text-[#5F6368]" role="status">
+                    <span className="text-sm text-[#56524B]" role="status">
                       Ivvy is building your study sheet...
                     </span>
                   ) : null}
                 </div>
               ) : (
-                <div className="mt-4 rounded-lg border border-[#E1E3E1] bg-[#F8FAFD] px-4 py-4">
-                  <p className="text-sm font-medium text-[#1F1F1F]">
+                <div className="mt-4 rounded-lg border border-[#E7E3DA] bg-[#FAF8F4] px-4 py-4">
+                  <p className="text-sm font-medium text-[#1A1A17]">
                     No material saved for this topic yet
                   </p>
-                  <p className="mt-1 text-sm text-[#5F6368]">
+                  <p className="mt-1 text-sm text-[#56524B]">
                     Ivvy builds the sheet from your saved material. Add material
                     to this topic, then come back.
                   </p>
@@ -379,10 +376,10 @@ export default function StudySheetPage({
 
             {status === "done" ? (
               <section
-                className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6"
+                className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6"
                 aria-label="Study sheet"
               >
-                <h2 className="text-base font-semibold text-[#1F1F1F]">
+                <h2 className="text-base font-semibold text-[#1A1A17]">
                   {selectedTopic?.name
                     ? `Study sheet: ${selectedTopic.name}`
                     : "Study sheet"}
@@ -406,11 +403,11 @@ export default function StudySheetPage({
                     />
                   </div>
                 ) : (
-                  <p className="mt-3 whitespace-pre-wrap text-sm text-[#5F6368]">
+                  <p className="mt-3 whitespace-pre-wrap text-sm text-[#56524B]">
                     {rawSheet}
                   </p>
                 )}
-                <p className="mt-5 text-xs text-[#80868B]">
+                <p className="mt-5 text-xs text-[#7A766D]">
                   Generated from your saved material. Regenerate any time after
                   you update this topic&apos;s notes.
                 </p>
@@ -418,7 +415,6 @@ export default function StudySheetPage({
             ) : null}
           </div>
         )}
-      </div>
-    </main>
+    </ProjectShell>
   );
 }

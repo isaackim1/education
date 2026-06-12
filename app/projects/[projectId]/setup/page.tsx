@@ -3,11 +3,17 @@
 import Link from "next/link";
 import ProjectTopicManager from "@/components/project/ProjectTopicManager";
 import TopicSuggestionPanel from "@/components/project/TopicSuggestionPanel";
-import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
+import ProjectShell from "@/components/project/ProjectShell";
+import {
+  CenteredNotice,
+  Eyebrow,
+  PageHeader,
+  PageShell,
+  PrimaryActionCard,
+  primaryAction,
+  StatusPill,
+} from "@/components/ui/primitives";
 import { useProject } from "@/hooks/useProject";
-
-const PRIMARY_ACTION =
-  "inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
 
 export default function ProjectSetupPage({
   params,
@@ -19,94 +25,81 @@ export default function ProjectSetupPage({
   );
 
   if (!isLoaded) {
-    return (
-      <main className="min-h-screen bg-[#F8FAFD] flex items-center justify-center">
-        <p className="text-sm text-[#5F6368]">Loading project topics...</p>
-      </main>
-    );
+    return <CenteredNotice>Loading project topics…</CenteredNotice>;
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-[#F8FAFD]">
-        <div className="max-w-lg mx-auto px-4 py-12">
-          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
-            Project not found
-          </h1>
-          <Link
-            href="/projects"
-            className="inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
-          >
-            Back to projects
-          </Link>
-        </div>
-      </main>
+      <PageShell width="max-w-lg">
+        <h1 className="font-serif text-[34px] leading-[1.08] tracking-[-0.01em] text-[#1A1A17]">
+          Project not found
+        </h1>
+        <Link
+          href="/projects"
+          className="mt-4 inline-flex h-9 -ml-3 items-center rounded-full px-3 text-sm text-[#56524B] transition-colors duration-200 hover:bg-[#EFEBE2] hover:text-[#1A1A17]"
+        >
+          Back to projects
+        </Link>
+      </PageShell>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#F8FAFD]">
-      <div className="max-w-2xl mx-auto px-4 py-10 sm:py-12">
-        <ProjectWorkspaceNav projectId={params.projectId} active="setup" />
+    <ProjectShell projectId={params.projectId} active="setup">
+      <PageHeader
+        eyebrow="Training map"
+        title="Topics"
+        description="Topics define what Ivvy trains you on. The fastest way to build them is to upload your material once and let Ivvy organize it."
+        action={
+          <StatusPill>
+            {topics.length} topic{topics.length === 1 ? "" : "s"}
+          </StatusPill>
+        }
+      />
 
-        <header className="mb-6">
-          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
-            Topics
-          </h1>
-          <p className="text-sm text-[#5F6368] mt-2">
-            Topics define what Ivvy should train you on. The fastest way to build
-            them is to upload your material once and let Ivvy organize it.
-          </p>
-        </header>
-
-        <div className="space-y-5">
-          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
-            <span className="inline-flex items-center rounded-full bg-[#E6F4EA] px-2.5 py-1 text-xs font-medium text-[#137333]">
-              Recommended
-            </span>
-            <h2 className="mt-3 text-lg font-medium text-[#1F1F1F]">
-              Upload once and organize materials
-            </h2>
-            <p className="mt-1 text-sm text-[#5F6368]">
-              Upload your materials once. Ivvy will extract topics and organize
-              the material for you, so you can review everything before it&apos;s
-              saved.
-            </p>
+      <div className="space-y-8">
+        <PrimaryActionCard
+          eyebrow="Recommended"
+          title="Upload once and organize"
+          description="Upload your materials once. Ivvy extracts topics and sorts the material into them, so you can review the whole map before anything is saved."
+          action={
             <Link
               href={`/projects/${params.projectId}/import`}
-              className={`${PRIMARY_ACTION} mt-4`}
+              className={primaryAction}
             >
-              Upload once and organize materials
+              Upload once
             </Link>
-          </section>
+          }
+        />
 
-          <div className="pt-1">
-            <h2 className="text-sm font-medium text-[#5F6368]">
-              Or add topics manually
-            </h2>
-            <p className="mt-1 text-sm text-[#80868B]">
+        <section>
+          <div className="mb-4">
+            <Eyebrow>Or build topics manually</Eyebrow>
+            <p className="mt-1.5 text-sm text-[#56524B]">
               Prefer to build your topic list by hand? Add topics directly, or
               paste material to suggest a starting set.
             </p>
           </div>
 
-          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
-            <ProjectTopicManager
-              projectId={params.projectId}
-              topics={topics}
-              onAddTopic={addTopic}
-              onDeleteTopic={deleteTopic}
-            />
-          </section>
+          <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+            <div className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
+              <ProjectTopicManager
+                projectId={params.projectId}
+                topics={topics}
+                onAddTopic={addTopic}
+                onDeleteTopic={deleteTopic}
+              />
+            </div>
 
-          <TopicSuggestionPanel
-            projectId={params.projectId}
-            subject={project.subject}
-            existingTopics={topics}
-            onAddTopic={addTopic}
-          />
-        </div>
+            <TopicSuggestionPanel
+              projectId={params.projectId}
+              subject={project.subject}
+              existingTopics={topics}
+              onAddTopic={addTopic}
+            />
+          </div>
+        </section>
       </div>
-    </main>
+    </ProjectShell>
   );
 }

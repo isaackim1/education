@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
+import ProjectShell from "@/components/project/ProjectShell";
+import {
+  CenteredNotice,
+  EmptyState,
+  PageHeader,
+  PageShell,
+  primaryAction,
+  SectionHeader,
+  StatusPill,
+} from "@/components/ui/primitives";
 import { useProject } from "@/hooks/useProject";
 
 const ACTIVE_MODES = [
@@ -38,12 +47,6 @@ const COMING_SOON_MODES = [
   },
 ];
 
-const PRIMARY_ACTION =
-  "inline-flex h-10 items-center justify-center rounded-full bg-[#1F1F1F] px-6 text-sm font-medium text-white transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
-
-const BACK_LINK =
-  "inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
-
 export default function ProjectStudyPage({
   params,
 }: {
@@ -52,129 +55,111 @@ export default function ProjectStudyPage({
   const { project, topics, isLoaded } = useProject(params.projectId);
 
   if (!isLoaded) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F8FAFD]">
-        <p className="text-sm text-[#5F6368]">Loading study modes...</p>
-      </main>
-    );
+    return <CenteredNotice>Loading study modes…</CenteredNotice>;
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-[#F8FAFD]">
-        <div className="mx-auto max-w-lg px-4 py-12">
-          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
-            Project not found
-          </h1>
-          <Link href="/projects" className={BACK_LINK}>
-            Back to projects
-          </Link>
-        </div>
-      </main>
+      <PageShell width="max-w-lg">
+        <h1 className="font-serif text-[34px] leading-[1.08] tracking-[-0.01em] text-[#1A1A17]">
+          Project not found
+        </h1>
+        <Link
+          href="/projects"
+          className="mt-4 inline-flex h-9 -ml-3 items-center rounded-full px-3 text-sm text-[#56524B] transition-colors duration-200 hover:bg-[#EFEBE2] hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]"
+        >
+          Back to projects
+        </Link>
+      </PageShell>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#F8FAFD]">
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:py-12">
-        <ProjectWorkspaceNav projectId={params.projectId} active="study" />
+    <ProjectShell projectId={params.projectId} active="study">
+      <PageHeader
+        eyebrow="Study cockpit"
+        title="More than a chat. A study system."
+        description={`Train, Teach Back, Study Sheet, and Mistakes work from the same topic map and materials in ${project.name}. Each mode has a distinct role in getting you exam-ready.`}
+      />
 
-        <header className="mb-6">
-          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
-            Study modes
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-[#5F6368]">
-            Choose a focused way to train in {project.name}. Each mode uses the
-            same topic map and workspace materials.
-          </p>
-        </header>
-
-        {topics.length === 0 ? (
-          <section className="rounded-2xl border border-[#E1E3E1] bg-white px-6 py-14 text-center">
-            <h2 className="text-lg font-semibold text-[#1F1F1F]">
-              Build your training workspace first
-            </h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-[#5F6368]">
-              Upload materials first to build your training workspace.
-            </p>
+      {topics.length === 0 ? (
+        <EmptyState
+          title="Build your training workspace first"
+          description="Upload your material once and Ivvy organizes it into a topic map you can train against."
+          action={
             <Link
               href={`/projects/${params.projectId}/import`}
-              className={`${PRIMARY_ACTION} mt-6`}
+              className={primaryAction}
             >
               Upload materials
             </Link>
+          }
+        />
+      ) : (
+        <div className="space-y-12">
+          <section aria-labelledby="active-study-modes">
+            <SectionHeader
+              eyebrow="Available now"
+              title="Four ways to train"
+              description="Continue from your current topic map and materials."
+            />
+
+            <div className="grid gap-px overflow-hidden rounded-2xl border border-[#E7E3DA] bg-[#E7E3DA] sm:grid-cols-2">
+              {ACTIVE_MODES.map((mode, index) => (
+                <Link
+                  key={mode.title}
+                  href={`/projects/${params.projectId}${mode.suffix}`}
+                  className="group flex flex-col bg-white p-6 transition-colors duration-200 hover:bg-[#FBFAF7] focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1A1A17]"
+                >
+                  <span className="font-serif text-sm text-[#A8A299] tabular-nums">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="mt-3 font-serif text-[20px] leading-tight tracking-[-0.01em] text-[#1A1A17]">
+                    {mode.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[#56524B]">
+                    {mode.description}
+                  </p>
+                  <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-[#1A1A17]">
+                    {mode.action}
+                    <span
+                      aria-hidden="true"
+                      className="transition-transform duration-200 group-hover:translate-x-0.5"
+                    >
+                      &rarr;
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </div>
           </section>
-        ) : (
-          <div className="space-y-8">
-            <section aria-labelledby="active-study-modes">
-              <div className="mb-4">
-                <h2
-                  id="active-study-modes"
-                  className="text-base font-semibold text-[#1F1F1F]"
+
+          <section aria-labelledby="coming-soon-study-modes">
+            <SectionHeader
+              eyebrow="On the roadmap"
+              title="Coming soon"
+              description="Additional ways to work with your topic materials."
+            />
+
+            <div className="grid gap-4 md:grid-cols-3">
+              {COMING_SOON_MODES.map((mode) => (
+                <article
+                  key={mode.title}
+                  className="rounded-2xl border border-dashed border-[#D8D3C8] bg-white p-6"
                 >
-                  Available now
-                </h2>
-                <p className="mt-1 text-sm text-[#5F6368]">
-                  Continue training from your current topic map.
-                </p>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                {ACTIVE_MODES.map((mode) => (
-                  <Link
-                    key={mode.title}
-                    href={`/projects/${params.projectId}${mode.suffix}`}
-                    className="group rounded-2xl border border-[#E1E3E1] bg-white p-5 transition-colors hover:border-[#C4C7C5] hover:bg-[#FDFDFD] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
-                  >
-                    <h3 className="text-base font-semibold text-[#1F1F1F]">
-                      {mode.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-[#5F6368]">
-                      {mode.description}
-                    </p>
-                    <span className="mt-5 inline-flex text-sm font-medium text-[#1F1F1F] underline decoration-[#C4C7C5] underline-offset-4 group-hover:decoration-[#1F1F1F]">
-                      {mode.action}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </section>
-
-            <section aria-labelledby="coming-soon-study-modes">
-              <div className="mb-4">
-                <h2
-                  id="coming-soon-study-modes"
-                  className="text-base font-semibold text-[#1F1F1F]"
-                >
-                  Coming soon
-                </h2>
-                <p className="mt-1 text-sm text-[#5F6368]">
-                  Additional ways to work with your topic materials.
-                </p>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                {COMING_SOON_MODES.map((mode) => (
-                  <article
-                    key={mode.title}
-                    className="rounded-2xl border border-[#E1E3E1] bg-white p-5"
-                  >
-                    <span className="inline-flex rounded-full bg-[#F1F3F4] px-2.5 py-1 text-xs font-medium text-[#5F6368]">
-                      Coming soon
-                    </span>
-                    <h3 className="mt-4 text-base font-semibold text-[#1F1F1F]">
-                      {mode.title}
-                    </h3>
-                    <p className="mt-2 text-sm text-[#5F6368]">
-                      {mode.description}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </section>
-          </div>
-        )}
-      </div>
-    </main>
+                  <StatusPill>Coming soon</StatusPill>
+                  <h3 className="mt-4 font-serif text-[20px] leading-tight tracking-[-0.01em] text-[#1A1A17]">
+                    {mode.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[#56524B]">
+                    {mode.description}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
+    </ProjectShell>
   );
 }

@@ -27,7 +27,7 @@ export default function MessageThread({
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center text-sm text-[#80868B]">
+      <div className="flex-1 flex items-center justify-center text-sm text-[#7A766D]">
         No messages yet.
       </div>
     );

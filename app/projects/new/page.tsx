@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useProjects } from "@/hooks/useProjects";
 
-const LABEL = "block text-sm font-medium text-[#1F1F1F] mb-1.5";
+const LABEL = "block text-sm font-medium text-[#1A1A17] mb-1.5";
 const INPUT =
-  "w-full h-12 rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15";
-const HELPER = "text-xs text-[#5F6368] mt-1.5";
+  "w-full h-12 rounded-lg border border-[#D8D3C8] bg-white px-4 text-sm text-[#1A1A17] placeholder:text-[#7A766D] transition-colors focus-visible:outline-none focus-visible:border-[#1A1A17] focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15";
+const HELPER = "text-xs text-[#56524B] mt-1.5";
 
 export default function NewProjectPage() {
   const router = useRouter();
@@ -52,26 +52,26 @@ export default function NewProjectPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F8FAFD]">
+    <main className="min-h-screen bg-[#FAF8F4]">
       <div className="max-w-lg mx-auto px-4 py-10 sm:py-12">
         <Link
           href="/projects"
-          className="inline-flex items-center h-9 -ml-3 px-3 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+          className="inline-flex items-center h-9 -ml-3 px-3 rounded-full text-sm text-[#56524B] transition-colors hover:bg-[#EFEBE2] hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
         >
           Back to projects
         </Link>
 
         <header className="mt-4 mb-6">
-          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
+          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1A1A17]">
             Create training project
           </h1>
-          <p className="text-sm text-[#5F6368] mt-2">
+          <p className="text-sm text-[#56524B] mt-2">
             Set up one exam. You will add topics and materials next, then train in
             chat.
           </p>
         </header>
 
-        <div className="rounded-2xl border border-[#E1E3E1] bg-white p-6 sm:p-8">
+        <div className="rounded-2xl border border-[#E7E3DA] bg-white p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label htmlFor="project-name" className={LABEL}>
@@ -144,7 +144,7 @@ export default function NewProjectPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full h-11 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+              className="w-full h-11 rounded-full bg-[#1A1A17] text-white text-sm font-medium transition-colors hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
             >
               Create project
             </button>

@@ -8,7 +8,7 @@ import ReviewProgressRing from "@/components/project/dashboard/ReviewProgressRin
 import TodaysPlan from "@/components/project/dashboard/TodaysPlan";
 import TopicCoverageList from "@/components/project/dashboard/TopicCoverageList";
 import GoalProgressCard from "@/components/project/goals/GoalProgressCard";
-import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
+import ProjectShell from "@/components/project/ProjectShell";
 import { useProject } from "@/hooks/useProject";
 import { useProjectGoals } from "@/hooks/useProjectGoals";
 import { useProjectMaterials } from "@/hooks/useProjectMaterials";
@@ -21,11 +21,21 @@ import {
   computeWeeklyProgress,
   daysUntil,
 } from "@/lib/dashboard-metrics";
+import {
+  CenteredNotice,
+  Eyebrow,
+  MetricCard,
+  PageHeader,
+  PageShell,
+  PrimaryActionCard,
+  primaryAction,
+  StatusPill,
+} from "@/components/ui/primitives";
 import { getProjectChat, getProjectMistakes } from "@/lib/project-storage";
 import type { Chat, Mistake } from "@/lib/types";
 
 const SECONDARY_LINK =
-  "inline-flex items-center h-9 px-4 rounded-full border border-[#C4C7C5] text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex items-center h-9 px-4 rounded-full border border-[#D8D3C8] text-sm font-medium text-[#1A1A17] transition-colors duration-200 hover:bg-[#EFEBE2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]";
 
 function formatDate(dateString: string): string {
   const date = new Date(`${dateString}T00:00:00`);
@@ -41,24 +51,6 @@ function daysPillLabel(days: number | null): string {
   if (days === null) return "Exam date unavailable";
   if (days === 0) return "Exam date reached";
   return `${days} day${days === 1 ? "" : "s"} until exam`;
-}
-
-function StatCard({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string | number;
-  detail?: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-[#E1E3E1] bg-white p-4">
-      <p className="text-xs font-medium text-[#5F6368]">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-[#1F1F1F]">{value}</p>
-      {detail ? <p className="mt-1 text-xs text-[#80868B]">{detail}</p> : null}
-    </div>
-  );
 }
 
 export default function ProjectPage({
@@ -137,28 +129,22 @@ export default function ProjectPage({
     logLoaded;
 
   if (!isLoaded) {
-    return (
-      <main className="min-h-screen bg-[#F8FAFD] flex items-center justify-center">
-        <p className="text-sm text-[#5F6368]">Loading...</p>
-      </main>
-    );
+    return <CenteredNotice>Loading…</CenteredNotice>;
   }
 
   if (!project || !todaysPlan) {
     return (
-      <main className="min-h-screen bg-[#F8FAFD]">
-        <div className="max-w-lg mx-auto px-4 py-12">
-          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
-            Project not found
-          </h1>
-          <Link
-            href="/projects"
-            className="inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
-          >
-            Back to projects
-          </Link>
-        </div>
-      </main>
+      <PageShell width="max-w-lg">
+        <h1 className="font-serif text-[34px] leading-[1.08] tracking-[-0.01em] text-[#1A1A17]">
+          Project not found
+        </h1>
+        <Link
+          href="/projects"
+          className="mt-4 inline-flex h-9 -ml-3 items-center rounded-full px-3 text-sm text-[#56524B] transition-colors duration-200 hover:bg-[#EFEBE2] hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]"
+        >
+          Back to projects
+        </Link>
+      </PageShell>
     );
   }
 
@@ -175,136 +161,113 @@ export default function ProjectPage({
   const isExamUrgent = examDays !== null && examDays <= 7;
 
   return (
-    <main className="min-h-screen bg-[#F8FAFD]">
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:py-12">
-        <ProjectWorkspaceNav projectId={params.projectId} active="overview" />
+    <ProjectShell projectId={params.projectId} active="overview">
+      <PageHeader
+        eyebrow="Command center"
+        title={project.name}
+        description="Where you are in exam preparation, and what to train next."
+        action={
+          <StatusPill tone={isExamUrgent ? "warning" : "neutral"}>
+            {daysPillLabel(examDays)}
+          </StatusPill>
+        }
+      />
 
-        <div className="space-y-5">
-          <header>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
-                  {project.name}
-                </h1>
-                <p className="mt-2 text-sm text-[#5F6368]">
-                  Where you are in exam preparation and what to do next.
-                </p>
-              </div>
-              <span
-                className={`inline-flex w-fit items-center rounded-full px-3 py-1.5 text-xs font-medium ${
-                  isExamUrgent
-                    ? "bg-[#FEEFC3] text-[#B06000]"
-                    : "bg-[#F1F3F4] text-[#5F6368]"
-                }`}
-              >
-                {daysPillLabel(examDays)}
-              </span>
-            </div>
+      <div className="-mt-3 mb-6 flex flex-wrap items-center gap-2">
+        <span className="inline-flex h-7 items-center rounded-full bg-[#F4F1EA] px-3 text-xs font-medium text-[#56524B]">
+          {project.subject}
+        </span>
+        <span className="inline-flex h-7 items-center rounded-full bg-[#F4F1EA] px-3 text-xs font-medium text-[#56524B]">
+          Exam {formatDate(project.examDate)}
+        </span>
+        <span className="inline-flex h-7 items-center rounded-full bg-[#F4F1EA] px-3 text-xs font-medium text-[#56524B]">
+          Target {project.targetGrade}
+        </span>
+      </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center h-7 px-3 rounded-full bg-[#F1F3F4] text-xs font-medium text-[#5F6368]">
-                {project.subject}
-              </span>
-              <span className="inline-flex items-center h-7 px-3 rounded-full bg-[#F1F3F4] text-xs font-medium text-[#5F6368]">
-                Exam {formatDate(project.examDate)}
-              </span>
-              <span className="inline-flex items-center h-7 px-3 rounded-full bg-[#F1F3F4] text-xs font-medium text-[#5F6368]">
-                Target {project.targetGrade}
-              </span>
-            </div>
-          </header>
-
+      <div className="grid gap-5 lg:grid-cols-12">
+        {/* Primary column — readiness, plan, next action, activity */}
+        <div className="space-y-5 lg:col-span-8">
           <ReadinessBand readiness={readiness} />
 
           <TodaysPlan plan={todaysPlan} />
 
-          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-[#5F6368]">
-                  Study modes
-                </p>
-                <h2 className="mt-1 text-base font-semibold text-[#1F1F1F]">
-                  Choose how to train
-                </h2>
-                <p className="mt-1 text-sm text-[#5F6368]">
-                  Practice questions, revisit mistakes, and see the next study
-                  modes Ivvy is building.
-                </p>
-              </div>
+          <PrimaryActionCard
+            eyebrow="Study modes"
+            title="Choose how to train"
+            description="Practice questions, teach a topic back, build a study sheet, or revisit saved mistakes — one coherent learning system."
+            action={
               <Link
                 href={`/projects/${params.projectId}/study`}
-                className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-[#1F1F1F] px-6 text-sm font-medium text-white transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+                className={primaryAction}
               >
                 Open study modes
               </Link>
+            }
+          />
+
+          <section aria-label="Project statistics">
+            <Eyebrow>At a glance</Eyebrow>
+            <div className="mt-3 grid grid-cols-2 gap-3 xl:grid-cols-4">
+              <MetricCard
+                label="Topics"
+                value={topics.length}
+                detail={
+                  topics.length === 0
+                    ? "Add your exam areas"
+                    : `${topicCoverage.filter((row) => row.hasMaterials).length} with materials`
+                }
+              />
+              <MetricCard
+                label="Materials"
+                value={meaningfulMaterials.length}
+                detail={
+                  meaningfulMaterials.length === 0
+                    ? "Add notes or past papers"
+                    : "Saved across topics"
+                }
+              />
+              <MetricCard
+                label="Mistakes"
+                value={mistakes.length}
+                detail={
+                  mistakes.length === 0
+                    ? "Train to find weak areas"
+                    : `${unreviewedMistakes} unreviewed`
+                }
+              />
+              <MetricCard
+                label="Review"
+                value={`${reviewPercentage}%`}
+                detail={
+                  mistakes.length === 0
+                    ? "No review queue yet"
+                    : `${reviewedMistakes} of ${mistakes.length} reviewed`
+                }
+              />
             </div>
           </section>
 
+          <ActivityGrid cells={activity} />
+
+          <TopicCoverageList rows={topicCoverage} />
+        </div>
+
+        {/* Secondary column — goals + review progress */}
+        <div className="space-y-5 lg:col-span-4">
           <GoalProgressCard
             projectId={params.projectId}
             weeklyProgress={weeklyProgress}
             focusTopicNames={focusTopicNames}
           />
 
-          <section
-            className="grid grid-cols-2 gap-3 sm:grid-cols-4"
-            aria-label="Project statistics"
-          >
-            <StatCard
-              label="Topics"
-              value={topics.length}
-              detail={
-                topics.length === 0
-                  ? "Add your exam areas"
-                  : `${topicCoverage.filter((row) => row.hasMaterials).length} with materials`
-              }
-            />
-            <StatCard
-              label="Materials"
-              value={meaningfulMaterials.length}
-              detail={
-                meaningfulMaterials.length === 0
-                  ? "Add notes or past papers"
-                  : "Saved across topics"
-              }
-            />
-            <StatCard
-              label="Mistakes"
-              value={mistakes.length}
-              detail={
-                mistakes.length === 0
-                  ? "Train to find weak areas"
-                  : `${unreviewedMistakes} unreviewed`
-              }
-            />
-            <StatCard
-              label="Review"
-              value={`${reviewPercentage}%`}
-              detail={
-                mistakes.length === 0
-                  ? "No review queue yet"
-                  : `${reviewedMistakes} of ${mistakes.length} reviewed`
-              }
-            />
-          </section>
-
-          <ActivityGrid cells={activity} />
-
-          <TopicCoverageList rows={topicCoverage} />
-
           <ReviewProgressRing
             total={mistakes.length}
             reviewed={reviewedMistakes}
           />
 
-          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
-            <h2 className="text-base font-semibold text-[#1F1F1F]">
-              Workspace
-            </h2>
-            <p className="mt-1 text-sm text-[#5F6368]">
-              Move between setup, source material, training, and review.
-            </p>
+          <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
+            <Eyebrow>Jump to</Eyebrow>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
                 href={`/projects/${params.projectId}/import`}
@@ -313,34 +276,10 @@ export default function ProjectPage({
                 Upload materials
               </Link>
               <Link
-                href={`/projects/${params.projectId}/setup`}
-                className={SECONDARY_LINK}
-              >
-                Topics
-              </Link>
-              <Link
-                href={`/projects/${params.projectId}/materials`}
-                className={SECONDARY_LINK}
-              >
-                Materials
-              </Link>
-              <Link
-                href={`/projects/${params.projectId}/study`}
-                className={SECONDARY_LINK}
-              >
-                Study modes
-              </Link>
-              <Link
                 href={`/projects/${params.projectId}/train`}
                 className={SECONDARY_LINK}
               >
                 Train
-              </Link>
-              <Link
-                href={`/projects/${params.projectId}/chat`}
-                className={SECONDARY_LINK}
-              >
-                Chat
               </Link>
               <Link
                 href={`/projects/${params.projectId}/mistakes`}
@@ -358,6 +297,6 @@ export default function ProjectPage({
           </section>
         </div>
       </div>
-    </main>
+    </ProjectShell>
   );
 }

@@ -11,7 +11,7 @@ const MATERIAL_TEXT_LIMIT = 12_000;
 const FILE_ACCEPT =
   ".txt,.md,.csv,.json,.html,.pdf,.docx,text/plain,text/markdown,text/csv,application/json,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 const FIELD =
-  "w-full rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15";
+  "w-full rounded-lg border border-[#D8D3C8] bg-white px-4 text-sm text-[#1A1A17] placeholder:text-[#7A766D] transition-colors focus-visible:outline-none focus-visible:border-[#1A1A17] focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15";
 
 type SuggestedTopic = {
   name: string;
@@ -192,12 +192,12 @@ export default function TopicSuggestionPanel({
   }
 
   return (
-    <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6 space-y-5">
+    <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6 space-y-5">
       <div>
-        <h2 className="text-lg font-medium text-[#1F1F1F]">
+        <h2 className="text-lg font-medium text-[#1A1A17]">
           Generate training map
         </h2>
-        <p className="mt-1 text-sm text-[#5F6368]">
+        <p className="mt-1 text-sm text-[#56524B]">
           Paste a syllabus, notes, or past paper to suggest topics before adding
           them.
         </p>
@@ -206,7 +206,7 @@ export default function TopicSuggestionPanel({
       <div>
         <label
           htmlFor={`topic-extraction-material-${projectId}`}
-          className="block text-xs font-medium text-[#5F6368] mb-1.5"
+          className="block text-xs font-medium text-[#56524B] mb-1.5"
         >
           Exam materials
         </label>
@@ -234,22 +234,22 @@ export default function TopicSuggestionPanel({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isBusy}
-            className="inline-flex items-center h-9 px-4 rounded-full border border-[#C4C7C5] text-sm text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+            className="inline-flex items-center h-9 px-4 rounded-full border border-[#D8D3C8] text-sm text-[#1A1A17] transition-colors hover:bg-[#EFEBE2] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
           >
             {isParsing ? "Extracting…" : "Choose files"}
           </button>
-          <span className="text-xs text-[#80868B]">
+          <span className="text-xs text-[#7A766D]">
             Up to {MATERIAL_TEXT_LIMIT.toLocaleString()} characters.
           </span>
         </div>
         {isParsing ? (
-          <p className="mt-2 text-xs text-[#5F6368]" role="status">
+          <p className="mt-2 text-xs text-[#56524B]" role="status">
             Extracting text from selected files…
           </p>
         ) : null}
         {error ? (
           <p
-            className="mt-2 rounded-lg bg-[#F1F3F4] px-3 py-2 text-xs text-[#5F6368] whitespace-pre-line"
+            className="mt-2 rounded-lg bg-[#EFEBE2] px-3 py-2 text-xs text-[#56524B] whitespace-pre-line"
             role="alert"
           >
             {error}
@@ -257,7 +257,7 @@ export default function TopicSuggestionPanel({
         ) : null}
         {warning && !isParsing ? (
           <p
-            className="mt-2 rounded-lg bg-[#F1F3F4] px-3 py-2 text-xs text-[#5F6368] whitespace-pre-line"
+            className="mt-2 rounded-lg bg-[#EFEBE2] px-3 py-2 text-xs text-[#56524B] whitespace-pre-line"
             role="status"
           >
             {warning}
@@ -270,25 +270,25 @@ export default function TopicSuggestionPanel({
           type="button"
           onClick={handleGenerate}
           disabled={isBusy || materialText.trim().length === 0}
-          className="inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+          className="inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1A1A17] text-white text-sm font-medium transition-colors hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
         >
           {isGenerating ? "Reading your materials…" : "Generate training map"}
         </button>
         {notice ? (
-          <span className="text-xs font-medium text-[#5F6368]" role="status">
+          <span className="text-xs font-medium text-[#56524B]" role="status">
             {notice}
           </span>
         ) : null}
       </div>
 
       {materialText.length === 0 && suggestions.length === 0 ? (
-        <p className="text-sm text-[#5F6368]">
+        <p className="text-sm text-[#56524B]">
           Add material above to generate a starting set of study topics.
         </p>
       ) : null}
 
       {generatedEmpty ? (
-        <p className="text-sm text-[#5F6368]">
+        <p className="text-sm text-[#56524B]">
           No clear topics found &mdash; add them manually below, or paste more
           detailed notes.
         </p>
@@ -297,14 +297,14 @@ export default function TopicSuggestionPanel({
       {suggestions.length > 0 ? (
         <div className="space-y-3">
           <div>
-            <h3 className="text-base font-medium text-[#1F1F1F]">
+            <h3 className="text-base font-medium text-[#1A1A17]">
               Suggested topics
             </h3>
-            <p className="text-xs text-[#5F6368] mt-1">Review before adding.</p>
+            <p className="text-xs text-[#56524B] mt-1">Review before adding.</p>
           </div>
 
           {allAlreadyExist ? (
-            <p className="text-sm text-[#5F6368]">
+            <p className="text-sm text-[#56524B]">
               These topics are already in your project.
             </p>
           ) : null}
@@ -316,23 +316,23 @@ export default function TopicSuggestionPanel({
               );
               return (
                 <li key={topic.name}>
-                  <label className="flex items-center gap-3 rounded-xl border border-[#E1E3E1] bg-[#F8FAFD] px-4 py-3">
+                  <label className="flex items-center gap-3 rounded-xl border border-[#E7E3DA] bg-[#FAF8F4] px-4 py-3">
                     <input
                       type="checkbox"
                       checked={topic.checked}
                       onChange={() => toggleSuggestion(topic.name)}
                       disabled={alreadyExists}
-                      className="h-4 w-4 accent-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+                      className="h-4 w-4 accent-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
                     />
                     <span
                       className={`flex-1 text-sm ${
-                        alreadyExists ? "text-[#80868B]" : "text-[#1F1F1F]"
+                        alreadyExists ? "text-[#7A766D]" : "text-[#1A1A17]"
                       }`}
                     >
                       {topic.name}
                     </span>
                     {alreadyExists ? (
-                      <span className="rounded-full bg-[#E8EAED] px-2.5 py-1 text-xs text-[#5F6368]">
+                      <span className="rounded-full bg-[#E7E3DA] px-2.5 py-1 text-xs text-[#56524B]">
                         Already added
                       </span>
                     ) : null}
@@ -346,7 +346,7 @@ export default function TopicSuggestionPanel({
             type="button"
             onClick={handleAddTopics}
             disabled={checkedNewTopics.length === 0}
-            className="inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#E8EAED] text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#DADCE0] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+            className="inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#E7E3DA] text-sm font-medium text-[#1A1A17] transition-colors hover:bg-[#D8D3C8] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
           >
             Add {checkedNewTopics.length} topic
             {checkedNewTopics.length === 1 ? "" : "s"}

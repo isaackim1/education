@@ -2,16 +2,17 @@
 
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
-import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
+import ProjectShell from "@/components/project/ProjectShell";
+import { PageHeader } from "@/components/ui/primitives";
 import { useProject } from "@/hooks/useProject";
 import { useTrainingLog } from "@/hooks/useTrainingLog";
 import type { TrainingSession, TrainingSessionType } from "@/lib/types";
 
 const FIELD =
-  "h-12 w-full rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15";
+  "h-12 w-full rounded-lg border border-[#D8D3C8] bg-white px-4 text-sm text-[#1A1A17] placeholder:text-[#7A766D] transition-colors focus-visible:outline-none focus-visible:border-[#1A1A17] focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15";
 
 const PRIMARY_ACTION =
-  "inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1A1A17] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const TYPE_OPTIONS: { value: TrainingSessionType; label: string }[] = [
   { value: "studied-materials", label: "Studied materials" },
@@ -31,10 +32,10 @@ const DURATION_PRESETS = [15, 30, 45, 60];
 const CONFIDENCE_LEVELS: (1 | 2 | 3 | 4 | 5)[] = [1, 2, 3, 4, 5];
 
 function chipClass(selected: boolean): string {
-  return `inline-flex items-center h-9 px-4 rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2 ${
+  return `inline-flex items-center h-9 px-4 rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 ${
     selected
-      ? "bg-[#1F1F1F] text-white"
-      : "border border-[#C4C7C5] text-[#1F1F1F] hover:bg-[#F1F3F4]"
+      ? "bg-[#1A1A17] text-white"
+      : "border border-[#D8D3C8] text-[#1A1A17] hover:bg-[#EFEBE2]"
   }`;
 }
 
@@ -121,22 +122,22 @@ export default function LogPage({
 
   if (!isLoaded) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F8FAFD]">
-        <p className="text-sm text-[#5F6368]">Loading...</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF8F4]">
+        <p className="text-sm text-[#56524B]">Loading...</p>
       </main>
     );
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-[#F8FAFD]">
+      <main className="min-h-screen bg-[#FAF8F4]">
         <div className="mx-auto max-w-lg px-4 py-12">
-          <h1 className="text-[28px] font-semibold tracking-tight text-[#1F1F1F]">
+          <h1 className="text-[28px] font-semibold tracking-tight text-[#1A1A17]">
             Project not found
           </h1>
           <Link
             href="/projects"
-            className="mt-4 inline-flex h-9 items-center rounded-full px-3 text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F]"
+            className="mt-4 inline-flex h-9 items-center rounded-full px-3 text-sm text-[#56524B] transition-colors hover:bg-[#EFEBE2] hover:text-[#1A1A17]"
           >
             Back to projects
           </Link>
@@ -146,30 +147,23 @@ export default function LogPage({
   }
 
   return (
-    <main className="min-h-screen bg-[#F8FAFD]">
-      <div className="mx-auto max-w-2xl px-4 py-10 sm:py-12">
-        <ProjectWorkspaceNav projectId={params.projectId} active="log" />
+    <ProjectShell projectId={params.projectId} active="log" width="max-w-3xl">
+      <PageHeader
+        eyebrow="Activity"
+        title="Training log"
+        description="Record a session each time you study, train, or review. Your activity grid and weekly goals fill in as you go."
+      />
 
-        <header className="mb-6">
-          <h1 className="text-[28px] font-semibold tracking-tight text-[#1F1F1F]">
-            Training log
-          </h1>
-          <p className="mt-2 text-sm text-[#5F6368]">
-            Record a session each time you study, train, or review. Your
-            activity grid and weekly goals fill in as you go.
-          </p>
-        </header>
-
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6"
-        >
-          <h2 className="text-base font-semibold text-[#1F1F1F]">
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6"
+      >
+          <h2 className="text-base font-semibold text-[#1A1A17]">
             Log a training session
           </h2>
 
           <fieldset className="mt-4">
-            <legend className="text-sm font-medium text-[#1F1F1F]">
+            <legend className="text-sm font-medium text-[#1A1A17]">
               What did you do?
             </legend>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -188,7 +182,7 @@ export default function LogPage({
           </fieldset>
 
           <label className="mt-5 block space-y-1.5">
-            <span className="text-sm font-medium text-[#1F1F1F]">
+            <span className="text-sm font-medium text-[#1A1A17]">
               Topic (optional)
             </span>
             <select
@@ -206,7 +200,7 @@ export default function LogPage({
           </label>
 
           <fieldset className="mt-5">
-            <legend className="text-sm font-medium text-[#1F1F1F]">
+            <legend className="text-sm font-medium text-[#1A1A17]">
               How long?
             </legend>
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -241,14 +235,14 @@ export default function LogPage({
                   onChange={(event) => setCustomDuration(event.target.value)}
                   placeholder="Minutes"
                   aria-label="Custom duration in minutes"
-                  className="h-9 w-28 rounded-lg border border-[#C4C7C5] bg-white px-3 text-sm text-[#1F1F1F] placeholder:text-[#80868B] focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15"
+                  className="h-9 w-28 rounded-lg border border-[#D8D3C8] bg-white px-3 text-sm text-[#1A1A17] placeholder:text-[#7A766D] focus-visible:outline-none focus-visible:border-[#1A1A17] focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15"
                 />
               ) : null}
             </div>
           </fieldset>
 
           <label className="mt-5 block space-y-1.5">
-            <span className="text-sm font-medium text-[#1F1F1F]">
+            <span className="text-sm font-medium text-[#1A1A17]">
               Note (optional)
             </span>
             <textarea
@@ -256,12 +250,12 @@ export default function LogPage({
               onChange={(event) => setNote(event.target.value)}
               rows={2}
               placeholder="Anything worth remembering about this session"
-              className="w-full rounded-lg border border-[#C4C7C5] bg-white px-4 py-3 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15"
+              className="w-full rounded-lg border border-[#D8D3C8] bg-white px-4 py-3 text-sm text-[#1A1A17] placeholder:text-[#7A766D] transition-colors focus-visible:outline-none focus-visible:border-[#1A1A17] focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15"
             />
           </label>
 
           <fieldset className="mt-5">
-            <legend className="text-sm font-medium text-[#1F1F1F]">
+            <legend className="text-sm font-medium text-[#1A1A17]">
               Confidence after (optional)
             </legend>
             <div className="mt-2 flex gap-2">
@@ -275,10 +269,10 @@ export default function LogPage({
                       current === level ? null : level
                     )
                   }
-                  className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2 ${
+                  className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 ${
                     confidenceAfter === level
-                      ? "bg-[#1F1F1F] text-white"
-                      : "border border-[#C4C7C5] text-[#1F1F1F] hover:bg-[#F1F3F4]"
+                      ? "bg-[#1A1A17] text-white"
+                      : "border border-[#D8D3C8] text-[#1A1A17] hover:bg-[#EFEBE2]"
                   }`}
                 >
                   {level}
@@ -295,16 +289,16 @@ export default function LogPage({
         </form>
 
         <section className="mt-6">
-          <h2 className="text-base font-semibold text-[#1F1F1F]">
+          <h2 className="text-base font-semibold text-[#1A1A17]">
             Logged sessions
           </h2>
 
           {orderedSessions.length === 0 ? (
-            <div className="mt-3 rounded-2xl border border-[#E1E3E1] bg-white p-6 text-center">
-              <p className="text-sm font-medium text-[#1F1F1F]">
+            <div className="mt-3 rounded-2xl border border-[#E7E3DA] bg-white p-6 text-center">
+              <p className="text-sm font-medium text-[#1A1A17]">
                 No sessions logged yet
               </p>
-              <p className="mx-auto mt-1 max-w-sm text-sm text-[#5F6368]">
+              <p className="mx-auto mt-1 max-w-sm text-sm text-[#56524B]">
                 Log a session each time you study, train in chat, or review
                 mistakes. Your activity grid and weekly goals fill in as you go.
               </p>
@@ -318,16 +312,16 @@ export default function LogPage({
                 return (
                   <li
                     key={session.id}
-                    className="flex items-start justify-between gap-3 rounded-2xl border border-[#E1E3E1] bg-white p-4"
+                    className="flex items-start justify-between gap-3 rounded-2xl border border-[#E7E3DA] bg-white p-4"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-[#1F1F1F]">
+                      <p className="text-sm font-medium text-[#1A1A17]">
                         {TYPE_LABELS[session.type]}
                         {session.durationMinutes > 0
                           ? ` · ${session.durationMinutes} min`
                           : ""}
                       </p>
-                      <p className="mt-0.5 text-xs text-[#80868B]">
+                      <p className="mt-0.5 text-xs text-[#7A766D]">
                         {formatLoggedAt(session.loggedAt)}
                         {topicName ? ` · ${topicName}` : ""}
                         {session.confidenceAfter
@@ -335,7 +329,7 @@ export default function LogPage({
                           : ""}
                       </p>
                       {session.note ? (
-                        <p className="mt-2 text-sm text-[#5F6368]">
+                        <p className="mt-2 text-sm text-[#56524B]">
                           {session.note}
                         </p>
                       ) : null}
@@ -354,7 +348,6 @@ export default function LogPage({
             </ul>
           )}
         </section>
-      </div>
-    </main>
+    </ProjectShell>
   );
 }

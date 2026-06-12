@@ -1,22 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ProjectMaterialCard from "@/components/project/ProjectMaterialCard";
-import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
+import ProjectShell from "@/components/project/ProjectShell";
+import {
+  CenteredNotice,
+  EmptyState,
+  Eyebrow,
+  PageHeader,
+  PageShell,
+  primaryAction,
+  StatusPill,
+} from "@/components/ui/primitives";
 import { useProject } from "@/hooks/useProject";
 import { useProjectMaterials } from "@/hooks/useProjectMaterials";
-
-const PRIMARY_ACTION =
-  "inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
-
-const SECONDARY_ACTION =
-  "inline-flex items-center justify-center h-10 px-5 rounded-full border border-[#C4C7C5] text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
-
-const INLINE_LINK =
-  "inline-flex items-center h-9 -ml-1 mt-3 px-3 rounded-full text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
-
-const BACK_LINK =
-  "inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
 
 export default function ProjectMaterialsPage({
   params,
@@ -33,124 +31,174 @@ export default function ProjectMaterialsPage({
     saveTopicMaterial,
   } = useProjectMaterials(params.projectId);
 
+  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+
+  // Live state of the mounted editor, so we can guard topic switches against
+  // discarding unsaved drafts or interrupting an in-progress file import.
+  const editorStateRef = useRef<{ isDirty: boolean; isParsing: boolean }>({
+    isDirty: false,
+    isParsing: false,
+  });
+  const [isParsing, setIsParsing] = useState(false);
+
+  const handleEditorStateChange = useCallback(
+    (state: { isDirty: boolean; isParsing: boolean }) => {
+      editorStateRef.current = state;
+      setIsParsing(state.isParsing);
+    },
+    []
+  );
+
+  function selectTopic(topicId: string) {
+    if (topicId === selectedTopicId) return;
+    const { isDirty, isParsing: parsing } = editorStateRef.current;
+    // Never switch away mid-import — the parse would be lost.
+    if (parsing) return;
+    // Confirm before discarding unsaved edits; no silent loss.
+    if (
+      isDirty &&
+      !window.confirm(
+        "You have unsaved changes to this topic's material. Discard them and switch topics?"
+      )
+    ) {
+      return;
+    }
+    setSelectedTopicId(topicId);
+  }
+
+  // Default to the first topic once topics load; keep selection valid if topics change.
+  useEffect(() => {
+    if (topics.length === 0) {
+      setSelectedTopicId(null);
+      return;
+    }
+    setSelectedTopicId((current) =>
+      current && topics.some((topic) => topic.id === current)
+        ? current
+        : topics[0].id
+    );
+  }, [topics]);
+
   const isLoaded = projectLoaded && materialsLoaded;
 
   if (!isLoaded) {
-    return (
-      <main className="min-h-screen bg-[#F8FAFD] flex items-center justify-center">
-        <p className="text-sm text-[#5F6368]">Loading materials...</p>
-      </main>
-    );
+    return <CenteredNotice>Loading materials…</CenteredNotice>;
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-[#F8FAFD]">
-        <div className="max-w-lg mx-auto px-4 py-12">
-          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
-            Project not found
-          </h1>
-          <Link href="/projects" className={BACK_LINK}>
-            Back to projects
-          </Link>
-        </div>
-      </main>
-    );
-  }
-
-  if (topics.length === 0) {
-    return (
-      <main className="min-h-screen bg-[#F8FAFD]">
-        <div className="max-w-2xl mx-auto px-4 py-10 sm:py-12">
-          <ProjectWorkspaceNav projectId={params.projectId} active="materials" />
-
-          <header className="mb-6">
-            <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
-              Materials
-            </h1>
-            <p className="text-sm text-[#5F6368] mt-2">
-              The quickest way to add materials is the upload-once flow — Ivvy
-              creates your topics and organizes the material at the same time.
-            </p>
-          </header>
-
-          <div className="rounded-2xl border border-[#E1E3E1] bg-white px-6 py-14 text-center">
-            <h2 className="text-base font-medium text-[#1F1F1F]">
-              No topics yet
-            </h2>
-            <p className="text-sm text-[#5F6368] mt-2 mx-auto max-w-sm">
-              Upload your material once and Ivvy will create topics and attach
-              the material for you. You can also add topics manually first.
-            </p>
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <Link
-                href={`/projects/${params.projectId}/import`}
-                className={PRIMARY_ACTION}
-              >
-                Upload once and organize materials
-              </Link>
-              <Link
-                href={`/projects/${params.projectId}/setup`}
-                className={SECONDARY_ACTION}
-              >
-                Add topics manually
-              </Link>
-            </div>
-          </div>
-        </div>
-      </main>
+      <PageShell width="max-w-lg">
+        <h1 className="font-serif text-[34px] leading-[1.08] tracking-[-0.01em] text-[#1A1A17]">
+          Project not found
+        </h1>
+        <Link
+          href="/projects"
+          className="mt-4 inline-flex h-9 -ml-3 items-center rounded-full px-3 text-sm text-[#56524B] transition-colors duration-200 hover:bg-[#EFEBE2] hover:text-[#1A1A17]"
+        >
+          Back to projects
+        </Link>
+      </PageShell>
     );
   }
 
   const savedCount = materials.filter(
     (m) => m.content.trim().length > 0
   ).length;
+  const selectedTopic =
+    topics.find((topic) => topic.id === selectedTopicId) ?? null;
 
   return (
-    <main className="min-h-screen bg-[#F8FAFD]">
-      <div className="max-w-2xl mx-auto px-4 py-10 sm:py-12">
-        <ProjectWorkspaceNav projectId={params.projectId} active="materials" />
-
-        <header className="mb-6">
-          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
-            Materials
-          </h1>
-          <p className="text-sm text-[#5F6368] mt-2">
-            Review and edit the material attached to each topic. Materials can be
-            added automatically from the upload-once import flow, or edited
-            manually here.
-          </p>
+    <ProjectShell projectId={params.projectId} active="materials">
+      <PageHeader
+        eyebrow="Source material"
+        title="Materials"
+        description="Review and edit the material attached to each topic. The fastest way to add material is the upload-once flow — Ivvy creates topics and attaches material at the same time."
+        action={
           <Link
             href={`/projects/${params.projectId}/import`}
-            className={INLINE_LINK}
+            className={primaryAction}
           >
-            Use upload-once import instead &rarr;
+            Upload once
           </Link>
-          <p className="mt-3 text-xs text-[#5F6368]">
-            Supported formats: TXT, MD, CSV, JSON, HTML, PDF, DOCX. PDF and DOCX
-            import selectable text only — scanned or image-only PDFs aren&apos;t
-            supported yet.
-          </p>
-        </header>
+        }
+      />
 
-        <div className="space-y-4">
-          {topics.map((topic) => (
-            <ProjectMaterialCard
-              key={topic.id}
-              topicName={topic.name}
-              topicId={topic.id}
-              material={getMaterialsForTopic(topic.id)}
-              onSave={saveTopicMaterial}
-            />
-          ))}
+      {topics.length === 0 ? (
+        <EmptyState
+          title="No topics yet"
+          description="Upload your material once and Ivvy will create topics and attach the material for you. You can also add topics manually first."
+          action={
+            <Link
+              href={`/projects/${params.projectId}/import`}
+              className={primaryAction}
+            >
+              Upload once and organize
+            </Link>
+          }
+        />
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
+          {/* Topic list */}
+          <aside className="lg:col-span-4 xl:col-span-3">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <Eyebrow>Topics</Eyebrow>
+              <StatusPill tone={savedCount > 0 ? "success" : "neutral"}>
+                {savedCount}/{topics.length}
+              </StatusPill>
+            </div>
+            <ul className="space-y-1.5">
+              {topics.map((topic) => {
+                const hasMaterial =
+                  (getMaterialsForTopic(topic.id)?.content.trim().length ?? 0) >
+                  0;
+                const isActive = topic.id === selectedTopicId;
+                // While a file import is running, lock other topics so the
+                // in-progress parse can't be discarded by a switch.
+                const isLocked = isParsing && !isActive;
+                return (
+                  <li key={topic.id}>
+                    <button
+                      type="button"
+                      onClick={() => selectTopic(topic.id)}
+                      disabled={isLocked}
+                      aria-current={isActive ? "true" : undefined}
+                      className={`flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4] disabled:cursor-not-allowed disabled:opacity-50 ${
+                        isActive
+                          ? "border-[#1A1A17] bg-white"
+                          : "border-[#E7E3DA] bg-white hover:border-[#D8D3C8] hover:bg-[#FBFAF7]"
+                      }`}
+                    >
+                      <span className="truncate text-sm font-medium text-[#1A1A17]">
+                        {topic.name}
+                      </span>
+                      <span
+                        className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                          hasMaterial ? "bg-[#137333]" : "bg-[#D8D3C8]"
+                        }`}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </aside>
+
+          {/* Selected topic detail */}
+          <div className="lg:col-span-8 xl:col-span-9">
+            {selectedTopic ? (
+              <ProjectMaterialCard
+                key={selectedTopic.id}
+                topicName={selectedTopic.name}
+                topicId={selectedTopic.id}
+                material={getMaterialsForTopic(selectedTopic.id)}
+                onSave={saveTopicMaterial}
+                onStateChange={handleEditorStateChange}
+              />
+            ) : null}
+          </div>
         </div>
-
-        {materials.length > 0 ? (
-          <p className="text-xs text-[#80868B] mt-6">
-            {savedCount} of {topics.length} topics have saved materials.
-          </p>
-        ) : null}
-      </div>
-    </main>
+      )}
+    </ProjectShell>
   );
 }

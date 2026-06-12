@@ -6,7 +6,7 @@ import type { SaveTopicMaterialInput } from "@/hooks/useProjectMaterials";
 import { parseMaterialFile } from "@/lib/material-file-parser";
 
 const FIELD =
-  "w-full rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15";
+  "w-full rounded-lg border border-[#D8D3C8] bg-white px-4 text-sm text-[#1A1A17] placeholder:text-[#7A766D] transition-colors focus-visible:outline-none focus-visible:border-[#1A1A17] focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15";
 
 const BATCH_FILE_LIMIT = 20;
 const BATCH_TEXT_LIMIT = 300_000;
@@ -123,11 +123,15 @@ export default function ProjectMaterialCard({
   topicId,
   material,
   onSave,
+  onStateChange,
 }: {
   topicName: string;
   topicId: string;
   material: Material | null;
   onSave: (input: SaveTopicMaterialInput) => void;
+  // Reports unsaved-edit / in-progress-import state to a parent so it can guard
+  // against discarding drafts (e.g. when switching topics in a master-detail view).
+  onStateChange?: (state: { isDirty: boolean; isParsing: boolean }) => void;
 }) {
   const defaultTitle = `${topicName} materials`;
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -326,6 +330,13 @@ export default function ProjectMaterialCard({
     (source === "file" &&
       (fileName !== savedFileName || fileType !== savedFileType));
 
+  // Surface dirty/parsing state to an optional parent guard. Reset on unmount so
+  // a remounted editor (new topic) doesn't inherit the previous card's state.
+  useEffect(() => {
+    onStateChange?.({ isDirty, isParsing });
+    return () => onStateChange?.({ isDirty: false, isParsing: false });
+  }, [isDirty, isParsing, onStateChange]);
+
   const showFileInfo =
     source === "file" && fileName.length > 0 && content.length > 0;
 
@@ -334,16 +345,16 @@ export default function ProjectMaterialCard({
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-2xl border border-[#E1E3E1] bg-white p-5 space-y-4"
+      className="rounded-2xl border border-[#E7E3DA] bg-white p-5 space-y-4"
     >
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-base font-medium text-[#1F1F1F]">{topicName}</h3>
+        <h3 className="text-base font-medium text-[#1A1A17]">{topicName}</h3>
         {hasSavedContent ? (
           <span className="inline-flex items-center rounded-full bg-[#E6F4EA] px-2.5 py-0.5 text-xs font-medium text-[#137333]">
             Saved
           </span>
         ) : (
-          <span className="inline-flex items-center rounded-full bg-[#F1F3F4] px-2.5 py-0.5 text-xs font-medium text-[#5F6368]">
+          <span className="inline-flex items-center rounded-full bg-[#EFEBE2] px-2.5 py-0.5 text-xs font-medium text-[#56524B]">
             Empty
           </span>
         )}
@@ -352,7 +363,7 @@ export default function ProjectMaterialCard({
       <div>
         <label
           htmlFor={`material-title-${topicId}`}
-          className="block text-xs font-medium text-[#5F6368] mb-1.5"
+          className="block text-xs font-medium text-[#56524B] mb-1.5"
         >
           Title
         </label>
@@ -366,7 +377,7 @@ export default function ProjectMaterialCard({
       </div>
 
       <div>
-        <span className="block text-xs font-medium text-[#5F6368] mb-1.5">
+        <span className="block text-xs font-medium text-[#56524B] mb-1.5">
           Import files
         </span>
         <input
@@ -383,17 +394,17 @@ export default function ProjectMaterialCard({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isParsing}
-          className="inline-flex items-center h-9 px-4 rounded-full border border-[#C4C7C5] text-sm text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+          className="inline-flex items-center h-9 px-4 rounded-full border border-[#D8D3C8] text-sm text-[#1A1A17] transition-colors hover:bg-[#EFEBE2] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
         >
           {isParsing ? "Extracting…" : "Choose files"}
         </button>
-        <p className="text-xs text-[#80868B] mt-1.5">
+        <p className="text-xs text-[#7A766D] mt-1.5">
           TXT, MD, CSV, JSON, HTML &mdash; max 500 KB each. PDF, DOCX &mdash;
           max 5 MB each, selectable text only. Up to {BATCH_FILE_LIMIT} files at
           once.
         </p>
         {isParsing ? (
-          <p className="mt-2 text-xs text-[#5F6368]" role="status">
+          <p className="mt-2 text-xs text-[#56524B]" role="status">
             {parsingFiles!.count === 1
               ? `Extracting text from ${parsingFiles!.firstName}…`
               : `Extracting text from ${parsingFiles!.count} files…`}
@@ -416,7 +427,7 @@ export default function ProjectMaterialCard({
           </p>
         ) : null}
         {showFileInfo ? (
-          <p className="text-xs text-[#5F6368] mt-2">
+          <p className="text-xs text-[#56524B] mt-2">
             {fileName}
             {uploadedFileSize !== null
               ? ` · ${formatFileSize(uploadedFileSize)}`
@@ -428,7 +439,7 @@ export default function ProjectMaterialCard({
       <div>
         <label
           htmlFor={`material-content-${topicId}`}
-          className="block text-xs font-medium text-[#5F6368] mb-1.5"
+          className="block text-xs font-medium text-[#56524B] mb-1.5"
         >
           Content
         </label>
@@ -447,7 +458,7 @@ export default function ProjectMaterialCard({
         <button
           type="submit"
           disabled={isParsing || (!isDirty && saveState === "idle")}
-          className="inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+          className="inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1A1A17] text-white text-sm font-medium transition-colors hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
         >
           {saveState === "saved" ? "Saved" : "Save"}
         </button>

@@ -26,8 +26,8 @@ export default function HomePage() {
 
   if (showLanding === null) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#F8FAFD]">
-        <p className="text-sm text-[#5F6368]">Loading...</p>
+      <main className="min-h-screen flex items-center justify-center bg-[#FAF8F4]">
+        <p className="text-sm text-[#56524B]">Loading...</p>
       </main>
     );
   }

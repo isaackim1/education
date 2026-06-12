@@ -1,7 +1,7 @@
 import type { ActivityCell } from "@/lib/dashboard-metrics";
 
 const LEVEL_CLASSES: Record<ActivityCell["level"], string> = {
-  0: "bg-[#F1F3F4]",
+  0: "bg-[#EFEBE2]",
   1: "bg-[#E6F4EA]",
   2: "bg-[#137333]/50",
   3: "bg-[#137333]",
@@ -21,18 +21,18 @@ export default function ActivityGrid({ cells }: { cells: ActivityCell[] }) {
   const totalActivity = cells.reduce((sum, cell) => sum + cell.count, 0);
 
   return (
-    <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
+    <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-[#1F1F1F]">
+          <h2 className="text-base font-semibold text-[#1A1A17]">
             Training activity
           </h2>
-          <p className="mt-1 text-sm text-[#5F6368]">
+          <p className="mt-1 text-sm text-[#56524B]">
             Student messages, saved mistakes, and completed reviews over the
             last 12 weeks.
           </p>
         </div>
-        <span className="rounded-full bg-[#F1F3F4] px-3 py-1 text-xs font-medium text-[#5F6368]">
+        <span className="rounded-full bg-[#EFEBE2] px-3 py-1 text-xs font-medium text-[#56524B]">
           {totalActivity} action{totalActivity === 1 ? "" : "s"}
         </span>
       </div>
@@ -57,11 +57,11 @@ export default function ActivityGrid({ cells }: { cells: ActivityCell[] }) {
       </div>
 
       {totalActivity === 0 ? (
-        <p className="mt-4 text-sm text-[#5F6368]">
+        <p className="mt-4 text-sm text-[#56524B]">
           Train to start filling this in.
         </p>
       ) : (
-        <div className="mt-4 flex items-center gap-2 text-xs text-[#80868B]">
+        <div className="mt-4 flex items-center gap-2 text-xs text-[#7A766D]">
           <span>Less</span>
           {[0, 1, 2, 3].map((level) => (
             <span

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, useMemo, useRef, useState } from "react";
-import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
+import ProjectShell from "@/components/project/ProjectShell";
 import { useProject } from "@/hooks/useProject";
 import {
   MaterialParseError,
@@ -27,13 +27,13 @@ const FILE_ACCEPT =
   ".txt,.md,.csv,.json,.html,.pdf,.docx,text/plain,text/markdown,text/csv,application/json,text/html,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 const PRIMARY_ACTION =
-  "inline-flex h-10 items-center justify-center rounded-full bg-[#1F1F1F] px-6 text-sm font-medium text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex h-10 items-center justify-center rounded-full bg-[#1A1A17] px-6 text-sm font-medium text-white transition-colors hover:bg-black disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const OUTLINE_ACTION =
-  "inline-flex h-9 items-center justify-center rounded-full border border-[#C4C7C5] px-4 text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex h-9 items-center justify-center rounded-full border border-[#D8D3C8] px-4 text-sm font-medium text-[#1A1A17] transition-colors hover:bg-[#EFEBE2] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const FIELD =
-  "w-full rounded-lg border border-[#C4C7C5] bg-white px-4 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus-visible:outline-none focus-visible:border-[#1F1F1F] focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15";
+  "w-full rounded-lg border border-[#D8D3C8] bg-white px-4 text-sm text-[#1A1A17] placeholder:text-[#7A766D] transition-colors focus-visible:outline-none focus-visible:border-[#1A1A17] focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15";
 
 const UNSORTED = "__unsorted__";
 
@@ -477,17 +477,17 @@ function ImportContent({ projectId }: { projectId: string }) {
 
   if (!isLoaded) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F8FAFD]">
-        <p className="text-sm text-[#5F6368]">Loading import…</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#FAF8F4]">
+        <p className="text-sm text-[#56524B]">Loading import…</p>
       </main>
     );
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-[#F8FAFD]">
+      <main className="min-h-screen bg-[#FAF8F4]">
         <div className="mx-auto max-w-lg px-4 py-12">
-          <h1 className="text-[28px] font-semibold tracking-tight text-[#1F1F1F]">
+          <h1 className="text-[28px] font-semibold tracking-tight text-[#1A1A17]">
             Project not found
           </h1>
           <Link href="/projects" className={`${OUTLINE_ACTION} mt-5`}>
@@ -499,17 +499,18 @@ function ImportContent({ projectId }: { projectId: string }) {
   }
 
   return (
-    <main className="min-h-screen bg-[#F8FAFD]">
-      <div className="mx-auto max-w-2xl px-4 py-10 sm:py-12">
-        <ProjectWorkspaceNav projectId={projectId} active="setup" />
-
-        <header className="mb-6">
-          <h1 className="text-[28px] font-semibold tracking-tight text-[#1F1F1F]">
+    <ProjectShell projectId={projectId} active="import" width="max-w-3xl">
+        <header className="mb-8">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#7A766D]">
+            Upload once · Ivvy organizes · You review
+          </p>
+          <h1 className="mt-2.5 font-serif text-[34px] leading-[1.08] tracking-[-0.01em] text-[#1A1A17] sm:text-[40px]">
             Upload once and organize
           </h1>
-          <p className="mt-2 text-sm text-[#5F6368]">
+          <p className="mt-3.5 text-[15px] leading-relaxed text-[#56524B]">
             Add your material once. Ivvy suggests topics and sorts your notes
-            into them, so you can review before anything is created.
+            into them, so you can review the whole training map before anything
+            is saved.
           </p>
         </header>
 
@@ -528,14 +529,14 @@ function ImportContent({ projectId }: { projectId: string }) {
           />
         ) : (
           <section className="space-y-5">
-            <div className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
+            <div className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
               <label
                 htmlFor="import-paste"
-                className="block text-sm font-medium text-[#1F1F1F]"
+                className="block text-sm font-medium text-[#1A1A17]"
               >
                 Paste material
               </label>
-              <p className="mt-1 text-sm text-[#5F6368]">
+              <p className="mt-1 text-sm text-[#56524B]">
                 Syllabus, lecture notes, summaries, or past-paper text.
               </p>
               <textarea
@@ -549,10 +550,10 @@ function ImportContent({ projectId }: { projectId: string }) {
               />
 
               <div className="mt-4">
-                <span className="block text-sm font-medium text-[#1F1F1F]">
+                <span className="block text-sm font-medium text-[#1A1A17]">
                   Or upload files
                 </span>
-                <p className="mt-1 text-xs text-[#5F6368]">
+                <p className="mt-1 text-xs text-[#56524B]">
                   Supported: TXT, MD, CSV, JSON, HTML, PDF, DOCX. PDF and DOCX
                   import selectable text only — scanned images aren&apos;t
                   supported. Files are read in your browser; only text is sent.
@@ -583,9 +584,9 @@ function ImportContent({ projectId }: { projectId: string }) {
                   {fileSources.map((source) => (
                     <li
                       key={source.id}
-                      className="flex items-center justify-between gap-3 rounded-lg border border-[#E1E3E1] bg-[#F8FAFD] px-3 py-2"
+                      className="flex items-center justify-between gap-3 rounded-lg border border-[#E7E3DA] bg-[#FAF8F4] px-3 py-2"
                     >
-                      <span className="truncate text-sm text-[#1F1F1F]">
+                      <span className="truncate text-sm text-[#1A1A17]">
                         {source.label}
                       </span>
                       <button
@@ -593,7 +594,7 @@ function ImportContent({ projectId }: { projectId: string }) {
                         onClick={() => removeFileSource(source.id)}
                         disabled={isOrganizing}
                         aria-label={`Remove ${source.label}`}
-                        className="shrink-0 rounded-full px-2 py-1 text-xs font-medium text-[#5F6368] transition-colors hover:bg-[#E8EAED] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2 disabled:opacity-40"
+                        className="shrink-0 rounded-full px-2 py-1 text-xs font-medium text-[#56524B] transition-colors hover:bg-[#E7E3DA] hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 disabled:opacity-40"
                       >
                         Remove
                       </button>
@@ -603,7 +604,7 @@ function ImportContent({ projectId }: { projectId: string }) {
               ) : null}
 
               {isParsing ? (
-                <p className="mt-3 text-xs text-[#5F6368]" role="status">
+                <p className="mt-3 text-xs text-[#56524B]" role="status">
                   Reading your files…
                 </p>
               ) : null}
@@ -625,7 +626,7 @@ function ImportContent({ projectId }: { projectId: string }) {
               ) : null}
             </div>
 
-            <div className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
+            <div className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
               <button
                 type="button"
                 onClick={handleOrganize}
@@ -651,15 +652,14 @@ function ImportContent({ projectId }: { projectId: string }) {
               ) : null}
 
               {!hasMaterial && !isOrganizing ? (
-                <p className="mt-3 text-sm text-[#5F6368]">
+                <p className="mt-3 text-sm text-[#56524B]">
                   Add some material above to organize it into topics.
                 </p>
               ) : null}
             </div>
           </section>
         )}
-      </div>
-    </main>
+    </ProjectShell>
   );
 }
 
@@ -706,13 +706,13 @@ function ReviewPanel({
 
   return (
     <div className="space-y-5">
-      <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
+      <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold text-[#1F1F1F]">
+            <h2 className="text-base font-semibold text-[#1A1A17]">
               Review your training map
             </h2>
-            <p className="mt-1 text-sm text-[#5F6368]">
+            <p className="mt-1 text-sm text-[#56524B]">
               {keptTopics.length} topic{keptTopics.length === 1 ? "" : "s"} ·{" "}
               {review.segments.length} segment
               {review.segments.length === 1 ? "" : "s"} · {sortedCount} sorted ·{" "}
@@ -746,7 +746,7 @@ function ReviewPanel({
           <section
             key={topic.id}
             className={`rounded-2xl border bg-white p-5 sm:p-6 ${
-              topic.keep ? "border-[#E1E3E1]" : "border-[#E1E3E1] opacity-60"
+              topic.keep ? "border-[#E7E3DA]" : "border-[#E7E3DA] opacity-60"
             }`}
           >
             <div className="flex flex-wrap items-center gap-3">
@@ -785,12 +785,12 @@ function ReviewPanel({
                   ))}
                 </ul>
               ) : (
-                <p className="mt-4 rounded-lg bg-[#F8FAFD] px-3 py-2 text-sm text-[#80868B]">
+                <p className="mt-4 rounded-lg bg-[#FAF8F4] px-3 py-2 text-sm text-[#7A766D]">
                   No material assigned yet. Move segments here from Unsorted.
                 </p>
               )
             ) : (
-              <p className="mt-3 text-sm text-[#80868B]">
+              <p className="mt-3 text-sm text-[#7A766D]">
                 Dropped — its material moves to Unsorted.
               </p>
             )}
@@ -798,9 +798,9 @@ function ReviewPanel({
         );
       })}
 
-      <section className="rounded-2xl border border-[#E1E3E1] bg-[#F1F3F4] p-5 sm:p-6">
-        <h3 className="text-base font-semibold text-[#1F1F1F]">Unsorted</h3>
-        <p className="mt-1 text-sm text-[#5F6368]">
+      <section className="rounded-2xl border border-[#E7E3DA] bg-[#EFEBE2] p-5 sm:p-6">
+        <h3 className="text-base font-semibold text-[#1A1A17]">Unsorted</h3>
+        <p className="mt-1 text-sm text-[#56524B]">
           Material not matched to a kept topic. Move it into a topic, or leave
           it out.
         </p>
@@ -818,13 +818,13 @@ function ReviewPanel({
             ))}
           </ul>
         ) : (
-          <p className="mt-4 text-sm text-[#80868B]">
+          <p className="mt-4 text-sm text-[#7A766D]">
             Nothing unsorted — everything is in a topic.
           </p>
         )}
       </section>
 
-      <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
+      <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
         <button
           type="button"
           onClick={onAccept}
@@ -833,11 +833,11 @@ function ReviewPanel({
         >
           {isAccepting ? "Saving…" : "Accept training map"}
         </button>
-        <p className="mt-2 text-xs text-[#80868B]">
+        <p className="mt-2 text-xs text-[#7A766D]">
           Creates topics and study materials from your reviewed buckets.
         </p>
         {!canAccept && !isAccepting ? (
-          <p className="mt-2 text-xs text-[#80868B]">
+          <p className="mt-2 text-xs text-[#7A766D]">
             Keep at least one named topic with material to accept.
           </p>
         ) : null}
@@ -871,9 +871,9 @@ function SegmentRow({
     segment.text.length > 240 ? `${segment.text.slice(0, 240)}…` : segment.text;
 
   return (
-    <li className="rounded-lg border border-[#E1E3E1] bg-white p-3">
-      <p className="text-xs text-[#80868B]">{segment.source}</p>
-      <p className="mt-1 whitespace-pre-wrap text-sm text-[#1F1F1F]">{preview}</p>
+    <li className="rounded-lg border border-[#E7E3DA] bg-white p-3">
+      <p className="text-xs text-[#7A766D]">{segment.source}</p>
+      <p className="mt-1 whitespace-pre-wrap text-sm text-[#1A1A17]">{preview}</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <label className="sr-only" htmlFor={`move-${segment.id}`}>
           Move segment to topic
@@ -882,7 +882,7 @@ function SegmentRow({
           id={`move-${segment.id}`}
           value={currentTarget}
           onChange={(event) => onMove(segment.id, event.target.value)}
-          className="h-9 rounded-lg border border-[#C4C7C5] bg-white px-3 text-sm text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F]/15"
+          className="h-9 rounded-lg border border-[#D8D3C8] bg-white px-3 text-sm text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17]/15"
         >
           <option value={UNSORTED}>Unsorted</option>
           {keptTopics.map((topic) => (

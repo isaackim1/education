@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
+import ProjectShell from "@/components/project/ProjectShell";
+import { PageHeader } from "@/components/ui/primitives";
 import { useProject } from "@/hooks/useProject";
 import {
   getProjectMistakes,
@@ -12,25 +13,25 @@ import {
 import type { Mistake } from "@/lib/types";
 
 const PRIMARY_ACTION =
-  "inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#1F1F1F]";
+  "inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#1A1A17] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#1A1A17]";
 
 const REQUIZ_ACTION =
-  "inline-flex items-center h-9 px-4 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex items-center h-9 px-4 rounded-full bg-[#1A1A17] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const OUTLINE_ACTION =
-  "inline-flex items-center h-9 px-4 rounded-full border border-[#C4C7C5] text-sm text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent";
+  "inline-flex items-center h-9 px-4 rounded-full border border-[#D8D3C8] text-sm text-[#1A1A17] transition-colors hover:bg-[#EFEBE2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent";
 
 const TONAL_ACTION =
-  "inline-flex items-center h-9 px-4 rounded-full bg-[#E8EAED] text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#DADCE0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#E8EAED]";
+  "inline-flex items-center h-9 px-4 rounded-full bg-[#E7E3DA] text-sm font-medium text-[#1A1A17] transition-colors hover:bg-[#D8D3C8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#E7E3DA]";
 
 const TEXT_LINK =
-  "inline-flex items-center h-9 px-3 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex items-center h-9 px-3 rounded-full text-sm text-[#56524B] transition-colors hover:bg-[#EFEBE2] hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const BACK_LINK =
-  "inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#56524B] transition-colors hover:bg-[#EFEBE2] hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 const FIELD =
-  "w-full rounded-2xl border border-[#E1E3E1] bg-white px-4 py-3 text-sm text-[#1F1F1F] placeholder:text-[#80868B] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+  "w-full rounded-2xl border border-[#E7E3DA] bg-white px-4 py-3 text-sm text-[#1A1A17] placeholder:text-[#7A766D] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
 function sortForReview(mistakes: Mistake[]): Mistake[] {
   return [...mistakes].sort((a, b) => {
@@ -167,17 +168,17 @@ function ProjectReviewContent({
 
   if (!isLoaded) {
     return (
-      <main className="min-h-screen bg-[#F8FAFD] flex items-center justify-center">
-        <p className="text-sm text-[#5F6368]">Loading review...</p>
+      <main className="min-h-screen bg-[#FAF8F4] flex items-center justify-center">
+        <p className="text-sm text-[#56524B]">Loading review...</p>
       </main>
     );
   }
 
   if (!project) {
     return (
-      <main className="min-h-screen bg-[#F8FAFD]">
+      <main className="min-h-screen bg-[#FAF8F4]">
         <div className="max-w-lg mx-auto px-4 py-12">
-          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
+          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1A1A17]">
             Project not found
           </h1>
           <Link href="/projects" className={BACK_LINK}>
@@ -192,26 +193,19 @@ function ProjectReviewContent({
     reviewQueue.length > 0 && unreviewedQueue.length === 0;
 
   return (
-    <main className="min-h-screen bg-[#F8FAFD]">
-      <div className="max-w-2xl mx-auto px-4 py-10 sm:py-12">
-        <ProjectWorkspaceNav projectId={projectId} active="review" />
-
-        <header className="mb-6">
-          <h1 className="text-[28px] leading-9 font-semibold tracking-tight text-[#1F1F1F]">
-            Review
-          </h1>
-          <p className="text-sm text-[#5F6368] mt-2">
-            Active retrieval practice for saved mistakes. Try each one again
-            before checking the better approach, then mark it reviewed.
-          </p>
-        </header>
+    <ProjectShell projectId={projectId} active="review" width="max-w-3xl">
+      <PageHeader
+        eyebrow="Active recall"
+        title="Review"
+        description="Active retrieval practice for saved mistakes. Try each one again before checking the better approach, then mark it reviewed."
+      />
 
         {reviewQueue.length === 0 ? (
-          <div className="rounded-2xl border border-[#E1E3E1] bg-white px-6 py-14 text-center">
-            <h2 className="text-base font-medium text-[#1F1F1F]">
+          <div className="rounded-2xl border border-[#E7E3DA] bg-white px-6 py-14 text-center">
+            <h2 className="text-base font-medium text-[#1A1A17]">
               Nothing in the review queue yet
             </h2>
-            <p className="text-sm text-[#5F6368] mt-2 mx-auto max-w-sm">
+            <p className="text-sm text-[#56524B] mt-2 mx-auto max-w-sm">
               Mistakes appear here after training. Ivvy saves them when you
               answer incorrectly in chat.
             </p>
@@ -223,14 +217,14 @@ function ProjectReviewContent({
             </Link>
           </div>
         ) : allReviewed ? (
-          <div className="rounded-2xl border border-[#E1E3E1] bg-white px-6 py-14 text-center">
+          <div className="rounded-2xl border border-[#E7E3DA] bg-white px-6 py-14 text-center">
             <span className="inline-flex items-center rounded-full bg-[#E6F4EA] px-3 py-1 text-xs font-medium text-[#137333]">
               Review complete
             </span>
-            <h2 className="text-base font-medium text-[#1F1F1F] mt-4">
+            <h2 className="text-base font-medium text-[#1A1A17] mt-4">
               You&apos;ve reviewed all saved mistakes
             </h2>
-            <p className="text-sm text-[#5F6368] mt-2 mx-auto max-w-sm">
+            <p className="text-sm text-[#56524B] mt-2 mx-auto max-w-sm">
               Keep training in chat to save new mistakes, or revisit the mistake
               bank anytime.
             </p>
@@ -251,19 +245,19 @@ function ProjectReviewContent({
           </div>
         ) : currentMistake ? (
           <>
-            <p className="text-sm text-[#5F6368] mb-4">
+            <p className="text-sm text-[#56524B] mb-4">
               Reviewing {currentIndex + 1} of {unreviewedQueue.length} unreviewed
               {reviewQueue.length > unreviewedQueue.length
                 ? ` · ${reviewQueue.length} saved total`
                 : ""}
             </p>
 
-            <div className="rounded-2xl border border-[#E1E3E1] bg-white p-5 space-y-5">
+            <div className="rounded-2xl border border-[#E7E3DA] bg-white p-5 space-y-5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-[#F1F3F4] px-2.5 py-0.5 text-xs text-[#5F6368]">
+                <span className="inline-flex items-center rounded-full bg-[#EFEBE2] px-2.5 py-0.5 text-xs text-[#56524B]">
                   {currentMistake.topicName}
                 </span>
-                <span className="inline-flex items-center rounded-full bg-[#F1F3F4] px-2.5 py-0.5 text-xs text-[#5F6368]">
+                <span className="inline-flex items-center rounded-full bg-[#EFEBE2] px-2.5 py-0.5 text-xs text-[#56524B]">
                   {currentMistake.mistakeCategory}
                 </span>
                 <span className="inline-flex items-center rounded-full bg-[#FEEFC3] px-2.5 py-0.5 text-xs font-medium text-[#B06000]">
@@ -273,10 +267,10 @@ function ProjectReviewContent({
 
               {currentMistake.question.trim() ? (
                 <div>
-                  <p className="text-xs font-medium text-[#5F6368]">
+                  <p className="text-xs font-medium text-[#56524B]">
                     Original question
                   </p>
-                  <p className="text-sm text-[#1F1F1F] mt-1 whitespace-pre-wrap">
+                  <p className="text-sm text-[#1A1A17] mt-1 whitespace-pre-wrap">
                     {currentMistake.question}
                   </p>
                 </div>
@@ -284,10 +278,10 @@ function ProjectReviewContent({
 
               {currentMistake.studentAnswer.trim() ? (
                 <div>
-                  <p className="text-xs font-medium text-[#5F6368]">
+                  <p className="text-xs font-medium text-[#56524B]">
                     Your previous answer
                   </p>
-                  <p className="text-sm text-[#1F1F1F] mt-1 whitespace-pre-wrap">
+                  <p className="text-sm text-[#1A1A17] mt-1 whitespace-pre-wrap">
                     {currentMistake.studentAnswer}
                   </p>
                 </div>
@@ -296,7 +290,7 @@ function ProjectReviewContent({
               <div>
                 <label
                   htmlFor="try-again"
-                  className="block text-xs font-medium text-[#5F6368] mb-2"
+                  className="block text-xs font-medium text-[#56524B] mb-2"
                 >
                   Try again
                 </label>
@@ -320,12 +314,12 @@ function ProjectReviewContent({
                   Show better approach
                 </button>
               ) : (
-                <div className="space-y-4 pt-1 border-t border-[#F1F3F4]">
+                <div className="space-y-4 pt-1 border-t border-[#EFEBE2]">
                   <div>
-                    <p className="text-xs font-medium text-[#5F6368]">
+                    <p className="text-xs font-medium text-[#56524B]">
                       Better approach
                     </p>
-                    <p className="text-sm text-[#1F1F1F] mt-1 whitespace-pre-wrap">
+                    <p className="text-sm text-[#1A1A17] mt-1 whitespace-pre-wrap">
                       {currentMistake.correctApproach.trim()
                         ? currentMistake.correctApproach
                         : "No better approach was saved for this mistake."}
@@ -334,10 +328,10 @@ function ProjectReviewContent({
 
                   {currentMistake.agentNote.trim() ? (
                     <div>
-                      <p className="text-xs font-medium text-[#5F6368]">
+                      <p className="text-xs font-medium text-[#56524B]">
                         Mistake note
                       </p>
-                      <p className="text-sm text-[#5F6368] mt-1 whitespace-pre-wrap">
+                      <p className="text-sm text-[#56524B] mt-1 whitespace-pre-wrap">
                         {currentMistake.agentNote}
                       </p>
                     </div>
@@ -345,10 +339,10 @@ function ProjectReviewContent({
 
                   {currentMistake.rememberThis.trim() ? (
                     <div>
-                      <p className="text-xs font-medium text-[#5F6368]">
+                      <p className="text-xs font-medium text-[#56524B]">
                         Remember this
                       </p>
-                      <p className="text-sm text-[#1F1F1F] mt-1 whitespace-pre-wrap">
+                      <p className="text-sm text-[#1A1A17] mt-1 whitespace-pre-wrap">
                         {currentMistake.rememberThis}
                       </p>
                     </div>
@@ -388,7 +382,7 @@ function ProjectReviewContent({
               )}
 
               {!approachRevealed ? (
-                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#F1F3F4]">
+                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#EFEBE2]">
                   <Link
                     href={`/projects/${projectId}/chat?mistakeId=${currentMistake.id}`}
                     className={REQUIZ_ACTION}
@@ -421,8 +415,7 @@ function ProjectReviewContent({
             </div>
           </>
         ) : null}
-      </div>
-    </main>
+    </ProjectShell>
   );
 }
 
@@ -434,8 +427,8 @@ export default function ProjectReviewPage({
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-[#F8FAFD] flex items-center justify-center">
-          <p className="text-sm text-[#5F6368]">Loading review...</p>
+        <main className="min-h-screen bg-[#FAF8F4] flex items-center justify-center">
+          <p className="text-sm text-[#56524B]">Loading review...</p>
         </main>
       }
     >
