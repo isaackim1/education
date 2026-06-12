@@ -6,6 +6,9 @@ import TopicSuggestionPanel from "@/components/project/TopicSuggestionPanel";
 import ProjectWorkspaceNav from "@/components/project/ProjectWorkspaceNav";
 import { useProject } from "@/hooks/useProject";
 
+const PRIMARY_ACTION =
+  "inline-flex items-center justify-center h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
 export default function ProjectSetupPage({
   params,
 }: {
@@ -51,24 +54,41 @@ export default function ProjectSetupPage({
             Topics
           </h1>
           <p className="text-sm text-[#5F6368] mt-2">
-            Topics define what Ivvy should train you on. Add what the exam
-            actually tests &mdash; smaller topics produce sharper questions.
+            Topics define what Ivvy should train you on. The fastest way to build
+            them is to upload your material once and let Ivvy organize it.
           </p>
-          <Link
-            href={`/projects/${params.projectId}/import`}
-            className="inline-flex items-center h-9 -ml-1 mt-3 px-3 rounded-full text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
-          >
-            Upload once and organize materials &rarr;
-          </Link>
         </header>
 
         <div className="space-y-5">
-          <TopicSuggestionPanel
-            projectId={params.projectId}
-            subject={project.subject}
-            existingTopics={topics}
-            onAddTopic={addTopic}
-          />
+          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
+            <span className="inline-flex items-center rounded-full bg-[#E6F4EA] px-2.5 py-1 text-xs font-medium text-[#137333]">
+              Recommended
+            </span>
+            <h2 className="mt-3 text-lg font-medium text-[#1F1F1F]">
+              Upload once and organize materials
+            </h2>
+            <p className="mt-1 text-sm text-[#5F6368]">
+              Upload your materials once. Ivvy will extract topics and organize
+              the material for you, so you can review everything before it&apos;s
+              saved.
+            </p>
+            <Link
+              href={`/projects/${params.projectId}/import`}
+              className={`${PRIMARY_ACTION} mt-4`}
+            >
+              Upload once and organize materials
+            </Link>
+          </section>
+
+          <div className="pt-1">
+            <h2 className="text-sm font-medium text-[#5F6368]">
+              Or add topics manually
+            </h2>
+            <p className="mt-1 text-sm text-[#80868B]">
+              Prefer to build your topic list by hand? Add topics directly, or
+              paste material to suggest a starting set.
+            </p>
+          </div>
 
           <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
             <ProjectTopicManager
@@ -78,6 +98,13 @@ export default function ProjectSetupPage({
               onDeleteTopic={deleteTopic}
             />
           </section>
+
+          <TopicSuggestionPanel
+            projectId={params.projectId}
+            subject={project.subject}
+            existingTopics={topics}
+            onAddTopic={addTopic}
+          />
         </div>
       </div>
     </main>

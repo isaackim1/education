@@ -284,6 +284,12 @@ export default function ProjectPage({
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
+                href={`/projects/${params.projectId}/import`}
+                className={SECONDARY_LINK}
+              >
+                Upload materials
+              </Link>
+              <Link
                 href={`/projects/${params.projectId}/setup`}
                 className={SECONDARY_LINK}
               >

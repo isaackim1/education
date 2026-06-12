@@ -9,6 +9,12 @@ import { useProjectMaterials } from "@/hooks/useProjectMaterials";
 const PRIMARY_ACTION =
   "inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#1F1F1F] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
 
+const SECONDARY_ACTION =
+  "inline-flex items-center justify-center h-10 px-5 rounded-full border border-[#C4C7C5] text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
+const INLINE_LINK =
+  "inline-flex items-center h-9 -ml-1 mt-3 px-3 rounded-full text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F1F3F4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
+
 const BACK_LINK =
   "inline-flex items-center h-9 -ml-3 px-3 mt-4 rounded-full text-sm text-[#5F6368] transition-colors hover:bg-[#F1F3F4] hover:text-[#1F1F1F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2";
 
@@ -63,8 +69,8 @@ export default function ProjectMaterialsPage({
               Materials
             </h1>
             <p className="text-sm text-[#5F6368] mt-2">
-              Add topics first. Ivvy needs topics before it can attach your notes
-              and ask focused questions.
+              The quickest way to add materials is the upload-once flow — Ivvy
+              creates your topics and organizes the material at the same time.
             </p>
           </header>
 
@@ -73,15 +79,23 @@ export default function ProjectMaterialsPage({
               No topics yet
             </h2>
             <p className="text-sm text-[#5F6368] mt-2 mx-auto max-w-sm">
-              Topics tell Ivvy what to train you on. Add them, then come back to
-              attach materials per topic.
+              Upload your material once and Ivvy will create topics and attach
+              the material for you. You can also add topics manually first.
             </p>
-            <Link
-              href={`/projects/${params.projectId}/setup`}
-              className={`${PRIMARY_ACTION} mt-6`}
-            >
-              Add topics
-            </Link>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href={`/projects/${params.projectId}/import`}
+                className={PRIMARY_ACTION}
+              >
+                Upload once and organize materials
+              </Link>
+              <Link
+                href={`/projects/${params.projectId}/setup`}
+                className={SECONDARY_ACTION}
+              >
+                Add topics manually
+              </Link>
+            </div>
           </div>
         </div>
       </main>
@@ -102,9 +116,16 @@ export default function ProjectMaterialsPage({
             Materials
           </h1>
           <p className="text-sm text-[#5F6368] mt-2">
-            Ivvy uses these notes to ask better exam questions. Add lecture
-            notes, summaries, syllabus points, or past questions per topic.
+            Review and edit the material attached to each topic. Materials can be
+            added automatically from the upload-once import flow, or edited
+            manually here.
           </p>
+          <Link
+            href={`/projects/${params.projectId}/import`}
+            className={INLINE_LINK}
+          >
+            Use upload-once import instead &rarr;
+          </Link>
           <p className="mt-3 text-xs text-[#5F6368]">
             Supported formats: TXT, MD, CSV, JSON, HTML, PDF, DOCX. PDF and DOCX
             import selectable text only — scanned or image-only PDFs aren&apos;t
