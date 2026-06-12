@@ -33,7 +33,7 @@ export default function SignupPage() {
       <header className="border-b border-[#E7E3DA]">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5 sm:px-8">
           <Link
-            href="/"
+            href="/home"
             className="flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]"
           >
             <span className="grid h-7 w-7 place-items-center rounded-md bg-[#1A1A17] font-serif text-sm text-white">
