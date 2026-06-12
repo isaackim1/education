@@ -4,6 +4,7 @@ type WorkspaceNavItem =
   | "overview"
   | "setup"
   | "materials"
+  | "study"
   | "train"
   | "chat"
   | "mistakes"
@@ -15,6 +16,7 @@ const NAV_ITEMS: { id: WorkspaceNavItem; label: string; suffix: string }[] = [
   { id: "overview", label: "Overview", suffix: "" },
   { id: "setup", label: "Topics", suffix: "/setup" },
   { id: "materials", label: "Materials", suffix: "/materials" },
+  { id: "study", label: "Study", suffix: "/study" },
   { id: "train", label: "Train", suffix: "/train" },
   { id: "chat", label: "Chat", suffix: "/chat" },
   { id: "mistakes", label: "Mistakes", suffix: "/mistakes" },

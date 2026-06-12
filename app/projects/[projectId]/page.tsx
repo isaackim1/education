@@ -218,6 +218,29 @@ export default function ProjectPage({
 
           <TodaysPlan plan={todaysPlan} />
 
+          <section className="rounded-2xl border border-[#E1E3E1] bg-white p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-[#5F6368]">
+                  Study modes
+                </p>
+                <h2 className="mt-1 text-base font-semibold text-[#1F1F1F]">
+                  Choose how to train
+                </h2>
+                <p className="mt-1 text-sm text-[#5F6368]">
+                  Practice questions, revisit mistakes, and see the next study
+                  modes Ivvy is building.
+                </p>
+              </div>
+              <Link
+                href={`/projects/${params.projectId}/study`}
+                className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-[#1F1F1F] px-6 text-sm font-medium text-white transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1F1F] focus-visible:ring-offset-2"
+              >
+                Open study modes
+              </Link>
+            </div>
+          </section>
+
           <GoalProgressCard
             projectId={params.projectId}
             weeklyProgress={weeklyProgress}
@@ -300,6 +323,12 @@ export default function ProjectPage({
                 className={SECONDARY_LINK}
               >
                 Materials
+              </Link>
+              <Link
+                href={`/projects/${params.projectId}/study`}
+                className={SECONDARY_LINK}
+              >
+                Study modes
               </Link>
               <Link
                 href={`/projects/${params.projectId}/train`}
