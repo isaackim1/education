@@ -12,6 +12,12 @@ const ACTIVE_MODES = [
     action: "Start training",
   },
   {
+    title: "Teach back",
+    description: "Explain a topic and let Ivvy find the gaps.",
+    suffix: "/study/teach",
+    action: "Start teaching back",
+  },
+  {
     title: "Review mistakes",
     description: "Revisit saved mistakes and close gaps.",
     suffix: "/mistakes",
@@ -20,10 +26,6 @@ const ACTIVE_MODES = [
 ];
 
 const COMING_SOON_MODES = [
-  {
-    title: "Teach back",
-    description: "Explain a topic and let Ivvy find gaps.",
-  },
   {
     title: "Study sheet",
     description: "Turn topic material into a structured summary.",

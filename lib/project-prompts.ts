@@ -119,6 +119,71 @@ GUIDED SESSION RULES:
 ${trainingModeRules(mode)}`;
 }
 
+// ─── Teach Back mode (Phase 14B) ─────────────────────────────────────────────
+// The student explains a topic in their own words; Ivvy assesses the
+// explanation against the topic material and returns structured feedback.
+
+const MAX_TEACH_BACK_MATERIAL_CHARS = 2500;
+const MAX_TEACH_BACK_EXPLANATION_CHARS = 3000;
+const MAX_TEACH_BACK_TOPIC_NAME_CHARS = 120;
+const MAX_TEACH_BACK_SUBJECT_CHARS = 120;
+// Final guardrail: stay strictly under /api/agent's 10,000-char contextMessage
+// validator even if every field is at its own cap.
+const MAX_TEACH_BACK_CONTEXT_CHARS = 9500;
+
+export interface TeachBackContext {
+  topicName: string;
+  subject: string;
+  material: string;
+  explanation: string;
+}
+
+export function buildTeachBackSystemPrompt(): string {
+  return `You are Ivvy, an AI exam trainer running Teach Back mode. The student has explained a topic in their own words, as if teaching it to someone else. Assess their explanation against the topic material and give precise, useful feedback.
+
+Judge only the student's explanation. Treat the provided topic material as the source of truth for what matters. Be specific and reference the actual concepts. Never give generic or hollow praise.
+
+Respond in EXACTLY this format, with each label on its own line and its content on the same line. Use plain text only — no markdown, no bullet characters, no emoji, no extra lines:
+
+RIGHT: what the student got correct (1-3 short points separated by "; ")
+MISSING: important points they left out (1-3 short points separated by "; ")
+UNCLEAR: anything vague, confused, or imprecise (1-2 short points; if none, write "Nothing major")
+NEXT: one focused improvement to work on next (one sentence)
+FOLLOWUP: one short question that pushes their understanding further
+
+Keep every line concise. If the explanation is empty or unrelated to the topic, say so plainly in RIGHT and guide the student in NEXT.`;
+}
+
+export function buildTeachBackContextMessage(context: TeachBackContext): string {
+  const topicName = truncateText(
+    context.topicName,
+    MAX_TEACH_BACK_TOPIC_NAME_CHARS
+  );
+  const subject = truncateText(context.subject, MAX_TEACH_BACK_SUBJECT_CHARS);
+  const material = truncateText(context.material, MAX_TEACH_BACK_MATERIAL_CHARS);
+  const explanation = truncateText(
+    context.explanation,
+    MAX_TEACH_BACK_EXPLANATION_CHARS
+  );
+
+  const lines = [
+    `Topic: ${topicName}`,
+    `Subject: ${subject || "Not specified"}`,
+    "",
+    "Topic material (source of truth):",
+    material.length > 0 ? material : "No material saved for this topic.",
+    "",
+    "Student's explanation:",
+    explanation.length > 0 ? explanation : "(The student left this blank.)",
+    "",
+    "Assess the explanation now using the required format.",
+  ];
+
+  // Hard cap the assembled message so it always stays under the /api/agent
+  // contextMessage validator limit, regardless of field lengths.
+  return truncateText(lines.join("\n"), MAX_TEACH_BACK_CONTEXT_CHARS);
+}
+
 export function buildProjectContextMessage(context: ProjectChatContext): string {
   const lines = [
     `Project: ${context.projectName}`,
