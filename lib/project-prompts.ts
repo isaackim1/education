@@ -184,6 +184,69 @@ export function buildTeachBackContextMessage(context: TeachBackContext): string 
   return truncateText(lines.join("\n"), MAX_TEACH_BACK_CONTEXT_CHARS);
 }
 
+// ─── Study Sheet mode (Phase 14C) ────────────────────────────────────────────
+// Turns a topic's saved material into a structured, exam-ready study sheet.
+
+const MAX_STUDY_SHEET_MATERIAL_CHARS = 4000;
+const MAX_STUDY_SHEET_TOPIC_NAME_CHARS = 120;
+const MAX_STUDY_SHEET_SUBJECT_CHARS = 120;
+// Final guardrail: stay strictly under /api/agent's 10,000-char contextMessage
+// validator even if every field is at its own cap.
+const MAX_STUDY_SHEET_CONTEXT_CHARS = 9500;
+
+export interface StudySheetContext {
+  topicName: string;
+  subject: string;
+  material: string;
+}
+
+export function buildStudySheetSystemPrompt(): string {
+  return `You are Ivvy, an AI exam trainer running Study Sheet mode. Turn the student's saved topic material into a focused, exam-ready study sheet. Ground everything in the provided material and stay on the topic. If the material is thin, fill obvious gaps with general subject knowledge, but never contradict the material.
+
+Respond in EXACTLY this format. Each label starts a section on its own line. Use plain text only — no markdown headers, no bold, no emoji.
+
+CORE: one or two sentences capturing the single most important idea of this topic
+TERMS:
+- term — short definition (3 to 6 key terms, each on its own line starting with "- ")
+EXAM:
+- a point likely to be tested or worth marks (3 to 6 points, each on its own line starting with "- ")
+MISTAKES:
+- a common mistake or misconception to avoid (2 to 4 items, each on its own line starting with "- ")
+CHECKLIST:
+- a concrete thing the student should be able to do (3 to 6 items, each on its own line starting with "- ")
+PRACTICE: one exam-style practice question on this topic, without giving the answer
+
+Keep it concise and specific to the topic. Do not add sections beyond these.`;
+}
+
+export function buildStudySheetContextMessage(
+  context: StudySheetContext
+): string {
+  const topicName = truncateText(
+    context.topicName,
+    MAX_STUDY_SHEET_TOPIC_NAME_CHARS
+  );
+  const subject = truncateText(context.subject, MAX_STUDY_SHEET_SUBJECT_CHARS);
+  const material = truncateText(
+    context.material,
+    MAX_STUDY_SHEET_MATERIAL_CHARS
+  );
+
+  const lines = [
+    `Topic: ${topicName}`,
+    `Subject: ${subject || "Not specified"}`,
+    "",
+    "Topic material (source of truth):",
+    material.length > 0 ? material : "No material saved for this topic.",
+    "",
+    "Create the study sheet now using the required format.",
+  ];
+
+  // Hard cap the assembled message so it always stays under the /api/agent
+  // contextMessage validator limit, regardless of field lengths.
+  return truncateText(lines.join("\n"), MAX_STUDY_SHEET_CONTEXT_CHARS);
+}
+
 export function buildProjectContextMessage(context: ProjectChatContext): string {
   const lines = [
     `Project: ${context.projectName}`,

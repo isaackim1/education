@@ -18,6 +18,12 @@ const ACTIVE_MODES = [
     action: "Start teaching back",
   },
   {
+    title: "Study sheet",
+    description: "Turn topic material into a structured summary.",
+    suffix: "/study/sheet",
+    action: "Generate study sheet",
+  },
+  {
     title: "Review mistakes",
     description: "Revisit saved mistakes and close gaps.",
     suffix: "/mistakes",
@@ -26,10 +32,6 @@ const ACTIVE_MODES = [
 ];
 
 const COMING_SOON_MODES = [
-  {
-    title: "Study sheet",
-    description: "Turn topic material into a structured summary.",
-  },
   {
     title: "Focus session",
     description: "Study in a focused block and log the session.",
