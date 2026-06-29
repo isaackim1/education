@@ -142,12 +142,35 @@ export interface ProgramDefinition {
   modules: { id: string; title: string; tagline: string; status: "active" | "locked" }[];
 }
 
+// ── Assignment revision history (Phase 2) ────────────────────────────────────
+/**
+ * A lightweight snapshot of an assignment submission taken each time the founder
+ * generates feed-forward. Keeps the journey legible ("Draft 1 → Draft 2 →
+ * Latest revision") without full diffing.
+ */
+export interface AssignmentRevision {
+  id: string;
+  submissionId: string;
+  moduleId: string;
+  founderProfileId: string;
+  sections: Record<string, string>;
+  feedbackReportId?: string;
+  /** Cached summary of the feed-forward that accompanied this revision. */
+  feedbackSummary?: string;
+  createdAt: string;
+  revisionNote?: string;
+}
+
 // ── Mentor chat (Unknown AI Mentor) ──────────────────────────────────────────
 export interface MentorMessage {
   id: string;
   role: "founder" | "mentor";
   content: string;
   createdAt: string;
+  /** Mentor-only: a concrete next action surfaced alongside the reply. */
+  suggestedNextAction?: string;
+  /** Mentor-only: a strong follow-up coaching question the founder can ask. */
+  suggestedQuestion?: string;
 }
 
 export interface MentorResult {

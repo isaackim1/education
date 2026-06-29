@@ -7,6 +7,7 @@ import {
   DuProgressBar,
   DuShell,
   DuStat,
+  DuTag,
   Eyebrow,
   SectionTitle,
 } from "@/components/du/ui";
@@ -15,22 +16,31 @@ import {
   EFFECTUATION_SECTION_IDS,
 } from "@/data/unknown/effectuation";
 import {
-  PROGRESS_ORDER,
+  deriveBottleneck,
+  deriveMilestones,
+  deriveReviewStatus,
   deriveSubmissionCompleteness,
   isApproachingMentorReview,
   isReadyForMentorReview,
   markReadyForMentorReview,
   moduleProgressPercent,
   progressStateLabel,
+  type JourneyInputs,
 } from "@/lib/du/progress";
-import {
-  getFounderState,
-  saveFounderState,
-} from "@/lib/du/storage";
+import { getFounderState, saveFounderState } from "@/lib/du/storage";
 
 export default function ProgressPage() {
-  const { ready, profile, submission, feedforward, state, reflections, refresh } =
-    useFounder();
+  const {
+    ready,
+    profile,
+    submission,
+    feedforward,
+    state,
+    reflections,
+    mentorThread,
+    revisions,
+    refresh,
+  } = useFounder();
 
   const completeness = deriveSubmissionCompleteness(
     submission,
@@ -46,6 +56,25 @@ export default function ProgressPage() {
     state,
   });
 
+  const reflectionComplete =
+    state?.progressState === "reflection_complete" ||
+    state?.progressState === "ready_for_mentor_review" ||
+    state?.progressState === "module_complete";
+
+  const journeyInputs: JourneyInputs = {
+    hasProfile: Boolean(profile),
+    reflectionsCount: reflectionsDone,
+    totalConcepts: EFFECTUATION_MODULE.conceptIds.length,
+    submissionFilled: completeness.filled,
+    hasFeedforward: Boolean(feedforward),
+    revisionsCount: revisions.length,
+    reflectionComplete,
+    state,
+  };
+  const milestones = deriveMilestones(journeyInputs);
+  const bottleneck = deriveBottleneck(milestones);
+  const review = deriveReviewStatus(state, completeness);
+
   const approaching = state
     ? isApproachingMentorReview(state, completeness)
     : false;
@@ -54,10 +83,11 @@ export default function ProgressPage() {
     ? progressStateLabel(state.progressState)
     : "Not started";
 
-  const reflectionComplete =
-    state?.progressState === "reflection_complete" ||
-    state?.progressState === "ready_for_mentor_review" ||
-    state?.progressState === "module_complete";
+  const latestMentorQuestion =
+    [...mentorThread].reverse().find((m) => m.role === "mentor" && m.suggestedQuestion)
+      ?.suggestedQuestion ?? feedforward?.mentorQuestions?.[0];
+  const latestNextAction =
+    state?.nextRecommendedAction ?? feedforward?.nextAction;
 
   function handleMarkReady() {
     const prev = getFounderState();
@@ -76,7 +106,7 @@ export default function ProgressPage() {
 
       {/* Top metrics */}
       <DuCard tone="ink" className="mb-6">
-        <div className="grid gap-6 sm:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-4">
           <DuStat
             onDark
             label="Module progress"
@@ -90,6 +120,16 @@ export default function ProgressPage() {
               <span className="text-xl font-black leading-tight">
                 {ready ? currentLabel : "—"}
               </span>
+            }
+          />
+          <DuStat
+            onDark
+            label="Revisions"
+            value={ready ? revisions.length : "—"}
+            detail={
+              ready && feedforward
+                ? `Last feed-forward ${formatDate(feedforward.createdAt)}`
+                : "No feed-forward yet"
             }
           />
           <DuStat
@@ -112,7 +152,7 @@ export default function ProgressPage() {
         <DuCard tone="yellow" className="mb-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <Eyebrow>Ready for mentor review</Eyebrow>
+              <Eyebrow>Ready to discuss with a mentor</Eyebrow>
               <p className="mt-1 text-[15px] font-bold text-[#0B0B0C]">
                 You&apos;ve learned, built, and reflected. Bring your roadmap to
                 your mentor.
@@ -147,46 +187,117 @@ export default function ProgressPage() {
         </DuCard>
       ) : null}
 
-      {/* Journey stepper */}
+      {/* Milestone timeline */}
       <DuCard className="mb-6">
-        <Eyebrow>The journey</Eyebrow>
-        <h3 className="mt-1.5 mb-4 text-lg font-black tracking-tight">
-          Where you are
+        <Eyebrow>Founder journey</Eyebrow>
+        <h3 className="mt-1.5 mb-5 text-lg font-black tracking-tight">
+          Seven milestones to mentor review
         </h3>
-        <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {PROGRESS_ORDER.filter((s) => s !== "revision_needed").map((s) => {
-            const isCurrent = ready && state?.progressState === s;
-            const reached =
-              ready &&
-              state &&
-              PROGRESS_ORDER.indexOf(state.progressState) >=
-                PROGRESS_ORDER.indexOf(s);
+        <ol className="relative space-y-1">
+          {milestones.map((m, i) => {
+            const done = ready && m.complete;
+            const current = ready && m.current;
             return (
-              <li
-                key={s}
-                className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 ${
-                  isCurrent
-                    ? "border-[#0B0B0C] bg-[#0B0B0C] text-white"
-                    : reached
-                      ? "border-[#0B0B0C] bg-white"
-                      : "border-[#E2DCCD] bg-white text-[#A8A296]"
-                }`}
-              >
-                <span
-                  aria-hidden
-                  className="h-2 w-2 shrink-0 rotate-45"
-                  style={{
-                    background: reached || isCurrent ? "#F5D11E" : "#D8D2C2",
-                  }}
-                />
-                <span className="text-xs font-bold uppercase tracking-[0.08em]">
-                  {progressStateLabel(s)}
-                </span>
+              <li key={m.id} className="flex gap-4">
+                {/* Rail */}
+                <div className="flex flex-col items-center">
+                  <span
+                    className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 text-xs font-black ${
+                      done
+                        ? "border-[#0B0B0C] bg-[#0B0B0C] text-[#F5D11E]"
+                        : current
+                          ? "border-[#F5D11E] bg-[#F5D11E] text-[#0B0B0C]"
+                          : "border-[#D8D2C2] bg-white text-[#A8A296]"
+                    }`}
+                  >
+                    {done ? "✓" : i + 1}
+                  </span>
+                  {i < milestones.length - 1 ? (
+                    <span
+                      className={`my-1 w-0.5 flex-1 ${
+                        done ? "bg-[#0B0B0C]" : "bg-[#E2DCCD]"
+                      }`}
+                      style={{ minHeight: 18 }}
+                    />
+                  ) : null}
+                </div>
+                {/* Label */}
+                <div className={`pb-4 ${i === milestones.length - 1 ? "pb-0" : ""}`}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`text-sm font-black tracking-tight ${
+                        done || current ? "text-[#0B0B0C]" : "text-[#A8A296]"
+                      }`}
+                    >
+                      {m.label}
+                    </span>
+                    {current ? <DuTag tone="accent">You&apos;re here</DuTag> : null}
+                  </div>
+                  {current ? (
+                    <p className="mt-1 text-sm text-[#56524B]">{m.hint}</p>
+                  ) : null}
+                </div>
               </li>
             );
           })}
         </ol>
       </DuCard>
+
+      {/* At-a-glance signals */}
+      <div className="mb-6 grid gap-5 lg:grid-cols-3">
+        <DuCard className="border-2 border-[#0B0B0C]">
+          <Eyebrow>Current bottleneck</Eyebrow>
+          {ready && bottleneck ? (
+            <>
+              <h3 className="mt-1.5 text-lg font-black tracking-tight">
+                {bottleneck.label}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-[#56524B]">
+                {bottleneck.hint}
+              </p>
+              <div className="mt-4">
+                <DuButton href={bottleneck.href} variant="primary">
+                  Resolve it →
+                </DuButton>
+              </div>
+            </>
+          ) : (
+            <p className="mt-2 text-sm text-[#56524B]">
+              Nothing blocking you — you&apos;ve reached the end of the journey.
+            </p>
+          )}
+        </DuCard>
+
+        <DuCard>
+          <Eyebrow>Latest mentor question</Eyebrow>
+          {ready && latestMentorQuestion ? (
+            <p className="mt-3 text-sm leading-relaxed text-[#3A372F]">
+              “{latestMentorQuestion}”
+            </p>
+          ) : (
+            <p className="mt-3 text-sm text-[#8A8579]">
+              Talk to the AI Mentor or generate feed-forward to surface a question.
+            </p>
+          )}
+          <div className="mt-4">
+            <DuButton href="/mentor" variant="outline">
+              Open mentor
+            </DuButton>
+          </div>
+        </DuCard>
+
+        <DuCard tone="yellow">
+          <Eyebrow>Latest next action</Eyebrow>
+          <p className="mt-3 text-[15px] font-semibold leading-relaxed text-[#0B0B0C]">
+            {ready && latestNextAction
+              ? latestNextAction
+              : "Work through the Effectuation concepts and build your roadmap to unlock your next action."}
+          </p>
+          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#0B0B0C]/60">
+            {review.label}
+          </p>
+        </DuCard>
+      </div>
 
       {/* Strengths / risks / patterns */}
       <div className="grid gap-5 lg:grid-cols-3">
@@ -213,7 +324,7 @@ export default function ProgressPage() {
         />
       </div>
 
-      {/* Latest feed-forward + next action */}
+      {/* Latest feed-forward + actions */}
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
         <DuCard>
           <Eyebrow>Latest feed-forward</Eyebrow>
@@ -225,7 +336,7 @@ export default function ProgressPage() {
               </p>
               <div className="mt-4">
                 <DuButton href="/module/effectuation/feedback" variant="outline">
-                  View full report
+                  Open Review Room
                 </DuButton>
               </div>
             </>
@@ -236,14 +347,12 @@ export default function ProgressPage() {
           )}
         </DuCard>
 
-        <DuCard tone="yellow">
-          <Eyebrow>Next recommended action</Eyebrow>
-          <p className="mt-3 text-[15px] font-semibold leading-relaxed text-[#0B0B0C]">
-            {ready && state?.nextRecommendedAction
-              ? state.nextRecommendedAction
-              : "Work through the Effectuation concepts and build your roadmap to unlock your next action."}
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
+        <DuCard>
+          <Eyebrow>Keep moving</Eyebrow>
+          <h3 className="mt-1.5 text-lg font-black tracking-tight">
+            Your next moves
+          </h3>
+          <div className="mt-4 flex flex-wrap gap-3">
             <DuButton href="/module/effectuation/studio" variant="primary">
               Open Studio
             </DuButton>
@@ -273,6 +382,17 @@ export default function ProgressPage() {
       ) : null}
     </DuShell>
   );
+}
+
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "";
+  }
 }
 
 function SignalCard({

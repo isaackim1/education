@@ -16,6 +16,7 @@ import {
   EFFECTUATION_SECTION_IDS,
 } from "@/data/unknown/effectuation";
 import {
+  appendRevision,
   duGenerateId,
   getFounderState,
   nowIso,
@@ -28,8 +29,11 @@ import {
   applyFeedForwardToState,
   createInitialFounderState,
   deriveSubmissionCompleteness,
+  revisionLabel,
 } from "@/lib/du/progress";
+import { DEMO_SECTIONS, DEMO_VENTURE } from "@/lib/du/demo";
 import type {
+  AssignmentRevision,
   AssignmentSubmission,
   FeedForwardResult,
   FounderProfile,
@@ -43,7 +47,8 @@ const inputClass =
 
 export default function VentureStudioPage() {
   const router = useRouter();
-  const { ready, profile, submission, refresh } = useFounder();
+  const { ready, profile, submission, feedforward, revisions, refresh } =
+    useFounder();
 
   // Profile form state.
   const [ventureName, setVentureName] = useState("");
@@ -117,6 +122,21 @@ export default function VentureStudioPage() {
     return { profile: nextProfile, submission: nextSubmission };
   }
 
+  function handleUseDemoVenture() {
+    setVentureName(DEMO_VENTURE.ventureName);
+    setIdea(DEMO_VENTURE.idea);
+    setStage(DEMO_VENTURE.stage);
+    setTargetCustomer(DEMO_VENTURE.targetCustomer);
+    setCurrentChallenge(DEMO_VENTURE.currentChallenge);
+    setGoalsText(DEMO_VENTURE.goals.join("\n"));
+    setSections({ ...DEMO_SECTIONS });
+    setHydrated(true);
+    setError(null);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
   function handleSaveDraft() {
     persist();
     setSavedAt(nowIso());
@@ -129,6 +149,9 @@ export default function VentureStudioPage() {
     setError(null);
     const { profile: savedProfile, submission: savedSubmission } = persist();
     setSavedAt(nowIso());
+
+    // This generation produces a new draft. Draft # = prior revisions + 1.
+    const draftNumber = revisions.length + 1;
 
     try {
       const res = await fetch("/api/feedforward", {
@@ -145,6 +168,19 @@ export default function VentureStudioPage() {
               prompt: s.prompt,
             })),
           },
+          draftNumber,
+          previousFeedForwardReport: feedforward
+            ? {
+                summary: feedforward.summary,
+                nextAction: feedforward.nextAction,
+                unsupportedAssumptions: feedforward.unsupportedAssumptions,
+                improvementSteps: feedforward.improvementSteps,
+              }
+            : undefined,
+          revisionHistory: revisions.map((r) => ({
+            revisionNote: r.revisionNote,
+            feedbackSummary: r.feedbackSummary,
+          })),
         }),
       });
 
@@ -158,6 +194,20 @@ export default function VentureStudioPage() {
         createdAt: nowIso(),
       };
       saveLatestFeedForward(report);
+
+      // Snapshot this draft into the revision history.
+      const revision: AssignmentRevision = {
+        id: duGenerateId(),
+        submissionId: savedSubmission.id,
+        moduleId: EFFECTUATION_MODULE.id,
+        founderProfileId: savedProfile.id,
+        sections: { ...savedSubmission.sections },
+        feedbackReportId: report.id,
+        feedbackSummary: result.summary,
+        createdAt: nowIso(),
+        revisionNote: `Draft ${draftNumber}`,
+      };
+      appendRevision(revision);
 
       // Advance the founder's journey from the report.
       const prevState =
@@ -192,6 +242,34 @@ export default function VentureStudioPage() {
           </DuTag>
         }
       />
+
+      {/* Onboarding — only before a venture exists */}
+      {ready && !profile ? (
+        <DuCard tone="ink" className="mb-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-xl">
+              <Eyebrow onDark>Founder onboarding</Eyebrow>
+              <h3 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">
+                Start with your venture.
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-white/70">
+                Everything on campus — the AI Mentor, your feed-forward, your
+                progress journey — reasons about the company you&apos;re actually
+                building. Fill the profile below, or drop in a demo venture to see
+                the full journey instantly.
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-col gap-2">
+              <DuButton variant="accent" onClick={handleUseDemoVenture}>
+                Use demo venture
+              </DuButton>
+              <span className="text-center text-[11px] text-white/45">
+                Pre-fills a complete roadmap
+              </span>
+            </div>
+          </div>
+        </DuCard>
+      ) : null}
 
       {/* Venture profile */}
       <DuCard className="mb-6">
@@ -307,6 +385,63 @@ export default function VentureStudioPage() {
         })}
       </div>
 
+      {/* Revision history */}
+      {revisions.length > 0 ? (
+        <DuCard className="mt-6">
+          <Eyebrow>Revision history</Eyebrow>
+          <h3 className="mt-2 text-lg font-black tracking-tight">
+            How your roadmap has evolved
+          </h3>
+          <p className="mt-1 text-sm text-[#56524B]">
+            Each draft is snapshotted when you generate feed-forward.
+          </p>
+          <ol className="mt-4 space-y-3">
+            {revisions
+              .slice()
+              .reverse()
+              .map((rev, i) => {
+                const realIndex = revisions.length - 1 - i;
+                const label = revisionLabel(realIndex, revisions.length);
+                const filledCount = Object.values(rev.sections).filter((v) =>
+                  (v || "").trim(),
+                ).length;
+                return (
+                  <li
+                    key={rev.id}
+                    className="flex gap-4 rounded-lg border border-[#E2DCCD] bg-white p-4"
+                  >
+                    <span
+                      className={`grid h-9 w-9 shrink-0 place-items-center text-xs font-black ${
+                        realIndex === revisions.length - 1
+                          ? "bg-[#F5D11E] text-[#0B0B0C]"
+                          : "bg-[#EDE8DA] text-[#56524B]"
+                      }`}
+                    >
+                      {realIndex + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-black tracking-tight text-[#0B0B0C]">
+                          {label}
+                        </span>
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#A8A296]">
+                          {formatDate(rev.createdAt)} · {filledCount}/
+                          {EFFECTUATION_SECTION_IDS.length} sections
+                        </span>
+                      </div>
+                      {rev.feedbackSummary ? (
+                        <p className="mt-1 text-sm leading-relaxed text-[#56524B]">
+                          {rev.feedbackSummary}
+                        </p>
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
+          </ol>
+        </DuCard>
+      ) : null}
+
       {/* Action bar */}
       <div className="sticky bottom-4 z-10 mt-8">
         <DuCard tone="ink">
@@ -347,6 +482,17 @@ export default function VentureStudioPage() {
       </div>
     </DuShell>
   );
+}
+
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "";
+  }
 }
 
 function Field({

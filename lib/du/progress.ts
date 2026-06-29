@@ -219,6 +219,180 @@ function reviewProgressFraction(state: ProgressState): number {
   }
 }
 
+// ── Journey milestones (Phase 2: clearer founder journey) ────────────────────
+export interface JourneyInputs {
+  hasProfile: boolean;
+  reflectionsCount: number;
+  totalConcepts: number;
+  submissionFilled: number;
+  hasFeedforward: boolean;
+  revisionsCount: number;
+  reflectionComplete: boolean;
+  state: FounderState | null;
+}
+
+export interface Milestone {
+  id: string;
+  label: string;
+  complete: boolean;
+  /** The first not-yet-complete milestone — the founder's live focus. */
+  current: boolean;
+  hint: string;
+  href: string;
+}
+
+/**
+ * The seven-step founder journey, inferred entirely from localStorage-derived
+ * inputs. Order matters: the first incomplete milestone is the "current" one and
+ * doubles as the founder's bottleneck.
+ */
+export function deriveMilestones(inputs: JourneyInputs): Milestone[] {
+  const conceptsExplored =
+    inputs.totalConcepts > 0 &&
+    inputs.reflectionsCount >= Math.ceil(inputs.totalConcepts / 2);
+  const revisionInProgress =
+    inputs.revisionsCount >= 2 ||
+    inputs.state?.progressState === "revision_needed";
+
+  const raw: Omit<Milestone, "current">[] = [
+    {
+      id: "profile",
+      label: "Venture profile created",
+      complete: inputs.hasProfile,
+      hint: "Set up who you are and what you're building.",
+      href: "/module/effectuation/studio",
+    },
+    {
+      id: "concepts",
+      label: "Core concepts explored",
+      complete: conceptsExplored,
+      hint: "Apply the effectuation concepts to your venture.",
+      href: "/module/effectuation/learn",
+    },
+    {
+      id: "draft",
+      label: "Roadmap draft started",
+      complete: inputs.submissionFilled > 0,
+      hint: "Start building your Effectuation Roadmap in the Studio.",
+      href: "/module/effectuation/studio",
+    },
+    {
+      id: "feedforward",
+      label: "Feed-forward received",
+      complete: inputs.hasFeedforward,
+      hint: "Generate feed-forward on your roadmap.",
+      href: "/module/effectuation/studio",
+    },
+    {
+      id: "revision",
+      label: "Revision in progress",
+      complete: revisionInProgress,
+      hint: "Revise your roadmap from the feed-forward.",
+      href: "/module/effectuation/studio",
+    },
+    {
+      id: "reflection",
+      label: "Reflection completed",
+      complete: inputs.reflectionComplete,
+      hint: "Reflect on what you'll change before review.",
+      href: "/module/effectuation/feedback",
+    },
+    {
+      id: "review",
+      label: "Ready for mentor review",
+      complete: inputs.state
+        ? isReadyForMentorReview(inputs.state)
+        : false,
+      hint: "Mark yourself ready and prep with the AI Mentor.",
+      href: "/progress",
+    },
+  ];
+
+  const firstIncomplete = raw.findIndex((m) => !m.complete);
+  return raw.map((m, i) => ({ ...m, current: i === firstIncomplete }));
+}
+
+/** The current bottleneck = the first incomplete milestone. */
+export function deriveBottleneck(
+  milestones: Milestone[],
+): { label: string; hint: string; href: string } | null {
+  const current = milestones.find((m) => m.current);
+  if (!current) return null;
+  return { label: current.label, hint: current.hint, href: current.href };
+}
+
+// ── Review-readiness language (never "passed"/"graded") ──────────────────────
+export type ReviewStatus = "building" | "revision" | "approaching" | "ready";
+
+export function deriveReviewStatus(
+  state: FounderState | null,
+  completeness: SubmissionCompleteness,
+): { status: ReviewStatus; label: string; detail: string } {
+  if (state && isReadyForMentorReview(state)) {
+    return {
+      status: "ready",
+      label: "Ready to discuss with a mentor",
+      detail: "You've learned, built, and reflected. Bring this to a human mentor.",
+    };
+  }
+  if (state?.progressState === "revision_needed") {
+    return {
+      status: "revision",
+      label: "Needs another revision",
+      detail: "Tighten the open assumptions and unclear areas, then regenerate feed-forward.",
+    };
+  }
+  if (state && isApproachingMentorReview(state, completeness)) {
+    return {
+      status: "approaching",
+      label: "Approaching mentor review readiness",
+      detail: "Strong work. Finish reflecting, then mark yourself ready for review.",
+    };
+  }
+  return {
+    status: "building",
+    label: "Still building toward review",
+    detail: "Keep applying concepts and building your roadmap — feed-forward will guide you.",
+  };
+}
+
+/**
+ * "Continue where you left off" routing, following the founder down the funnel.
+ */
+export function resolveContinueRoute(inputs: JourneyInputs): {
+  href: string;
+  label: string;
+} {
+  if (!inputs.hasProfile) {
+    return { href: "/module/effectuation/studio", label: "Set up your venture" };
+  }
+  if (inputs.reflectionsCount === 0) {
+    return { href: "/module/effectuation/learn", label: "Explore the concepts" };
+  }
+  if (inputs.submissionFilled === 0) {
+    return { href: "/module/effectuation/studio", label: "Build your roadmap" };
+  }
+  if (!inputs.hasFeedforward) {
+    return {
+      href: "/module/effectuation/studio",
+      label: "Generate feed-forward",
+    };
+  }
+  if (inputs.reflectionComplete) {
+    return { href: "/progress", label: "Review your progress journey" };
+  }
+  return {
+    href: "/module/effectuation/feedback",
+    label: "Read your feed-forward",
+  };
+}
+
+/** Draft 1 / Draft 2 / Latest revision labelling for the history list. */
+export function revisionLabel(index: number, total: number): string {
+  if (index === total - 1) return "Latest revision";
+  return `Draft ${index + 1}`;
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function dedupe(items: string[]): string[] {
   const seen = new Set<string>();

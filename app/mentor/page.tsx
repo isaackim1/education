@@ -10,7 +10,12 @@ import {
   Eyebrow,
 } from "@/components/du/ui";
 import { EFFECTUATION_MODULE } from "@/data/unknown/effectuation";
-import { duGenerateId, nowIso } from "@/lib/du/storage";
+import {
+  clearMentorThread,
+  duGenerateId,
+  nowIso,
+  saveMentorThread,
+} from "@/lib/du/storage";
 import type { MentorMessage, MentorResult } from "@/lib/du/types";
 
 const QUICK_PROMPTS = [
@@ -22,34 +27,51 @@ const QUICK_PROMPTS = [
 ];
 
 export default function MentorPage() {
-  const { ready, profile, feedforward, state } = useFounder();
+  const { ready, profile, feedforward, state, mentorThread } = useFounder();
   const [messages, setMessages] = useState<MentorMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [suggestion, setSuggestion] = useState<{
-    action?: string;
-    question?: string;
-  }>({});
   const scrollRef = useRef<HTMLDivElement>(null);
-  const seeded = useRef(false);
+  const loaded = useRef(false);
 
-  // Seed the first mentor message from venture + module context.
+  // Load the persisted thread once storage is ready; seed a context-aware
+  // greeting (and persist it) only if there's no prior conversation.
   useEffect(() => {
-    if (!ready || seeded.current) return;
-    seeded.current = true;
-    setMessages([
-      {
+    if (!ready || loaded.current) return;
+    loaded.current = true;
+    if (mentorThread.length > 0) {
+      setMessages(mentorThread);
+    } else {
+      const greeting: MentorMessage = {
         id: duGenerateId(),
         role: "mentor",
         content: buildGreeting(profile?.ventureName, profile?.currentChallenge),
         createdAt: nowIso(),
-      },
-    ]);
-  }, [ready, profile]);
+      };
+      setMessages([greeting]);
+      saveMentorThread([greeting]);
+    }
+  }, [ready, mentorThread, profile]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages, sending]);
+
+  function persist(next: MentorMessage[]) {
+    setMessages(next);
+    saveMentorThread(next);
+  }
+
+  function handleReset() {
+    clearMentorThread();
+    const greeting: MentorMessage = {
+      id: duGenerateId(),
+      role: "mentor",
+      content: buildGreeting(profile?.ventureName, profile?.currentChallenge),
+      createdAt: nowIso(),
+    };
+    persist([greeting]);
+  }
 
   async function send(text: string) {
     const trimmed = text.trim();
@@ -61,11 +83,10 @@ export default function MentorPage() {
       content: trimmed,
       createdAt: nowIso(),
     };
-    const history = [...messages, userMsg];
-    setMessages(history);
+    const withUser = [...messages, userMsg];
+    persist(withUser);
     setInput("");
     setSending(true);
-    setSuggestion({});
 
     try {
       const res = await fetch("/api/mentor", {
@@ -73,7 +94,7 @@ export default function MentorPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: trimmed,
-          history: history.slice(-8).map((m) => ({
+          history: withUser.slice(-8).map((m) => ({
             role: m.role,
             content: m.content,
           })),
@@ -104,27 +125,25 @@ export default function MentorPage() {
       const reply =
         data.reply ??
         "I'm here — tell me what you're working on and I'll help you turn it into a concrete next step.";
-      setMessages((prev) => [
-        ...prev,
+      persist([
+        ...withUser,
         {
           id: duGenerateId(),
           role: "mentor",
           content: reply,
           createdAt: nowIso(),
+          suggestedNextAction: data.suggestedNextAction,
+          suggestedQuestion: data.suggestedQuestion,
         },
       ]);
-      setSuggestion({
-        action: data.suggestedNextAction,
-        question: data.suggestedQuestion,
-      });
     } catch {
-      setMessages((prev) => [
-        ...prev,
+      persist([
+        ...withUser,
         {
           id: duGenerateId(),
           role: "mentor",
           content:
-            "I couldn't reach the campus just now. Try again in a moment — your venture context is still here.",
+            "I couldn't reach the campus just now. Try again in a moment — your venture context and our conversation are still here.",
           createdAt: nowIso(),
         },
       ]);
@@ -133,22 +152,38 @@ export default function MentorPage() {
     }
   }
 
+  const lastMentor = [...messages].reverse().find((m) => m.role === "mentor");
+  const suggestion = {
+    action: lastMentor?.suggestedNextAction,
+    question: lastMentor?.suggestedQuestion,
+  };
+  const exchanges = messages.filter((m) => m.role === "founder").length;
+
   return (
     <DuShell width="max-w-4xl">
-      <div className="mb-6 flex items-center justify-between gap-4">
+      <div className="mb-6 flex items-end justify-between gap-4">
         <div>
           <Eyebrow>Unknown · AI Mentor</Eyebrow>
           <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">
             Your 24/7 founder coach
           </h1>
           <p className="mt-2 max-w-xl text-sm text-[#56524B]">
-            Module-aware and venture-aware. Not a generic chatbot — a coach that
-            pushes you toward one concrete next move.
+            Module-aware and venture-aware, with memory of your conversation. Not
+            a generic chatbot — a coach that pushes you toward one concrete next
+            move.
           </p>
         </div>
-        <span className="hidden sm:block">
-          <DuTag tone="active">● Online</DuTag>
-        </span>
+        <div className="hidden flex-col items-end gap-2 sm:flex">
+          <DuTag tone="active">● Online · remembers</DuTag>
+          {exchanges > 0 ? (
+            <button
+              onClick={handleReset}
+              className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#A8A296] underline underline-offset-2 hover:text-[#0B0B0C]"
+            >
+              Reset conversation
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {/* Quick prompts */}
@@ -251,18 +286,30 @@ export default function MentorPage() {
         </div>
       </DuCard>
 
-      {ready && !profile ? (
-        <p className="mt-4 text-center text-xs text-[#6B675D]">
-          Tip: set up your venture in the{" "}
-          <a
-            href="/module/effectuation/studio"
-            className="font-semibold underline underline-offset-2"
+      <div className="mt-4 flex items-center justify-between gap-4">
+        {ready && !profile ? (
+          <p className="text-xs text-[#6B675D]">
+            Tip: set up your venture in the{" "}
+            <a
+              href="/module/effectuation/studio"
+              className="font-semibold underline underline-offset-2"
+            >
+              Venture Studio
+            </a>{" "}
+            to make every answer specific to what you&apos;re building.
+          </p>
+        ) : (
+          <span />
+        )}
+        {exchanges > 0 ? (
+          <button
+            onClick={handleReset}
+            className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#A8A296] underline underline-offset-2 hover:text-[#0B0B0C] sm:hidden"
           >
-            Venture Studio
-          </a>{" "}
-          to make every answer specific to what you&apos;re building.
-        </p>
-      ) : null}
+            Reset conversation
+          </button>
+        ) : null}
+      </div>
     </DuShell>
   );
 }

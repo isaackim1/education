@@ -6,14 +6,18 @@ import {
   getFounderState,
   getLatestFeedForward,
   getLessonReflections,
+  getMentorThread,
+  getRevisions,
   getSubmission,
 } from "@/lib/du/storage";
 import type {
+  AssignmentRevision,
   AssignmentSubmission,
   FeedForwardReport,
   FounderProfile,
   FounderState,
   LessonReflections,
+  MentorMessage,
 } from "@/lib/du/types";
 
 export interface FounderSnapshot {
@@ -24,6 +28,8 @@ export interface FounderSnapshot {
   feedforward: FeedForwardReport | null;
   state: FounderState | null;
   reflections: LessonReflections;
+  mentorThread: MentorMessage[];
+  revisions: AssignmentRevision[];
   /** Re-read everything from localStorage (call after a save). */
   refresh: () => void;
 }
@@ -40,6 +46,8 @@ export function useFounder(): FounderSnapshot {
   const [feedforward, setFeedforward] = useState<FeedForwardReport | null>(null);
   const [state, setState] = useState<FounderState | null>(null);
   const [reflections, setReflections] = useState<LessonReflections>({});
+  const [mentorThread, setMentorThread] = useState<MentorMessage[]>([]);
+  const [revisions, setRevisions] = useState<AssignmentRevision[]>([]);
 
   const refresh = useCallback(() => {
     setProfile(getFounderProfile());
@@ -47,6 +55,8 @@ export function useFounder(): FounderSnapshot {
     setFeedforward(getLatestFeedForward());
     setState(getFounderState());
     setReflections(getLessonReflections());
+    setMentorThread(getMentorThread());
+    setRevisions(getRevisions());
     setReady(true);
   }, []);
 
@@ -54,5 +64,15 @@ export function useFounder(): FounderSnapshot {
     refresh();
   }, [refresh]);
 
-  return { ready, profile, submission, feedforward, state, reflections, refresh };
+  return {
+    ready,
+    profile,
+    submission,
+    feedforward,
+    state,
+    reflections,
+    mentorThread,
+    revisions,
+    refresh,
+  };
 }

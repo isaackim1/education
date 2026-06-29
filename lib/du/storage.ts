@@ -11,11 +11,13 @@
  */
 
 import type {
+  AssignmentRevision,
   AssignmentSubmission,
   FeedForwardReport,
   FounderProfile,
   FounderState,
   LessonReflections,
+  MentorMessage,
 } from "./types";
 
 export const DU_KEYS = {
@@ -24,6 +26,8 @@ export const DU_KEYS = {
   latestFeedforward: "du_latest_feedforward",
   founderState: "du_founder_state",
   lessonReflections: "du_lesson_reflections",
+  mentorThread: "du_mentor_thread",
+  revisions: "du_effectuation_revisions",
 } as const;
 
 function isBrowser(): boolean {
@@ -120,6 +124,34 @@ export function saveLessonReflection(conceptId: string, text: string): boolean {
   const all = getLessonReflections();
   all[conceptId] = text;
   return writeJson(DU_KEYS.lessonReflections, all);
+}
+
+// ── Mentor thread (persistent conversation memory) ───────────────────────────
+export function getMentorThread(): MentorMessage[] {
+  return readJson<MentorMessage[]>(DU_KEYS.mentorThread, []);
+}
+
+export function saveMentorThread(thread: MentorMessage[]): boolean {
+  // Cap the stored thread so localStorage never grows unbounded in a long demo.
+  const capped = thread.slice(-60);
+  return writeJson(DU_KEYS.mentorThread, capped);
+}
+
+export function clearMentorThread(): boolean {
+  return removeItem(DU_KEYS.mentorThread);
+}
+
+// ── Assignment revision history ──────────────────────────────────────────────
+export function getRevisions(): AssignmentRevision[] {
+  return readJson<AssignmentRevision[]>(DU_KEYS.revisions, []);
+}
+
+export function appendRevision(revision: AssignmentRevision): AssignmentRevision[] {
+  const all = getRevisions();
+  all.push(revision);
+  const capped = all.slice(-20);
+  writeJson(DU_KEYS.revisions, capped);
+  return capped;
 }
 
 // ── Reset (useful for demos) ─────────────────────────────────────────────────

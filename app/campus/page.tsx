@@ -22,11 +22,29 @@ import {
   deriveSubmissionCompleteness,
   moduleProgressPercent,
   progressStateLabel,
+  resolveContinueRoute,
+  type JourneyInputs,
 } from "@/lib/du/progress";
+import { seedDemoVenture } from "@/lib/du/demo";
+
+interface ActivityEvent {
+  at: string;
+  label: string;
+  href: string;
+}
 
 export default function CampusPage() {
-  const { ready, profile, submission, feedforward, state, reflections } =
-    useFounder();
+  const {
+    ready,
+    profile,
+    submission,
+    feedforward,
+    state,
+    reflections,
+    mentorThread,
+    revisions,
+    refresh,
+  } = useFounder();
 
   const completeness = deriveSubmissionCompleteness(
     submission,
@@ -42,7 +60,38 @@ export default function CampusPage() {
     state,
   });
 
-  const nextAction = resolveNextAction(Boolean(profile), percent, state?.nextRecommendedAction);
+  const reflectionComplete =
+    state?.progressState === "reflection_complete" ||
+    state?.progressState === "ready_for_mentor_review" ||
+    state?.progressState === "module_complete";
+
+  const journeyInputs: JourneyInputs = {
+    hasProfile: Boolean(profile),
+    reflectionsCount: reflectionsDone,
+    totalConcepts: EFFECTUATION_MODULE.conceptIds.length,
+    submissionFilled: completeness.filled,
+    hasFeedforward: Boolean(feedforward),
+    revisionsCount: revisions.length,
+    reflectionComplete,
+    state,
+  };
+  const cont = resolveContinueRoute(journeyInputs);
+
+  const lastMentor = [...mentorThread]
+    .reverse()
+    .find((m) => m.role === "mentor");
+  const activity = buildActivity({
+    profileCreatedAt: profile?.createdAt,
+    ventureName: profile?.ventureName,
+    feedforwardAt: feedforward?.createdAt,
+    revisionCount: revisions.length,
+    lastMentorAt: lastMentor?.createdAt,
+  });
+
+  function handleUseDemo() {
+    seedDemoVenture();
+    refresh();
+  }
 
   return (
     <DuShell>
@@ -63,8 +112,8 @@ export default function CampusPage() {
               you&apos;re ready for mentor review.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <DuButton href="/module/effectuation" variant="accent">
-                Continue Module →
+              <DuButton href={cont.href} variant="accent">
+                {ready ? `Continue: ${cont.label} →` : "Continue →"}
               </DuButton>
               <DuButton
                 href="/module/effectuation/studio"
@@ -92,6 +141,18 @@ export default function CampusPage() {
               />
               <div className="mt-3">
                 <DuProgressBar percent={ready ? percent : 0} onDark />
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
+                <DuStat
+                  onDark
+                  label="Revisions"
+                  value={ready ? revisions.length : "—"}
+                />
+                <DuStat
+                  onDark
+                  label="Concepts"
+                  value={ready ? `${reflectionsDone}/${EFFECTUATION_MODULE.conceptIds.length}` : "—"}
+                />
               </div>
             </div>
           </div>
@@ -146,20 +207,114 @@ export default function CampusPage() {
         </DuCard>
 
         <DuCard tone="yellow">
-          <Eyebrow>Next action</Eyebrow>
+          <Eyebrow>Next recommended action</Eyebrow>
           <p className="mt-3 text-[15px] font-semibold leading-relaxed text-[#0B0B0C]">
-            {ready ? nextAction.text : "Loading your next move…"}
+            {ready
+              ? state?.nextRecommendedAction ?? defaultNextAction(journeyInputs)
+              : "Loading your next move…"}
           </p>
           <div className="mt-5">
-            <DuButton href={nextAction.href} variant="primary">
-              {nextAction.cta}
+            <DuButton href={cont.href} variant="primary">
+              {ready ? cont.label : "Continue"} →
             </DuButton>
           </div>
         </DuCard>
       </div>
 
-      {/* Venture + feed-forward preview */}
-      <div className="mt-8 grid gap-5 lg:grid-cols-2">
+      {/* Cockpit: activity + mentor + feed-forward */}
+      <div className="mt-8 grid gap-5 lg:grid-cols-3">
+        {/* Recent activity */}
+        <DuCard>
+          <Eyebrow>Recent activity</Eyebrow>
+          <h3 className="mt-1.5 text-lg font-black tracking-tight">
+            On your campus
+          </h3>
+          {ready && activity.length > 0 ? (
+            <ul className="mt-4 space-y-3">
+              {activity.map((ev, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span
+                    aria-hidden
+                    className="mt-[7px] h-2 w-2 shrink-0 rotate-45 bg-[#F5D11E]"
+                  />
+                  <Link
+                    href={ev.href}
+                    className="text-sm leading-relaxed text-[#3A372F] hover:text-[#0B0B0C]"
+                  >
+                    {ev.label}
+                    <span className="ml-1.5 text-xs text-[#A8A296]">
+                      · {formatDate(ev.at)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 text-sm text-[#56524B]">
+              Nothing yet. Set up your venture and your campus comes alive.
+            </p>
+          )}
+        </DuCard>
+
+        {/* Latest mentor */}
+        <DuCard>
+          <Eyebrow>Latest from your mentor</Eyebrow>
+          {ready && lastMentor ? (
+            <>
+              <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-[#3A372F]">
+                {firstLine(lastMentor.content)}
+              </p>
+              {lastMentor.suggestedQuestion ? (
+                <p className="mt-3 text-xs italic text-[#6B675D]">
+                  Suggested: “{lastMentor.suggestedQuestion}”
+                </p>
+              ) : null}
+              <div className="mt-4">
+                <DuButton href="/mentor" variant="outline">
+                  Resume conversation
+                </DuButton>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="mt-3 text-sm text-[#56524B]">
+                Your 24/7 AI Mentor knows your venture and remembers your
+                conversation. Ask it anything.
+              </p>
+              <div className="mt-4">
+                <DuButton href="/mentor" variant="outline">
+                  Open AI Mentor
+                </DuButton>
+              </div>
+            </>
+          )}
+        </DuCard>
+
+        {/* Latest feed-forward */}
+        <DuCard>
+          <Eyebrow>Latest feed-forward</Eyebrow>
+          {ready && feedforward ? (
+            <>
+              <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-[#3A372F]">
+                {feedforward.summary}
+              </p>
+              <div className="mt-4">
+                <DuButton href="/module/effectuation/feedback" variant="outline">
+                  Open Review Room
+                </DuButton>
+              </div>
+            </>
+          ) : (
+            <p className="mt-3 text-sm text-[#56524B]">
+              No feed-forward yet. Build your roadmap and generate your first
+              report — direct, founder-to-founder, never a grade.
+            </p>
+          )}
+        </DuCard>
+      </div>
+
+      {/* Venture card */}
+      <div className="mt-8">
         <DuCard>
           <SectionTitle
             eyebrow="Your venture"
@@ -176,6 +331,16 @@ export default function CampusPage() {
                   <DuTag>Customer · {profile.targetCustomer}</DuTag>
                 ) : null}
               </div>
+              {feedforward && feedforward.strengths.length > 0 ? (
+                <div className="mt-5">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#6B675D]">
+                    Strengths so far
+                  </p>
+                  <div className="mt-2">
+                    <DuTickList items={feedforward.strengths.slice(0, 2)} />
+                  </div>
+                </div>
+              ) : null}
               <div className="mt-5">
                 <DuButton href="/module/effectuation/studio" variant="outline">
                   Edit in Venture Studio
@@ -187,49 +352,18 @@ export default function CampusPage() {
               <p className="text-sm leading-relaxed text-[#56524B]">
                 Everything on campus reasons about your venture. Create your
                 founder profile to make the mentor and feed-forward personal to
-                what you&apos;re building.
+                what you&apos;re building — or drop in a demo venture to see the
+                whole journey instantly.
               </p>
-              <div className="mt-5">
+              <div className="mt-5 flex flex-wrap gap-3">
                 <DuButton href="/module/effectuation/studio" variant="primary">
                   Create venture profile
                 </DuButton>
-              </div>
-            </>
-          )}
-        </DuCard>
-
-        <DuCard>
-          <SectionTitle
-            eyebrow="Latest feed-forward"
-            title="What to build next"
-          />
-          {ready && feedforward ? (
-            <>
-              <p className="text-sm leading-relaxed text-[#3A372F]">
-                {feedforward.summary}
-              </p>
-              {feedforward.strengths.length > 0 ? (
-                <div className="mt-4">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#6B675D]">
-                    Strengths
-                  </p>
-                  <div className="mt-2">
-                    <DuTickList items={feedforward.strengths.slice(0, 2)} />
-                  </div>
-                </div>
-              ) : null}
-              <div className="mt-5 flex flex-wrap gap-3">
-                <DuButton href="/module/effectuation/feedback" variant="outline">
-                  View full report
+                <DuButton variant="accent" onClick={handleUseDemo}>
+                  Use demo venture
                 </DuButton>
               </div>
             </>
-          ) : (
-            <p className="text-sm leading-relaxed text-[#56524B]">
-              No feed-forward yet. Complete your Effectuation Roadmap in the
-              Venture Studio and generate your first report — direct,
-              founder-to-founder, never a grade.
-            </p>
           )}
         </DuCard>
       </div>
@@ -237,31 +371,66 @@ export default function CampusPage() {
   );
 }
 
-function resolveNextAction(
-  hasProfile: boolean,
-  percent: number,
-  recommended?: string,
-): { text: string; cta: string; href: string } {
-  if (!hasProfile) {
-    return {
-      text: "Create your venture profile so the campus can reason about what you're actually building.",
-      cta: "Start in Studio →",
+function defaultNextAction(inputs: JourneyInputs): string {
+  if (!inputs.hasProfile) {
+    return "Create your venture profile so the campus can reason about what you're actually building.";
+  }
+  if (inputs.reflectionsCount === 0) {
+    return "Work through the Effectuation concepts and apply each one to your venture.";
+  }
+  if (!inputs.hasFeedforward) {
+    return "Build your Effectuation Roadmap and generate feed-forward before mentor review.";
+  }
+  return "Revise from your feed-forward, then reflect and prepare for mentor review.";
+}
+
+function buildActivity(input: {
+  profileCreatedAt?: string;
+  ventureName?: string;
+  feedforwardAt?: string;
+  revisionCount: number;
+  lastMentorAt?: string;
+}): ActivityEvent[] {
+  const events: ActivityEvent[] = [];
+  if (input.profileCreatedAt) {
+    events.push({
+      at: input.profileCreatedAt,
+      label: `Created venture ${input.ventureName ?? ""}`.trim(),
       href: "/module/effectuation/studio",
-    };
+    });
   }
-  if (recommended) {
-    return { text: recommended, cta: "Continue →", href: "/module/effectuation" };
+  if (input.feedforwardAt) {
+    events.push({
+      at: input.feedforwardAt,
+      label:
+        input.revisionCount > 1
+          ? `Generated feed-forward · Draft ${input.revisionCount}`
+          : "Generated your first feed-forward",
+      href: "/module/effectuation/feedback",
+    });
   }
-  if (percent < 40) {
-    return {
-      text: "Work through the Effectuation concepts and apply each one to your venture.",
-      cta: "Continue learning →",
-      href: "/module/effectuation/learn",
-    };
+  if (input.lastMentorAt) {
+    events.push({
+      at: input.lastMentorAt,
+      label: "Talked with your AI Mentor",
+      href: "/mentor",
+    });
   }
-  return {
-    text: "Build your Effectuation Roadmap and generate feed-forward before mentor review.",
-    cta: "Open Venture Studio →",
-    href: "/module/effectuation/studio",
-  };
+  return events.sort((a, b) => (a.at < b.at ? 1 : -1)).slice(0, 5);
+}
+
+function firstLine(text: string): string {
+  const trimmed = text.trim();
+  return trimmed.length > 180 ? `${trimmed.slice(0, 177)}…` : trimmed;
+}
+
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "";
+  }
 }

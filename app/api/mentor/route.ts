@@ -17,6 +17,8 @@ const MODEL = "claude-sonnet-4-6";
 interface MentorRequest {
   message: string;
   history?: { role: "founder" | "mentor"; content: string }[];
+  /** Alias for `history` — recent persisted thread messages, if provided. */
+  recentMessages?: { role: "founder" | "mentor"; content: string }[];
   founderProfile?: {
     ventureName?: string;
     idea?: string;
@@ -47,6 +49,8 @@ Hard rules:
 
 How you coach:
 - Use the founder's venture context and the current module context in every answer.
+- This is an ongoing relationship: reference earlier parts of THIS conversation when relevant ("last time you said…", "building on the experiment we discussed…") instead of restarting cold each turn. Don't repeat a suggestion you already made — advance it.
+- When a feed-forward report is present, connect your coaching to it: its open assumptions, its suggested next action, and what the founder should change before a human mentor review.
 - Connect advice to effectuation when relevant: start with your means (bird-in-hand), affordable loss, partnerships/co-creation (crazy-quilt), surprises as input (lemonade), agency (pilot-in-the-plane), and the Business Model Canvas link.
 - Ask strong coaching questions that move the founder forward.
 - Always push toward ONE concrete next practical action.
@@ -75,7 +79,8 @@ export async function POST(request: Request) {
 
   try {
     const anthropic = new Anthropic({ apiKey });
-    const history = (body.history ?? []).slice(-8).map((m) => ({
+    const priorMessages = body.history ?? body.recentMessages ?? [];
+    const history = priorMessages.slice(-8).map((m) => ({
       role: m.role === "mentor" ? ("assistant" as const) : ("user" as const),
       content: m.content,
     }));

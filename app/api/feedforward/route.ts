@@ -33,6 +33,15 @@ interface FeedForwardRequest {
     assignmentTitle?: string;
     sections?: { id: string; prompt: string }[];
   };
+  /** Phase 2 revision context — present from the founder's 2nd draft onward. */
+  draftNumber?: number;
+  previousFeedForwardReport?: {
+    summary?: string;
+    nextAction?: string;
+    unsupportedAssumptions?: string[];
+    improvementSteps?: string[];
+  };
+  revisionHistory?: { revisionNote?: string; feedbackSummary?: string }[];
 }
 
 const SYSTEM_PROMPT = `You are the Feed-Forward Brain inside Unknown Digital University — a digital campus where founders learn entrepreneurship by building their own venture.
@@ -44,6 +53,9 @@ You give FEED-FORWARD, not grading. Absolute rules:
 - Ground everything in effectuation and an Unknown-style, build-from-day-one philosophy: start with your means (bird-in-hand), affordable loss, partnerships/co-creation (crazy-quilt), surprises as input (lemonade), agency (pilot-in-the-plane), and connecting work to the Business Model Canvas.
 - Challenge unsupported assumptions directly but respectfully.
 - Identify exactly what a sharp human mentor would question in a review.
+- This complements — never replaces — a human mentor review. Do not declare the founder "ready", "passed", or "approved".
+- Revision awareness: if this looks like a first draft, set the founder up to build momentum. If revision context is provided, acknowledge it as a later draft, note what seems to have improved, and avoid simply repeating prior feed-forward — push the next layer.
+- Prioritise: order "improvementSteps" strongest-first, so the single most important improvement priority is the FIRST item.
 - Always end on momentum: one concrete next action the founder can take this week.
 
 Return ONLY a JSON object (no prose, no markdown fences) with exactly these keys:
@@ -114,6 +126,25 @@ function buildUserMessage(body: FeedForwardRequest): string {
           ([k, v]) => `### ${k}\n${(v || "").trim() || "(left blank)"}`,
         );
 
+  const draftNumber = body.draftNumber ?? 1;
+  const prev = body.previousFeedForwardReport;
+  const revisionBlock =
+    draftNumber > 1
+      ? `
+
+REVISION CONTEXT — this is draft #${draftNumber} (a later revision, not a first draft).
+${
+  prev
+    ? `Previous feed-forward summary: ${prev.summary || "(none)"}
+Previously flagged assumptions: ${(prev.unsupportedAssumptions ?? []).join("; ") || "(none)"}
+Previously suggested improvements: ${(prev.improvementSteps ?? []).join("; ") || "(none)"}
+Acknowledge what has improved since then and push the NEXT layer — do not just repeat the above.`
+    : "Acknowledge this is a later draft and raise the bar accordingly."
+}`
+      : `
+
+REVISION CONTEXT — this appears to be the founder's FIRST draft. Set them up to build momentum.`;
+
   return `FOUNDER VENTURE PROFILE
 Venture: ${founderProfile.ventureName || "(unnamed)"}
 Idea: ${founderProfile.idea || "(not provided)"}
@@ -126,9 +157,9 @@ MODULE: ${moduleContext.moduleTitle || "Effectuation Roadmap"}
 ASSIGNMENT: ${moduleContext.assignmentTitle || "Build your Effectuation Roadmap"}
 
 FOUNDER'S SUBMISSION
-${fallbackLines.join("\n\n")}
+${fallbackLines.join("\n\n")}${revisionBlock}
 
-Give feed-forward as instructed. Some sections may be blank or thin — note what's missing and encourage completion without grading.`;
+Give feed-forward as instructed. Some sections may be blank or thin — note what's missing and encourage completion without grading. Remember: order improvementSteps strongest-first.`;
 }
 
 function parseReport(raw: string): FeedForwardResult | null {
@@ -166,6 +197,8 @@ function demoReport(body: FeedForwardRequest): FeedForwardResult {
   const filled = Object.values(body.submission.sections).filter(
     (v) => (v || "").trim().length > 0,
   ).length;
+  const draftNumber = body.draftNumber ?? 1;
+  const isRevision = draftNumber > 1;
 
   return {
     strengths: [
@@ -199,6 +232,8 @@ function demoReport(body: FeedForwardRequest): FeedForwardResult {
       "Tie one insight explicitly to a customer segment or value proposition on your canvas.",
     ],
     nextAction: `This week, run one affordable-loss experiment for ${venture}: pick the cheapest test that puts you in front of a real potential customer, and write down the single question it answers.`,
-    summary: `Strong start, founder — ${venture} is moving from idea to action. Tighten one experiment, ask for one real commitment, and you'll be ready for mentor review.`,
+    summary: isRevision
+      ? `Draft ${draftNumber} of ${venture} is tighter than the last — the means and affordable-loss thinking are landing. Now push the next layer: turn one named partner into a real commitment and you'll be approaching mentor review readiness.`
+      : `Strong start, founder — ${venture} is moving from idea to action. Tighten one experiment, ask for one real commitment, and you'll be approaching mentor review readiness.`,
   };
 }
