@@ -170,7 +170,7 @@ export default function MentorPage() {
           </h1>
           <p className="mt-2 max-w-xl text-sm text-[#56524B]">
             Module-aware and venture-aware, with memory of your conversation. Not
-            a generic chatbot — a coach that pushes you toward one concrete next
+            a generic chat tool — a coach that pushes you toward one concrete next
             move.
           </p>
         </div>

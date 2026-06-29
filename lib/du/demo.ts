@@ -32,13 +32,13 @@ export interface DemoVentureInput {
 
 export const DEMO_VENTURE: DemoVentureInput = {
   ventureName: "Ivvy",
-  idea: "An AI learning coach that helps students and founders learn by doing, not by passively consuming content.",
+  idea: "An AI learning coach that helps founders learn by doing, not by passively consuming content.",
   stage: "validation",
-  targetCustomer: "entrepreneurship students and early founders",
+  targetCustomer: "founder-program participants and early founders",
   currentChallenge:
     "proving that the digital university experience creates better progress before human mentor sessions",
   goals: [
-    "test with Unknown University-style students",
+    "test with an Unknown-style founder cohort",
     "validate feed-forward usefulness",
     "turn one module into a complete digital learning journey",
   ],
@@ -51,15 +51,15 @@ export const DEMO_VENTURE: DemoVentureInput = {
  */
 export const DEMO_SECTIONS: Record<string, string> = {
   "who-are-you":
-    "I'm a builder who learns fastest by shipping. I've coached students through exam prep and watched passive content fail them — so I care about applied, build-from-day-one learning. Ivvy is mine to build because I've lived the problem from both sides: learner and coach.",
+    "I'm a builder who learns fastest by shipping. I've coached learners through high-stakes preparation and watched passive content fail them — so I care about applied, build-from-day-one learning. Ivvy is mine to build because I've lived the problem from both sides: learner and coach.",
   "what-you-know":
     "I know how to turn messy material into structured learning, how to design feed-forward that changes behaviour, and how to ship a working product with a small team. I understand LLM-backed coaching and what makes founders actually act versus nod along.",
   "who-you-know":
-    "I know entrepreneurship educators, a few Unknown University-style program leads, and a network of early founders who'll trial new tools. I can reach roughly a dozen students and two program coordinators this week without any cold outreach.",
+    "I know entrepreneurship educators, a few Unknown University-style program leads, and a network of early founders who'll trial new tools. I can reach roughly a dozen founders and two program coordinators this week without any cold outreach.",
   "affordable-loss":
     "I can afford to lose one week and a small amount of credits running one cohort of 8 founders through the Effectuation module. If it flops, I've lost a week and learned exactly where the journey breaks — not the company.",
   partnerships:
-    "An Unknown University-style program could co-run a pilot where their students use Ivvy before human mentor sessions. The concrete ask: one program coordinator commits 8 students and one mentor's time to compare prepared vs unprepared sessions.",
+    "An Unknown University-style program could co-run a pilot where their founder cohort uses Ivvy before human mentor sessions. The concrete ask: one program coordinator commits 8 founders and one mentor's time to compare prepared vs unprepared sessions.",
   "bmc-connection":
     "This sharpens the customer segment (program-backed founders, not solo self-learners) and the value proposition (founders arrive at mentor sessions further along). Channel becomes the university itself rather than direct-to-founder marketing.",
   "next-experiment":

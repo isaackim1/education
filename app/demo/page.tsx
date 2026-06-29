@@ -24,7 +24,7 @@ const PROVES: { title: string; detail: string }[] = [
       "An entrepreneurship philosophy becomes a structured, applied learning journey — not a video library.",
   },
   {
-    title: "Students can work at their own pace",
+    title: "Founders can work at their own pace",
     detail:
       "Founders move through learn → apply → submit → revise on their own schedule, with progress that persists.",
   },

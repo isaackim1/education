@@ -56,7 +56,7 @@ function DuFooter() {
           </p>
           <p className="text-xs text-[#6B675D]">
             A digital campus for founders. Build from day one — applied learning,
-            not theoretical exams.
+            not passive content.
           </p>
         </div>
         <Link
