@@ -20,6 +20,8 @@ import {
   moduleProgressPercent,
   progressStateLabel,
 } from "@/lib/du/progress";
+import { getKnowledgeByModule } from "@/lib/du/knowledge";
+import { KNOWLEDGE_SOURCES } from "@/data/unknown/effectuation-knowledge";
 
 export default function EffectuationModulePage() {
   const { ready, profile, submission, feedforward, state, reflections } =
@@ -41,6 +43,12 @@ export default function EffectuationModulePage() {
 
   const learnStarted = reflectionsDone > 0;
   const hasDraft = completeness.filled > 0;
+
+  const knowledgeChunkCount = getKnowledgeByModule("effectuation").length;
+  const exampleSourceLabels = KNOWLEDGE_SOURCES.map((s) => s.sourceLabel).slice(
+    0,
+    4,
+  );
 
   return (
     <DuShell>
@@ -91,6 +99,51 @@ export default function EffectuationModulePage() {
         <DuCard>
           <SectionTitle eyebrow="What you'll build" title="Real artifacts" />
           <DuTickList items={EFFECTUATION_MODULE.willBuild} />
+        </DuCard>
+      </div>
+
+      {/* Unknown Knowledge Brain — Content Brain / RAG preview */}
+      <div className="mt-8">
+        <DuCard tone="ink">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-xl">
+              <Eyebrow onDark>Unknown Knowledge Brain</Eyebrow>
+              <h3 className="mt-2 text-xl font-black tracking-tight text-white sm:text-2xl">
+                Your mentor and feed-forward are source-grounded
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-white/70">
+                This alpha uses curated module knowledge now. The structure is
+                ready for transcripts, embeddings, and full RAG ingestion later —
+                the retrieval layer is real, not a mockup.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {exampleSourceLabels.map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-[11px] font-semibold text-white/75"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="flex shrink-0 gap-6 border-t border-white/10 pt-4 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+              <div>
+                <p className="text-3xl font-black tabular-nums text-[#F5D11E]">
+                  {knowledgeChunkCount}
+                </p>
+                <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/55">
+                  Knowledge chunks
+                </p>
+              </div>
+              <div>
+                <p className="text-3xl font-black text-white">1</p>
+                <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/55">
+                  Active module
+                </p>
+              </div>
+            </div>
+          </div>
         </DuCard>
       </div>
 

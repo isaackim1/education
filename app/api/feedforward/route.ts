@@ -1,6 +1,15 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
-import type { FeedForwardResult } from "@/lib/du/types";
+import type {
+  FeedForwardResult,
+  RetrievedKnowledge,
+  SourceRef,
+} from "@/lib/du/types";
+import {
+  formatKnowledgeForPrompt,
+  getSourceLabels,
+  retrieveWithFallback,
+} from "@/lib/du/knowledge";
 
 /**
  * Feed-Forward Brain (Phase DU-1A) — the re-cast of Ivvy's Assessment Brain.
@@ -58,6 +67,10 @@ You give FEED-FORWARD, not grading. Absolute rules:
 - Prioritise: order "improvementSteps" strongest-first, so the single most important improvement priority is the FIRST item.
 - Always end on momentum: one concrete next action the founder can take this week.
 
+Grounding in Unknown knowledge (RAG):
+- You are given a RETRIEVED UNKNOWN KNOWLEDGE section drawn from the Unknown Knowledge Brain (assignment criteria, common founder mistakes, effectuation principles, Business Model Canvas connection, mentor-review preparation). Use it to make "conceptConnections" and "mentorQuestions" source-grounded rather than generic.
+- These are paraphrased module notes, not verbatim transcripts — do NOT fabricate quotes, and do not invent Unknown University policy. If the retrieved knowledge is thin, lean on general effectuation principles carefully.
+
 Return ONLY a JSON object (no prose, no markdown fences) with exactly these keys:
 {
   "strengths": string[],
@@ -83,11 +96,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
+  // Knowledge Brain retrieval runs locally regardless of API key. Feed-forward
+  // prioritises assignment criteria, common mistakes, principles, BMC link, and
+  // mentor-review prep.
+  const { retrieved } = retrieveWithFallback(buildQuery(body), {
+    moduleId: "effectuation",
+    useCase: "feedforward",
+    conceptIds: [
+      "bird-in-hand",
+      "affordable-loss",
+      "crazy-quilt",
+      "bmc-connection",
+      "founder-roadmap",
+    ],
+    tags: ["assignment-criteria", "common-mistakes", "mentor-review"],
+    limit: 5,
+  });
+  const sources = getSourceLabels(retrieved);
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
   // Safe fallback so the demo path always works locally.
   if (!apiKey) {
-    return NextResponse.json({ ...demoReport(body), demo: true });
+    return NextResponse.json({ ...demoReport(body, sources), demo: true });
   }
 
   try {
@@ -96,23 +127,42 @@ export async function POST(request: Request) {
       model: MODEL,
       max_tokens: 1200,
       system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: buildUserMessage(body) }],
+      messages: [{ role: "user", content: buildUserMessage(body, retrieved) }],
     });
 
     const firstBlock = response.content[0];
     const raw = firstBlock?.type === "text" ? firstBlock.text : "";
-    const parsed = parseReport(raw);
+    const parsed = parseReport(raw, sources);
     if (!parsed) {
-      return NextResponse.json({ ...demoReport(body), demo: true });
+      return NextResponse.json({ ...demoReport(body, sources), demo: true });
     }
     return NextResponse.json(parsed);
   } catch {
     // Never block the founder's flow on an AI error — fall back to demo.
-    return NextResponse.json({ ...demoReport(body), demo: true });
+    return NextResponse.json({ ...demoReport(body, sources), demo: true });
   }
 }
 
-function buildUserMessage(body: FeedForwardRequest): string {
+/** Build the retrieval query from the submission, profile, and revision context. */
+function buildQuery(body: FeedForwardRequest): string {
+  const sectionText = Object.values(body.submission.sections)
+    .map((v) => (v || "").trim())
+    .filter(Boolean)
+    .join(" ");
+  const parts = [
+    sectionText,
+    body.founderProfile.idea ?? "",
+    body.founderProfile.currentChallenge ?? "",
+    body.previousFeedForwardReport?.summary ?? "",
+    "effectuation roadmap assignment affordable loss partnerships business model canvas mentor review",
+  ];
+  return parts.filter(Boolean).join(" ");
+}
+
+function buildUserMessage(
+  body: FeedForwardRequest,
+  retrieved: RetrievedKnowledge[],
+): string {
   const { founderProfile, submission, moduleContext } = body;
   const sectionLines = (moduleContext.sections ?? []).map((s) => {
     const answer = (submission.sections[s.id] ?? "").trim();
@@ -145,7 +195,7 @@ Acknowledge what has improved since then and push the NEXT layer — do not just
 
 REVISION CONTEXT — this appears to be the founder's FIRST draft. Set them up to build momentum.`;
 
-  return `FOUNDER VENTURE PROFILE
+  return `=== FOUNDER VENTURE PROFILE ===
 Venture: ${founderProfile.ventureName || "(unnamed)"}
 Idea: ${founderProfile.idea || "(not provided)"}
 Stage: ${founderProfile.stage || "(unknown)"}
@@ -153,16 +203,23 @@ Target customer: ${founderProfile.targetCustomer || "(not provided)"}
 Current challenge: ${founderProfile.currentChallenge || "(not provided)"}
 Goals: ${(founderProfile.goals ?? []).join("; ") || "(none listed)"}
 
-MODULE: ${moduleContext.moduleTitle || "Effectuation Roadmap"}
-ASSIGNMENT: ${moduleContext.assignmentTitle || "Build your Effectuation Roadmap"}
+=== MODULE ===
+${moduleContext.moduleTitle || "Effectuation Roadmap"} — ${moduleContext.assignmentTitle || "Build your Effectuation Roadmap"}
 
-FOUNDER'S SUBMISSION
+=== FOUNDER'S SUBMISSION ===
 ${fallbackLines.join("\n\n")}${revisionBlock}
+
+=== RETRIEVED UNKNOWN KNOWLEDGE ===
+(Curated, paraphrased module notes — not verbatim quotes. Ground concept connections and mentor questions in these.)
+${formatKnowledgeForPrompt(retrieved)}
 
 Give feed-forward as instructed. Some sections may be blank or thin — note what's missing and encourage completion without grading. Remember: order improvementSteps strongest-first.`;
 }
 
-function parseReport(raw: string): FeedForwardResult | null {
+function parseReport(
+  raw: string,
+  sources: SourceRef[],
+): FeedForwardResult | null {
   const start = raw.indexOf("{");
   const end = raw.lastIndexOf("}");
   if (start === -1 || end === -1 || end <= start) return null;
@@ -177,6 +234,7 @@ function parseReport(raw: string): FeedForwardResult | null {
       improvementSteps: toStringArray(obj.improvementSteps),
       nextAction: typeof obj.nextAction === "string" ? obj.nextAction : "",
       summary: typeof obj.summary === "string" ? obj.summary : "",
+      sources: sources.length > 0 ? sources : undefined,
     };
   } catch {
     return null;
@@ -192,7 +250,10 @@ function toStringArray(value: unknown): string[] {
 }
 
 // ── Demo fallback ────────────────────────────────────────────────────────────
-function demoReport(body: FeedForwardRequest): FeedForwardResult {
+function demoReport(
+  body: FeedForwardRequest,
+  sources: SourceRef[] = [],
+): FeedForwardResult {
   const venture = body.founderProfile.ventureName?.trim() || "your venture";
   const filled = Object.values(body.submission.sections).filter(
     (v) => (v || "").trim().length > 0,
@@ -235,5 +296,6 @@ function demoReport(body: FeedForwardRequest): FeedForwardResult {
     summary: isRevision
       ? `Draft ${draftNumber} of ${venture} is tighter than the last — the means and affordable-loss thinking are landing. Now push the next layer: turn one named partner into a real commitment and you'll be approaching mentor review readiness.`
       : `Strong start, founder — ${venture} is moving from idea to action. Tighten one experiment, ask for one real commitment, and you'll be approaching mentor review readiness.`,
+    sources: sources.length > 0 ? sources : undefined,
   };
 }

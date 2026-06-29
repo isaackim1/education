@@ -52,6 +52,8 @@ export interface FeedForwardReport {
   improvementSteps: string[];
   nextAction: string;
   summary: string;
+  /** Phase 3: Unknown Knowledge Brain sources this report was grounded in. */
+  sources?: SourceRef[];
   createdAt: string;
 }
 
@@ -161,6 +163,69 @@ export interface AssignmentRevision {
   revisionNote?: string;
 }
 
+// ── Knowledge Brain / RAG (Phase 3) ──────────────────────────────────────────
+/**
+ * A retrievable source document. For the alpha these are curated, paraphrased
+ * module notes — never claimed verbatim quotes — but the shape is ready for real
+ * transcripts and embeddings later (sourceUrl, author, createdAt all carry over).
+ */
+export type KnowledgeSourceType =
+  | "knowledge_clip"
+  | "module_note"
+  | "assignment_criteria"
+  | "philosophy_note"
+  | "transcript"
+  | "concept";
+
+export interface KnowledgeSource {
+  id: string;
+  title: string;
+  type: KnowledgeSourceType;
+  author?: string;
+  sourceUrl?: string;
+  sourceLabel: string;
+  createdAt?: string;
+}
+
+export type KnowledgeUseCase =
+  | "mentor"
+  | "feedforward"
+  | "lesson"
+  | "assignment_review";
+
+/**
+ * A single retrievable chunk. `sourceLabel`/`sourceUrl` are denormalised from
+ * the parent source so a retrieved chunk is self-describing in a prompt. A future
+ * vector layer would add an `embedding` field and swap the scorer — nothing else
+ * needs to change.
+ */
+export interface KnowledgeChunk {
+  id: string;
+  sourceId: string;
+  moduleId: string;
+  title: string;
+  content: string;
+  summary: string;
+  conceptIds: string[];
+  tags: string[];
+  useCases: KnowledgeUseCase[];
+  sourceLabel: string;
+  sourceUrl?: string;
+  order?: number;
+}
+
+export interface RetrievedKnowledge {
+  chunk: KnowledgeChunk;
+  score: number;
+  reason: string;
+}
+
+/** A compact, UI- and prompt-friendly reference to a grounding source. */
+export interface SourceRef {
+  label: string;
+  title?: string;
+}
+
 // ── Mentor chat (Unknown AI Mentor) ──────────────────────────────────────────
 export interface MentorMessage {
   id: string;
@@ -171,10 +236,13 @@ export interface MentorMessage {
   suggestedNextAction?: string;
   /** Mentor-only: a strong follow-up coaching question the founder can ask. */
   suggestedQuestion?: string;
+  /** Mentor-only: Knowledge Brain sources the reply was grounded in. */
+  sources?: SourceRef[];
 }
 
 export interface MentorResult {
   reply: string;
   suggestedNextAction?: string;
   suggestedQuestion?: string;
+  sources?: SourceRef[];
 }

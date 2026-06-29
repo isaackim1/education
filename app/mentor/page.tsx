@@ -134,6 +134,7 @@ export default function MentorPage() {
           createdAt: nowIso(),
           suggestedNextAction: data.suggestedNextAction,
           suggestedQuestion: data.suggestedQuestion,
+          sources: data.sources,
         },
       ]);
     } catch {
@@ -224,6 +225,14 @@ export default function MentorPage() {
                   </p>
                 ) : null}
                 {m.content}
+                {m.role === "mentor" && m.sources && m.sources.length > 0 ? (
+                  <p className="mt-2.5 border-t border-[#E2DCCD] pt-2 text-[11px] text-[#8A8579]">
+                    <span className="font-semibold text-[#6B675D]">
+                      Grounded in:
+                    </span>{" "}
+                    {m.sources.map((s) => s.label).join(" · ")}
+                  </p>
+                ) : null}
               </div>
             </div>
           ))}

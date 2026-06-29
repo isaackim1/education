@@ -200,6 +200,24 @@ export default function FeedbackPage() {
         />
       </div>
 
+      {/* Grounded in module knowledge (Knowledge Brain sources) */}
+      {feedforward.sources && feedforward.sources.length > 0 ? (
+        <div className="mt-6 rounded-xl border border-[#E2DCCD] bg-[#F8F6EF] px-5 py-4">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#6B675D]">
+              Grounded in module knowledge
+            </span>
+            <span className="text-xs text-[#8A8579]">
+              {feedforward.sources.map((s) => s.label).join(" · ")}
+            </span>
+          </div>
+          <p className="mt-1.5 text-xs text-[#8A8579]">
+            This feed-forward is grounded in the Unknown Knowledge Brain — curated
+            module knowledge, not a grade.
+          </p>
+        </div>
+      ) : null}
+
       {/* Reflection */}
       <DuCard className="mt-6 border-2 border-[#F5D11E]">
         <Eyebrow>Reflect &amp; prepare for mentor review</Eyebrow>

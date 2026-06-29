@@ -1,6 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
-import type { MentorResult } from "@/lib/du/types";
+import type { MentorResult, RetrievedKnowledge, SourceRef } from "@/lib/du/types";
+import {
+  formatKnowledgeForPrompt,
+  getSourceLabels,
+  retrieveWithFallback,
+} from "@/lib/du/knowledge";
 
 /**
  * Unknown AI Mentor (Phase DU-1A) — the re-cast of Ivvy's Coach Brain.
@@ -47,6 +52,11 @@ Hard rules:
 - No legal, financial, tax, or investment advice. No guarantees of business success or fundraising outcomes.
 - No generic startup platitudes. Every reply is specific to THIS founder's venture and current module.
 
+Grounding in Unknown knowledge (RAG):
+- You are given a RETRIEVED UNKNOWN KNOWLEDGE section drawn from the Unknown Knowledge Brain. Ground your coaching in it and let it shape the specifics.
+- If that knowledge is thin or clearly doesn't fit the question, say so plainly and fall back to careful general effectuation coaching — do NOT invent Unknown University policy, programmes, or facts.
+- Do NOT fabricate quotes. These are paraphrased module notes, not verbatim transcripts. You may name a source label (e.g. "the Effectuation Knowledge Clip") when it genuinely informs your point, but never put words in quotation marks as if quoting it.
+
 How you coach:
 - Use the founder's venture context and the current module context in every answer.
 - This is an ongoing relationship: reference earlier parts of THIS conversation when relevant ("last time you said…", "building on the experiment we discussed…") instead of restarting cold each turn. Don't repeat a suggestion you already made — advance it.
@@ -72,9 +82,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing message" }, { status: 400 });
   }
 
+  // Knowledge Brain retrieval runs locally regardless of API key, so sources
+  // are available on both the live and demo paths.
+  const { retrieved } = retrieveWithFallback(buildQuery(body), {
+    moduleId: "effectuation",
+    useCase: "mentor",
+    limit: 4,
+  });
+  const sources = getSourceLabels(retrieved);
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ ...demoReply(body), demo: true });
+    return NextResponse.json({ ...demoReply(body, sources), demo: true });
   }
 
   try {
@@ -90,8 +109,8 @@ export async function POST(request: Request) {
       max_tokens: 700,
       system: SYSTEM_PROMPT,
       messages: [
-        { role: "user", content: buildContext(body) },
-        { role: "assistant", content: "Understood — I have the venture and module context." },
+        { role: "user", content: buildContext(body, retrieved) },
+        { role: "assistant", content: "Understood — I have the venture, module, and Unknown knowledge context." },
         ...stripLeadingAssistant(history),
         { role: "user", content: body.message.trim() },
       ],
@@ -99,23 +118,44 @@ export async function POST(request: Request) {
 
     const firstBlock = response.content[0];
     const raw = firstBlock?.type === "text" ? firstBlock.text : "";
-    return NextResponse.json(parseMentor(raw, body));
+    return NextResponse.json(parseMentor(raw, body, sources));
   } catch {
-    return NextResponse.json({ ...demoReply(body), demo: true });
+    return NextResponse.json({ ...demoReply(body, sources), demo: true });
   }
 }
 
-function buildContext(body: MentorRequest): string {
+/** Build the retrieval query from the message + recent founder turns + context. */
+function buildQuery(body: MentorRequest): string {
+  const recent = (body.history ?? body.recentMessages ?? [])
+    .filter((m) => m.role === "founder")
+    .slice(-2)
+    .map((m) => m.content);
+  const parts = [
+    body.message,
+    ...recent,
+    body.founderProfile?.currentChallenge ?? "",
+    body.latestFeedForwardReport?.summary ?? "",
+    body.currentStep?.title ?? "",
+  ];
+  return parts.filter(Boolean).join(" ");
+}
+
+function buildContext(
+  body: MentorRequest,
+  retrieved: RetrievedKnowledge[],
+): string {
   const p = body.founderProfile ?? {};
   const ff = body.latestFeedForwardReport;
   const lines = [
-    "CONTEXT FOR THIS COACHING SESSION",
+    "=== FOUNDER CONTEXT ===",
     `Venture: ${p.ventureName || "(not set up yet)"}`,
     `Idea: ${p.idea || "(not provided)"}`,
     `Stage: ${p.stage || "(unknown)"}`,
     `Target customer: ${p.targetCustomer || "(not provided)"}`,
     `Current challenge: ${p.currentChallenge || "(not provided)"}`,
     `Goals: ${(p.goals ?? []).join("; ") || "(none listed)"}`,
+    "",
+    "=== MODULE CONTEXT ===",
     `Current module: ${body.currentModule?.title || "Effectuation Roadmap"} — ${
       body.currentModule?.tagline || ""
     }`,
@@ -124,12 +164,18 @@ function buildContext(body: MentorRequest): string {
   if (ff) {
     lines.push(
       "",
-      "MOST RECENT FEED-FORWARD",
+      "=== LATEST FEED-FORWARD ===",
       `Summary: ${ff.summary || "(none)"}`,
       `Suggested next action: ${ff.nextAction || "(none)"}`,
       `Open assumptions to challenge: ${(ff.unsupportedAssumptions ?? []).join("; ") || "(none)"}`,
     );
   }
+  lines.push(
+    "",
+    "=== RETRIEVED UNKNOWN KNOWLEDGE ===",
+    "(Curated, paraphrased module notes — not verbatim quotes. Ground your reply in these.)",
+    formatKnowledgeForPrompt(retrieved),
+  );
   return lines.join("\n");
 }
 
@@ -141,7 +187,11 @@ function stripLeadingAssistant(
   return out;
 }
 
-function parseMentor(raw: string, body: MentorRequest): MentorResult {
+function parseMentor(
+  raw: string,
+  body: MentorRequest,
+  sources: SourceRef[],
+): MentorResult {
   const metaIdx = raw.indexOf("<<META>>");
   let reply = raw;
   let meta: { suggestedNextAction?: string; suggestedQuestion?: string } = {};
@@ -158,7 +208,7 @@ function parseMentor(raw: string, body: MentorRequest): MentorResult {
     }
   }
   reply = reply.trim();
-  if (!reply) return demoReply(body);
+  if (!reply) return demoReply(body, sources);
   return {
     reply,
     suggestedNextAction:
@@ -169,11 +219,12 @@ function parseMentor(raw: string, body: MentorRequest): MentorResult {
       typeof meta.suggestedQuestion === "string" && meta.suggestedQuestion.trim()
         ? meta.suggestedQuestion.trim()
         : undefined,
+    sources: sources.length > 0 ? sources : undefined,
   };
 }
 
 // ── Demo fallback ────────────────────────────────────────────────────────────
-function demoReply(body: MentorRequest): MentorResult {
+function demoReply(body: MentorRequest, sources: SourceRef[] = []): MentorResult {
   const venture = body.founderProfile?.ventureName?.trim() || "your venture";
   const challenge = body.founderProfile?.currentChallenge?.trim();
   const msg = body.message.toLowerCase();
@@ -199,5 +250,6 @@ function demoReply(body: MentorRequest): MentorResult {
     reply,
     suggestedNextAction: `Run one affordable-loss experiment for ${venture} this week and note the single question it answers.`,
     suggestedQuestion: "What's the smallest real commitment you could ask a customer for this week?",
+    sources: sources.length > 0 ? sources : undefined,
   };
 }
