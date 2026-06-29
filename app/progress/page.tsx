@@ -380,6 +380,13 @@ export default function ProgressPage() {
           </DuCard>
         </div>
       ) : null}
+
+      {/* Human mentors stay central */}
+      <p className="mt-8 text-center text-xs leading-relaxed text-[#8A8579]">
+        This journey and its AI feed-forward help you improve before mentor
+        review. They don&apos;t grade, score, or replace human mentors, final
+        assessment, or expert judgment.
+      </p>
     </DuShell>
   );
 }

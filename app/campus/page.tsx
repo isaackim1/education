@@ -26,6 +26,7 @@ import {
   type JourneyInputs,
 } from "@/lib/du/progress";
 import { seedDemoVenture } from "@/lib/du/demo";
+import DemoGuide from "@/components/du/DemoGuide";
 
 interface ActivityEvent {
   at: string;
@@ -97,9 +98,18 @@ export default function CampusPage() {
     <DuShell>
       {/* Hero */}
       <DuCard tone="ink" className="overflow-hidden">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <Eyebrow onDark>Founder Campus · Entrepreneurship Foundations</Eyebrow>
+          <Link
+            href="/demo"
+            className="shrink-0 text-[11px] font-bold uppercase tracking-[0.14em] text-white/55 underline underline-offset-4 transition-colors hover:text-[#F5D11E]"
+          >
+            Partner demo →
+          </Link>
+        </div>
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <Eyebrow onDark>Founder Campus · Entrepreneurship Foundations</Eyebrow>
+            <Eyebrow onDark>Build from day one</Eyebrow>
             <h1 className="mt-4 text-4xl font-black leading-[0.98] tracking-tight text-white sm:text-6xl">
               Step into the
               <br />
@@ -216,6 +226,28 @@ export default function CampusPage() {
           <div className="mt-5">
             <DuButton href={cont.href} variant="primary">
               {ready ? cont.label : "Continue"} →
+            </DuButton>
+          </div>
+        </DuCard>
+      </div>
+
+      {/* Guided demo + partner framing */}
+      <div className="mt-8 grid gap-5 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <DemoGuide title="Start guided demo" />
+        </div>
+        <DuCard tone="ink">
+          <Eyebrow onDark>For partners</Eyebrow>
+          <h3 className="mt-2 text-lg font-black tracking-tight text-white">
+            See what this proves
+          </h3>
+          <p className="mt-2 text-sm leading-relaxed text-white/70">
+            A short, partner-facing walkthrough of how an applied module becomes a
+            digital university journey — and where it goes next.
+          </p>
+          <div className="mt-4">
+            <DuButton href="/demo" variant="accent">
+              Open partner demo →
             </DuButton>
           </div>
         </DuCard>

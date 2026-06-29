@@ -49,14 +49,22 @@ export function DuShell({
 function DuFooter() {
   return (
     <footer className="border-t border-[#E2DCCD] bg-[#F3F0E6]">
-      <div className="mx-auto flex max-w-6xl flex-col gap-1 px-5 py-8 sm:px-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#6B675D]">
-          Unknown Digital University
-        </p>
-        <p className="text-xs text-[#6B675D]">
-          A digital campus for founders. Build from day one — applied learning,
-          not theoretical exams.
-        </p>
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-8 sm:flex-row sm:items-end sm:justify-between sm:px-6">
+        <div className="flex flex-col gap-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#6B675D]">
+            Unknown Digital University
+          </p>
+          <p className="text-xs text-[#6B675D]">
+            A digital campus for founders. Build from day one — applied learning,
+            not theoretical exams.
+          </p>
+        </div>
+        <Link
+          href="/demo"
+          className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#6B675D] underline underline-offset-4 transition-colors hover:text-[#0B0B0C]"
+        >
+          Partner demo
+        </Link>
       </div>
     </footer>
   );

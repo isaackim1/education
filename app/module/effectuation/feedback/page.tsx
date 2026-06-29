@@ -53,8 +53,8 @@ export default function FeedbackPage() {
     return (
       <DuShell>
         <DuEmpty
-          title="No feed-forward yet"
-          description="Build your Effectuation Roadmap in the Venture Studio and generate your first report. It's feed-forward, not a grade — direct, founder-to-founder."
+          title="Submit your roadmap first to enter the Review Room"
+          description="Build your Effectuation Roadmap in the Venture Studio and generate feed-forward. It's feed-forward, not a grade — a working draft sharpened before mentor review, never a final score."
           action={
             <DuButton href="/module/effectuation/studio" variant="primary">
               Open Venture Studio
@@ -263,9 +263,11 @@ export default function FeedbackPage() {
           <div className="max-w-xl">
             <Eyebrow onDark>Human mentor review</Eyebrow>
             <p className="mt-2 text-sm leading-relaxed text-white/75">
-              This feed-forward complements — it never replaces — a human mentor.
-              Walk into that session further along: bring your sharpest experiment
-              and the assumption you most need a second opinion on.
+              This AI feed-forward helps you improve a working draft before mentor
+              review. It does not grade, score, or replace human mentors, final
+              assessment, or expert judgment. Walk into that session further along:
+              bring your sharpest experiment and the assumption you most need a
+              second opinion on.
             </p>
           </div>
           <DuButton href="/mentor" variant="accent">

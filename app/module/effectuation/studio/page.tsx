@@ -440,6 +440,14 @@ export default function VentureStudioPage() {
               })}
           </ol>
         </DuCard>
+      ) : ready && (profile || completeness.filled > 0) ? (
+        <div className="mt-6 rounded-xl border border-dashed border-[#D8D2C2] bg-white px-5 py-5">
+          <Eyebrow>Revision history</Eyebrow>
+          <p className="mt-2 text-sm text-[#56524B]">
+            Your drafts will appear here after each feed-forward cycle. Generate
+            feed-forward and we&apos;ll snapshot this working draft as Draft 1.
+          </p>
+        </div>
       ) : null}
 
       {/* Action bar */}

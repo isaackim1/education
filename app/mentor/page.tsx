@@ -188,7 +188,7 @@ export default function MentorPage() {
       </div>
 
       {/* Quick prompts */}
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-2 flex flex-wrap gap-2">
         {QUICK_PROMPTS.map((p) => (
           <button
             key={p}
@@ -200,6 +200,13 @@ export default function MentorPage() {
           </button>
         ))}
       </div>
+      {ready && exchanges === 0 ? (
+        <p className="mb-4 text-xs text-[#8A8579]">
+          New here? Ask the mentor to challenge your assumptions or prepare you
+          for human mentor review — it helps you sharpen a working draft, it
+          doesn&apos;t replace your mentors.
+        </p>
+      ) : null}
 
       {/* Chat surface */}
       <DuCard className="p-0">
