@@ -3,8 +3,7 @@
 @tailwind utilities;
 
 :root {
-  /* Warm-editorial foundation (Phase 13A) — warm off-white paper, near-black
-     warm ink. No blue. */
+  /* Warm-editorial foundation — warm off-white paper, near-black warm ink. */
   --background: #faf8f4;
   --foreground: #1a1a17;
 }
@@ -12,6 +11,48 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-inter), Inter, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* Native SF Pro / Helvetica Neue geometric sans — mirrors the Tailwind
+     `font-sans` theme so text is correct before hydration. No Inter. */
+  font-family: "SF Pro Display", "SF Pro Text", -apple-system,
+    BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Editorial ambient wash — a single, near-invisible warm radial behind the
+   workspace so sections read with quiet depth rather than flat emptiness.
+   Fixed and non-interactive; the slow drift is disabled under reduced-motion.
+   Scaled up so the drift never reveals a hard edge. */
+.ambient-wash {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  transform: scale(1.15);
+  background:
+    radial-gradient(
+      55rem 38rem at 12% -6%,
+      rgba(19, 115, 51, 0.045),
+      transparent 60%
+    ),
+    radial-gradient(
+      48rem 40rem at 102% 2%,
+      rgba(149, 100, 0, 0.035),
+      transparent 55%
+    );
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ambient-wash {
+    animation: ambient-drift 26s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes ambient-drift {
+  from {
+    transform: scale(1.15) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.15) translate3d(-1.5%, 1%, 0);
+  }
 }

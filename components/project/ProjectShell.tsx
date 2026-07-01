@@ -59,14 +59,17 @@ export default function ProjectShell({
   const base = `/projects/${projectId}`;
 
   return (
-    <div className="min-h-screen bg-[#FAF8F4]">
+    <div className="relative isolate min-h-screen bg-[#FAF8F4]">
+      {/* Editorial ambient wash — quiet warm depth behind the workspace. */}
+      <div className="ambient-wash" aria-hidden="true" />
+
       {/* Desktop sidebar — fixed, full height */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-[#E7E3DA] bg-[#F4F1EA]/70 px-5 py-7 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-[#E7E3DA] bg-[#F4F1EA]/80 px-5 py-7 backdrop-blur-sm lg:flex">
         <BrandMark />
 
         <Link
           href="/projects"
-          className="mt-6 inline-flex h-8 items-center gap-1.5 self-start rounded-full pr-2 text-xs font-medium text-[#56524B] transition-colors duration-200 hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]"
+          className="mt-6 inline-flex h-8 items-center gap-1.5 self-start rounded-md pr-2 text-xs font-medium text-[#56524B] transition-colors duration-200 hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]"
         >
           <span aria-hidden="true">&larr;</span> All projects
         </Link>
@@ -108,7 +111,7 @@ export default function ProjectShell({
           <BrandMark />
           <Link
             href="/projects"
-            className="inline-flex h-8 items-center rounded-full px-3 text-xs font-medium text-[#56524B] transition-colors hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]"
+            className="inline-flex h-8 items-center rounded-md px-3 text-xs font-medium text-[#56524B] transition-colors hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]"
           >
             All projects
           </Link>
@@ -121,7 +124,7 @@ export default function ProjectShell({
                 key={item.id}
                 href={`${base}${item.suffix}`}
                 aria-current={isActive ? "page" : undefined}
-                className={`inline-flex h-8 shrink-0 items-center rounded-full px-3.5 text-sm whitespace-nowrap transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4] ${
+                className={`inline-flex h-8 shrink-0 items-center rounded-md px-3.5 text-sm whitespace-nowrap transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4] ${
                   isActive
                     ? "bg-[#1A1A17] font-medium text-white"
                     : "text-[#56524B] hover:bg-[#EFEBE2] hover:text-[#1A1A17]"
@@ -134,9 +137,10 @@ export default function ProjectShell({
         </div>
       </div>
 
-      {/* Main content — fills remaining width beside the sidebar */}
-      <div className="lg:pl-64">
-        <main className="px-5 py-8 sm:px-8 sm:py-10 lg:px-12">
+      {/* Main content — fills remaining width beside the sidebar. Sits above
+          the ambient wash. */}
+      <div className="relative z-10 lg:pl-64">
+        <main className="px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
           <div className={`mx-auto ${width}`}>{children}</div>
         </main>
       </div>

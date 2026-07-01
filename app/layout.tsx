@@ -1,18 +1,16 @@
 import type { Metadata } from "next";
-import { Inter, Crimson_Pro } from "next/font/google";
+import { Newsreader } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
-// Crimson Pro — an academic book serif used for display headings only. Loaded
-// through next/font (part of Next.js, not a new dependency); self-hosted at
-// build time with no runtime request.
-const crimsonPro = Crimson_Pro({
+// Newsreader — an editorial literary serif used for display headings, metrics,
+// and pull quotes. Loaded through next/font (part of Next.js, not a new
+// dependency); self-hosted at build time with no runtime request. The body /
+// UI sans is a native SF Pro / Helvetica Neue stack defined in the Tailwind
+// theme, so no web sans is fetched at all.
+const newsreader = Newsreader({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
   variable: "--font-serif",
   display: "swap",
 });
@@ -29,9 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${inter.variable} ${crimsonPro.variable} font-sans antialiased`}
-      >
+      <body className={`${newsreader.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>

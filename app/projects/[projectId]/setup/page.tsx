@@ -9,5 +9,5 @@ export default function SetupRedirect({
 }: {
   params: { projectId: string };
 }) {
-  redirect(`/projects/${params.projectId}/materials`);
+  redirect(`/projects/${params.projectId}/materials?tab=topics`);
 }

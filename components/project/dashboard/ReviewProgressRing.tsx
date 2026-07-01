@@ -10,7 +10,7 @@ export default function ReviewProgressRing({
   const unreviewed = Math.max(0, total - reviewed);
 
   return (
-    <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
+    <section className="h-full rounded-xl border border-[#E7E3DA] bg-white p-6 sm:p-7">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
         <div
           className="relative flex h-28 w-28 shrink-0 items-center justify-center rounded-full"
@@ -24,14 +24,14 @@ export default function ReviewProgressRing({
           aria-valuemax={100}
         >
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white">
-            <span className="text-xl font-semibold text-[#1A1A17]">
+            <span className="font-serif text-[26px] leading-none tracking-[-0.02em] text-[#1A1A17] tabular-nums">
               {percentage}%
             </span>
           </div>
         </div>
 
         <div>
-          <h2 className="text-base font-semibold text-[#1A1A17]">
+          <h2 className="font-serif text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
             Mistake review progress
           </h2>
           {total === 0 ? (

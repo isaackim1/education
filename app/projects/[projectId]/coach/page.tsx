@@ -5,11 +5,13 @@ import ProjectShell from "@/components/project/ProjectShell";
 import {
   CenteredNotice,
   EmptyState,
+  ghostLink,
   PageHeader,
   PageShell,
   primaryAction,
   SectionHeader,
 } from "@/components/ui/primitives";
+import { Reveal } from "@/components/ui/motion";
 import { useProject } from "@/hooks/useProject";
 
 /**
@@ -37,7 +39,7 @@ const PRACTICE_MODES: CoachMode[] = [
     action: "Continue training",
   },
   {
-    title: "Exam-style practice",
+    title: "Teach it back",
     description:
       "Teach a topic back in your own words and let Ivvy find the gaps.",
     suffix: "/study/teach",
@@ -80,24 +82,22 @@ const REVIEW_MODES: CoachMode[] = [
 function ModeGrid({
   projectId,
   modes,
-  startIndex,
 }: {
   projectId: string;
   modes: CoachMode[];
-  startIndex: number;
 }) {
   return (
-    <div className="grid gap-px overflow-hidden rounded-2xl border border-[#E7E3DA] bg-[#E7E3DA] sm:grid-cols-2">
+    <div className="grid gap-px overflow-hidden rounded-xl border border-[#E7E3DA] bg-[#E7E3DA] sm:grid-cols-2">
       {modes.map((mode, index) => (
         <Link
           key={mode.title}
           href={`/projects/${projectId}${mode.suffix}`}
-          className="group flex flex-col bg-white p-6 transition-colors duration-200 hover:bg-[#FBFAF7] focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1A1A17]"
+          className="group flex flex-col bg-white p-7 transition-colors duration-200 hover:bg-[#FAF8F4] focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1A1A17]"
         >
-          <span className="font-serif text-sm text-[#A8A299] tabular-nums">
-            {String(startIndex + index + 1).padStart(2, "0")}
+          <span className="font-mono text-[13px] leading-none text-[#7A766D] tabular-nums">
+            {String(index + 1).padStart(2, "0")}
           </span>
-          <h3 className="mt-3 font-serif text-[20px] leading-tight tracking-[-0.01em] text-[#1A1A17]">
+          <h3 className="mt-4 font-serif text-[20px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
             {mode.title}
           </h3>
           <p className="mt-2 text-sm leading-relaxed text-[#56524B]">
@@ -132,13 +132,10 @@ export default function ProjectCoachPage({
   if (!project) {
     return (
       <PageShell width="max-w-lg">
-        <h1 className="font-serif text-[34px] leading-[1.08] tracking-[-0.01em] text-[#1A1A17]">
+        <h1 className="font-serif text-[34px] leading-[1.08] tracking-[-0.02em] text-[#1A1A17]">
           Project not found
         </h1>
-        <Link
-          href="/projects"
-          className="mt-4 inline-flex h-9 -ml-3 items-center rounded-full px-3 text-sm text-[#56524B] transition-colors duration-200 hover:bg-[#EFEBE2] hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]"
-        >
+        <Link href="/projects" className={`mt-4 -ml-3 ${ghostLink}`}>
           Back to projects
         </Link>
       </PageShell>
@@ -154,58 +151,54 @@ export default function ProjectCoachPage({
       />
 
       {topics.length === 0 ? (
-        <EmptyState
-          title="Add your materials first"
-          description="Ivvy coaches you from your own notes, slides, and past papers. Upload them once and Ivvy builds the topic map it trains you against."
-          action={
-            <Link
-              href={`/projects/${params.projectId}/materials`}
-              className={primaryAction}
-            >
-              Add materials
-            </Link>
-          }
-        />
+        <Reveal>
+          <EmptyState
+            title="Add your materials first"
+            description="Ivvy coaches you from your own notes, slides, and past papers. Upload them once and Ivvy builds the topic map it trains you against."
+            action={
+              <Link
+                href={`/projects/${params.projectId}/materials`}
+                className={primaryAction}
+              >
+                Add materials
+              </Link>
+            }
+          />
+        </Reveal>
       ) : (
-        <div className="space-y-12">
-          <section aria-labelledby="coach-practice">
-            <SectionHeader
-              eyebrow="Practice"
-              title="Train and test yourself"
-              description="Active recall against your own topics and materials."
-            />
-            <ModeGrid
-              projectId={params.projectId}
-              modes={PRACTICE_MODES}
-              startIndex={0}
-            />
-          </section>
+        <div className="space-y-12 sm:space-y-16">
+          <Reveal delay={0}>
+            <section aria-label="Practice — train and test yourself">
+              <SectionHeader
+                eyebrow="Practice"
+                title="Train and test yourself"
+                description="Active recall against your own topics and materials."
+              />
+              <ModeGrid projectId={params.projectId} modes={PRACTICE_MODES} />
+            </section>
+          </Reveal>
 
-          <section aria-labelledby="coach-learn">
-            <SectionHeader
-              eyebrow="Learn"
-              title="Understand and summarize"
-              description="Ask questions and turn material into something you can revise from."
-            />
-            <ModeGrid
-              projectId={params.projectId}
-              modes={LEARN_MODES}
-              startIndex={PRACTICE_MODES.length}
-            />
-          </section>
+          <Reveal delay={80}>
+            <section aria-label="Learn — understand and summarize">
+              <SectionHeader
+                eyebrow="Learn"
+                title="Understand and summarize"
+                description="Ask questions and turn material into something you can revise from."
+              />
+              <ModeGrid projectId={params.projectId} modes={LEARN_MODES} />
+            </section>
+          </Reveal>
 
-          <section aria-labelledby="coach-review">
-            <SectionHeader
-              eyebrow="Review"
-              title="Close your weak areas"
-              description="Revisit the mistakes Ivvy has saved and keep them from resurfacing."
-            />
-            <ModeGrid
-              projectId={params.projectId}
-              modes={REVIEW_MODES}
-              startIndex={PRACTICE_MODES.length + LEARN_MODES.length}
-            />
-          </section>
+          <Reveal delay={160}>
+            <section aria-label="Review — close your weak areas">
+              <SectionHeader
+                eyebrow="Review"
+                title="Close your weak areas"
+                description="Revisit the mistakes Ivvy has saved and keep them from resurfacing."
+              />
+              <ModeGrid projectId={params.projectId} modes={REVIEW_MODES} />
+            </section>
+          </Reveal>
         </div>
       )}
     </ProjectShell>

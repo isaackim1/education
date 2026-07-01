@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { outlineAction, Tag } from "@/components/ui/primitives";
 import type { TopicCoverageRow } from "@/lib/dashboard-metrics";
 
-const STATE_STYLES: Record<TopicCoverageRow["state"], string> = {
-  "No materials": "bg-[#EFEBE2] text-[#56524B]",
-  "Has materials": "bg-[#E7E3DA] text-[#1A1A17]",
-  Practiced: "bg-[#E7E3DA] text-[#1A1A17]",
-  Reviewed: "bg-[#E6F4EA] text-[#137333]",
+const STATE_TONE: Record<
+  TopicCoverageRow["state"],
+  "neutral" | "blue" | "green"
+> = {
+  "No materials": "neutral",
+  "Has materials": "neutral",
+  Practiced: "blue",
+  Reviewed: "green",
 };
 
 // Rows arrive already prioritized (weak / no-material first). Keep the dashboard
@@ -26,25 +30,25 @@ export default function TopicCoverageList({
   const hiddenCount = rows.length - COLLAPSED_COUNT;
 
   return (
-    <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
+    <section className="h-full rounded-xl border border-[#E7E3DA] bg-white p-6 sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-[#1A1A17]">
+          <h2 className="font-serif text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
             Topic coverage
           </h2>
-          <p className="mt-1 text-sm text-[#56524B]">
+          <p className="mt-1.5 text-sm leading-relaxed text-[#56524B]">
             Materials, practice, and review combined. Weak areas appear first.
           </p>
         </div>
         {rows.length > 0 ? (
-          <span className="rounded-full bg-[#EFEBE2] px-3 py-1 text-xs font-medium text-[#56524B]">
+          <Tag tone="neutral">
             {rows.length} topic{rows.length === 1 ? "" : "s"}
-          </span>
+          </Tag>
         ) : null}
       </div>
 
       {rows.length === 0 ? (
-        <p className="mt-5 rounded-xl bg-[#FAF8F4] px-4 py-4 text-sm text-[#56524B]">
+        <p className="mt-5 rounded-xl border border-[#E7E3DA] bg-[#FAF8F4] px-4 py-4 text-sm text-[#56524B]">
           No topics yet. Add topics to build your training map.
         </p>
       ) : (
@@ -62,9 +66,9 @@ export default function TopicCoverageList({
                         {row.name}
                       </h3>
                       {row.isWeakArea ? (
-                        <span className="rounded-full bg-[#EFEBE2] px-2.5 py-0.5 text-xs font-medium text-[#56524B]">
+                        <Tag tone="yellow">
                           {row.unreviewedCount} to review
-                        </span>
+                        </Tag>
                       ) : null}
                     </div>
                     <p className="mt-1 text-xs text-[#56524B]">
@@ -75,11 +79,7 @@ export default function TopicCoverageList({
                         : `${row.reviewedCount} reviewed · ${row.unreviewedCount} unreviewed`}
                     </p>
                   </div>
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${STATE_STYLES[row.state]}`}
-                  >
-                    {row.state}
-                  </span>
+                  <Tag tone={STATE_TONE[row.state]}>{row.state}</Tag>
                 </div>
 
                 <div
@@ -108,11 +108,11 @@ export default function TopicCoverageList({
               type="button"
               onClick={() => setExpanded((value) => !value)}
               aria-expanded={expanded}
-              className="mt-4 inline-flex h-9 items-center rounded-full border border-[#D8D3C8] px-4 text-sm font-medium text-[#1A1A17] transition-colors duration-200 hover:bg-[#EFEBE2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+              className={`mt-5 ${outlineAction}`}
             >
               {expanded ? "Show less" : `Show all ${rows.length} topics`}
               {!expanded ? (
-                <span className="ml-2 text-xs text-[#7A766D]">
+                <span className="ml-2 font-mono text-xs text-[#7A766D]">
                   +{hiddenCount}
                 </span>
               ) : null}

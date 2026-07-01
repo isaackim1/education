@@ -24,18 +24,19 @@ import {
 import {
   CenteredNotice,
   Eyebrow,
+  ghostLink,
   MetricCard,
+  outlineAction,
   PageHeader,
   PageShell,
   PrimaryActionCard,
   primaryAction,
   StatusPill,
+  Tag,
 } from "@/components/ui/primitives";
+import { Reveal } from "@/components/ui/motion";
 import { getProjectChat, getProjectMistakes } from "@/lib/project-storage";
 import type { Chat, Mistake } from "@/lib/types";
-
-const SECONDARY_LINK =
-  "inline-flex items-center h-9 px-4 rounded-full border border-[#D8D3C8] text-sm font-medium text-[#1A1A17] transition-colors duration-200 hover:bg-[#EFEBE2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]";
 
 function formatDate(dateString: string): string {
   const date = new Date(`${dateString}T00:00:00`);
@@ -138,10 +139,7 @@ export default function ProjectPage({
         <h1 className="font-serif text-[34px] leading-[1.08] tracking-[-0.01em] text-[#1A1A17]">
           Project not found
         </h1>
-        <Link
-          href="/projects"
-          className="mt-4 inline-flex h-9 -ml-3 items-center rounded-full px-3 text-sm text-[#56524B] transition-colors duration-200 hover:bg-[#EFEBE2] hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]"
-        >
+        <Link href="/projects" className={`mt-4 -ml-3 ${ghostLink}`}>
           Back to projects
         </Link>
       </PageShell>
@@ -174,24 +172,25 @@ export default function ProjectPage({
       />
 
       <div className="-mt-3 mb-6 flex flex-wrap items-center gap-2">
-        <span className="inline-flex h-7 items-center rounded-full bg-[#F4F1EA] px-3 text-xs font-medium text-[#56524B]">
-          {project.subject}
-        </span>
-        <span className="inline-flex h-7 items-center rounded-full bg-[#F4F1EA] px-3 text-xs font-medium text-[#56524B]">
-          Exam {formatDate(project.examDate)}
-        </span>
-        <span className="inline-flex h-7 items-center rounded-full bg-[#F4F1EA] px-3 text-xs font-medium text-[#56524B]">
-          Target {project.targetGrade}
-        </span>
+        <Tag tone="neutral">{project.subject}</Tag>
+        <Tag tone="neutral">Exam {formatDate(project.examDate)}</Tag>
+        <Tag tone="neutral">Target {project.targetGrade}</Tag>
       </div>
 
+      {/* Editorial asymmetric bento — the page owns col-spans + scroll motion;
+          each module carries only its own internal styling. */}
       <div className="grid gap-5 lg:grid-cols-12">
-        {/* Primary column — readiness, plan, next action, activity */}
-        <div className="space-y-5 lg:col-span-8">
+        {/* Feature row — readiness + today's plan */}
+        <Reveal delay={0} className="h-full lg:col-span-7">
           <ReadinessBand readiness={readiness} />
+        </Reveal>
 
+        <Reveal delay={80} className="h-full lg:col-span-5">
           <TodaysPlan plan={todaysPlan} />
+        </Reveal>
 
+        {/* Full-width next action */}
+        <Reveal delay={160} className="lg:col-span-12">
           <PrimaryActionCard
             eyebrow="Coach"
             title="Train with your materials"
@@ -205,10 +204,16 @@ export default function ProjectPage({
               </Link>
             }
           />
+        </Reveal>
 
-          <section aria-label="Project statistics">
+        {/* Mixed row — metric cells + review ring */}
+        <Reveal delay={240} className="h-full lg:col-span-8">
+          <section
+            aria-label="Project statistics"
+            className="h-full rounded-xl border border-[#E7E3DA] bg-[#F4F1EA] p-6 sm:p-7"
+          >
             <Eyebrow>At a glance</Eyebrow>
-            <div className="mt-3 grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
               <MetricCard
                 label="Topics"
                 value={topics.length}
@@ -247,55 +252,53 @@ export default function ProjectPage({
               />
             </div>
           </section>
+        </Reveal>
 
+        <Reveal delay={320} className="h-full lg:col-span-4">
+          <ReviewProgressRing
+            total={mistakes.length}
+            reviewed={reviewedMistakes}
+          />
+        </Reveal>
+
+        {/* Wide activity band */}
+        <Reveal delay={400} className="lg:col-span-12">
           <ActivityGrid cells={activity} />
+        </Reveal>
 
+        {/* Coverage + goals rail */}
+        <Reveal delay={480} className="h-full lg:col-span-8">
           <TopicCoverageList rows={topicCoverage} />
-        </div>
+        </Reveal>
 
-        {/* Secondary column — goals + review progress */}
-        <div className="space-y-5 lg:col-span-4">
+        <Reveal delay={560} className="h-full lg:col-span-4">
           <GoalProgressCard
             projectId={params.projectId}
             weeklyProgress={weeklyProgress}
             focusTopicNames={focusTopicNames}
           />
+        </Reveal>
 
-          <ReviewProgressRing
-            total={mistakes.length}
-            reviewed={reviewedMistakes}
-          />
-
-          <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
+        {/* Jump-to strip */}
+        <Reveal delay={640} className="lg:col-span-12">
+          <section className="rounded-xl border border-[#E7E3DA] bg-white p-6 sm:flex sm:items-center sm:justify-between">
             <Eyebrow>Jump to</Eyebrow>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2 sm:mt-0">
               <Link
                 href={`/projects/${params.projectId}/coach`}
-                className={SECONDARY_LINK}
+                className={outlineAction}
               >
                 Open Coach
               </Link>
               <Link
-                href={`/projects/${params.projectId}/coach`}
-                className={SECONDARY_LINK}
-              >
-                Train with Ivvy
-              </Link>
-              <Link
-                href={`/projects/${params.projectId}/coach`}
-                className={SECONDARY_LINK}
-              >
-                Review with Coach
-              </Link>
-              <Link
                 href={`/projects/${params.projectId}/materials`}
-                className={SECONDARY_LINK}
+                className={outlineAction}
               >
                 Materials
               </Link>
             </div>
           </section>
-        </div>
+        </Reveal>
       </div>
     </ProjectShell>
   );

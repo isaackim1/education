@@ -22,13 +22,13 @@ export default function ActivityGrid({ cells }: { cells: ActivityCell[] }) {
   const activeDays = cells.filter((cell) => cell.count > 0).length;
 
   return (
-    <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
+    <section className="h-full rounded-xl border border-[#E7E3DA] bg-white p-6 sm:p-7">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-[#1A1A17]">
+          <h2 className="font-serif text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
             Training activity
           </h2>
-          <p className="mt-1 text-sm text-[#56524B]">
+          <p className="mt-1.5 text-sm leading-relaxed text-[#56524B]">
             Messages, mistakes, and reviews · last 12 weeks
           </p>
         </div>
