@@ -6,10 +6,18 @@ import type {
   Mistake,
   MistakeCategory,
   ProjectGoals,
+  ReviewRating,
   StudyProject,
   Topic,
   TrainingSession,
 } from "./types";
+import {
+  gradeSchedule,
+  isScheduleDue,
+  isValidSchedule,
+  newSchedule,
+} from "./scheduling";
+import { addDaysToDate, getTodayIsoDate } from "./utils";
 
 const PROJECTS_KEY = "sc_projects";
 
@@ -272,9 +280,72 @@ export function saveProjectChat(projectId: string, chat: Chat): void {
 
 // ─── Project mistakes ────────────────────────────────────────────────────────
 
+/** Seed the old fixed-interval reviews into an FSRS stability estimate. */
+function legacyStability(reviewCount: number): number {
+  if (reviewCount <= 1) return 2;
+  if (reviewCount === 2) return 5;
+  return 10;
+}
+
+function validDateOnly(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const date = value.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const [year, month, day] = date.split("-").map(Number);
+  const parsed = new Date(year, month - 1, day);
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return null;
+  }
+  return date;
+}
+
+/**
+ * Lazily attach an FSRS schedule to mistakes saved before the scheduler
+ * existed. Never-reviewed mistakes become due-now "new" cards; already-reviewed
+ * ones keep their intended next date so prior review work isn't discarded.
+ */
+function ensureSchedule(mistake: Mistake): Mistake {
+  if (isValidSchedule(mistake.schedule)) return mistake;
+  const today = getTodayIsoDate();
+  if (!mistake.reviewed || mistake.reviewCount <= 0) {
+    return { ...mistake, schedule: newSchedule(today) };
+  }
+  const stability = legacyStability(mistake.reviewCount);
+  const due =
+    validDateOnly(mistake.nextReviewDate) ??
+    addDaysToDate(today, Math.round(stability));
+  return {
+    ...mistake,
+    schedule: {
+      stability,
+      difficulty: 5,
+      due,
+      lastReview: validDateOnly(mistake.lastReviewed) ?? today,
+      state: "review",
+      reps: mistake.reviewCount,
+      lapses: 0,
+    },
+  };
+}
+
 export function getProjectMistakes(projectId: string): Mistake[] {
   const raw = readJson<unknown>(projectMistakesKey(projectId), []);
-  return Array.isArray(raw) ? (raw as Mistake[]) : [];
+  if (!Array.isArray(raw)) return [];
+  return (raw as Mistake[]).map(ensureSchedule);
+}
+
+/** Mistakes whose next review date has arrived (or that were never reviewed). */
+export function getDueProjectMistakes(
+  projectId: string,
+  today: string = getTodayIsoDate()
+): Mistake[] {
+  return getProjectMistakes(projectId).filter((mistake) =>
+    isScheduleDue(mistake.schedule, today)
+  );
 }
 
 export function saveProjectMistakes(
@@ -305,7 +376,44 @@ export function updateProjectMistake(
   return saveProjectMistakes(projectId, mistakes);
 }
 
+/**
+ * Grade a review and reschedule the mistake. Keeps the legacy reviewed/count/
+ * date fields in sync so older UI keeps working while queues run off `schedule`.
+ */
+export function gradeProjectMistake(
+  projectId: string,
+  mistakeId: string,
+  rating: ReviewRating
+): boolean {
+  const current = getProjectMistakes(projectId).find(
+    (mistake) => mistake.id === mistakeId
+  );
+  if (!current) return false;
+  const today = getTodayIsoDate();
+  const schedule = gradeSchedule(
+    current.schedule ?? newSchedule(today),
+    rating,
+    today
+  );
+  return updateProjectMistake(projectId, mistakeId, {
+    schedule,
+    reviewed: true,
+    reviewCount: schedule.reps,
+    lastReviewed: new Date().toISOString(),
+    nextReviewDate: schedule.due,
+  });
+}
+
+/** Back-compat shim: a plain "reviewed" tap counts as a successful recall. */
 export function markProjectMistakeReviewed(
+  projectId: string,
+  mistakeId: string
+): boolean {
+  return gradeProjectMistake(projectId, mistakeId, "good");
+}
+
+/** Bring a mistake back into the due queue immediately. */
+export function resetProjectMistakeReview(
   projectId: string,
   mistakeId: string
 ): boolean {
@@ -313,19 +421,13 @@ export function markProjectMistakeReviewed(
     (mistake) => mistake.id === mistakeId
   );
   if (!current) return false;
-  if (current.reviewed) return true;
+  const today = getTodayIsoDate();
+  const base = current.schedule ?? newSchedule(today);
   return updateProjectMistake(projectId, mistakeId, {
-    reviewed: true,
-    reviewCount: current.reviewCount + 1,
-    lastReviewed: new Date().toISOString(),
+    reviewed: false,
+    nextReviewDate: today,
+    schedule: { ...base, due: today, state: "relearning" },
   });
-}
-
-export function resetProjectMistakeReview(
-  projectId: string,
-  mistakeId: string
-): boolean {
-  return updateProjectMistake(projectId, mistakeId, { reviewed: false });
 }
 
 function generateMistakeId(): string {
@@ -416,7 +518,8 @@ export function createProjectMistakeFromChat(
     reviewed: false,
     reviewCount: 0,
     lastReviewed: null,
-    nextReviewDate: null,
+    nextReviewDate: getTodayIsoDate(),
+    schedule: newSchedule(getTodayIsoDate()),
     createdAt: new Date().toISOString(),
   };
 }

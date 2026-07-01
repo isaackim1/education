@@ -27,6 +27,7 @@ import {
   getProjectMistakes,
   saveProjectMistake,
 } from "@/lib/project-storage";
+import { isScheduleDue } from "@/lib/scheduling";
 import type {
   ChatMessage,
   Material,
@@ -143,9 +144,9 @@ function parseMultipleChoice(reply: string): ParsedMultipleChoice | null {
   return { stem, options };
 }
 
-function getRecentUnreviewedMistakes(mistakes: Mistake[]) {
+function getRecentDueMistakes(mistakes: Mistake[]) {
   return mistakes
-    .filter((mistake) => !mistake.reviewed)
+    .filter((mistake) => isScheduleDue(mistake.schedule))
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -183,7 +184,7 @@ function buildTrainingContext(
         content: material.content.trim(),
         fileName: material.fileName,
       })),
-    recentUnreviewedMistakes: getRecentUnreviewedMistakes(mistakes),
+    recentDueMistakes: getRecentDueMistakes(mistakes),
   };
 }
 
@@ -247,7 +248,8 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
       .map((topic) => ({
         topicId: topic.id,
         count: mistakes.filter(
-          (mistake) => mistake.topicId === topic.id && !mistake.reviewed
+          (mistake) =>
+            mistake.topicId === topic.id && isScheduleDue(mistake.schedule)
         ).length,
       }))
       .sort((a, b) => b.count - a.count)[0];
@@ -557,7 +559,7 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
             </h2>
             <p className="mt-1 text-sm text-[#56524B]">
               Ivvy recommends a focus using your goals, materials, and
-              unreviewed mistakes.
+              mistakes due for review.
             </p>
 
             <label className="mt-5 block space-y-1.5">

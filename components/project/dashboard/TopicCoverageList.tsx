@@ -11,7 +11,7 @@ const STATE_TONE: Record<
   "No materials": "neutral",
   "Has materials": "neutral",
   Practiced: "blue",
-  Reviewed: "green",
+  Scheduled: "green",
 };
 
 // Rows arrive already prioritized (weak / no-material first). Keep the dashboard
@@ -67,7 +67,7 @@ export default function TopicCoverageList({
                       </h3>
                       {row.isWeakArea ? (
                         <Tag tone="yellow">
-                          {row.unreviewedCount} to review
+                          {row.dueCount} due
                         </Tag>
                       ) : null}
                     </div>
@@ -76,7 +76,7 @@ export default function TopicCoverageList({
                         ? row.hasMaterials
                           ? "Ready for first practice"
                           : "Add material to ground training"
-                        : `${row.reviewedCount} reviewed · ${row.unreviewedCount} unreviewed`}
+                        : `${row.scheduledCount} scheduled · ${row.dueCount} due`}
                     </p>
                   </div>
                   <Tag tone={STATE_TONE[row.state]}>{row.state}</Tag>

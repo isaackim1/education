@@ -7,7 +7,7 @@ export interface ProjectChatContext {
   topics: { name: string; masteryScore?: number }[];
   activeTopic: string | null;
   materials: { topicName: string; content: string; fileName?: string }[];
-  recentUnreviewedMistakes?: {
+  recentDueMistakes?: {
     topicName: string;
     mistakeCategory: string;
     question: string;
@@ -71,7 +71,7 @@ Train the student for their exam. Ask before you explain. Prefer one focused que
 
 When the student is wrong: explain briefly, then continue training with one targeted question. Do not give the full answer on the first wrong attempt.
 
-If recent unreviewed mistakes are listed in context, use them actively: retest weak areas with fresh exam-style questions, target the same gaps from new angles, and do not treat already-resolved material as mastered until the student proves it.
+If recent due mistakes are listed in context, use them actively: retest weak areas with fresh exam-style questions, target the same gaps from new angles, and do not treat scheduled material as mastered until the student proves it.
 
 MISTAKE SIGNAL: If the student's answer contains a clear error, start your reply with [MISTAKE:category] where category is conceptual, calculation, recall, or application.
 
@@ -280,10 +280,10 @@ export function buildProjectContextMessage(context: ProjectChatContext): string 
     lines.push("Student materials: none saved yet.");
   }
 
-  const mistakes = context.recentUnreviewedMistakes ?? [];
+  const mistakes = context.recentDueMistakes ?? [];
   if (mistakes.length > 0) {
     lines.push("");
-    lines.push("Recent unreviewed mistakes:");
+    lines.push("Recent due mistakes:");
     for (const mistake of mistakes.slice(0, 3)) {
       lines.push(`- Topic: ${truncateText(mistake.topicName, 100)}`);
       lines.push(`  Category: ${truncateText(mistake.mistakeCategory, 40)}`);

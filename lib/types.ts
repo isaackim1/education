@@ -16,6 +16,28 @@ export type QuestionType =
   | "calculation"
   | "concept";
 
+// ─── Spaced repetition (FSRS) ────────────────────────────────────────────────
+
+/** How well a mistake was recalled on review. Drives the scheduler. */
+export type ReviewRating = "again" | "hard" | "good" | "easy";
+
+export type ScheduleState = "new" | "learning" | "review" | "relearning";
+
+/**
+ * Per-mistake memory state for the in-house FSRS scheduler. `stability` is the
+ * number of days until recall probability drops to the desired retention;
+ * `difficulty` is 1–10. `due` is a local YYYY-MM-DD date.
+ */
+export interface MistakeSchedule {
+  stability: number;
+  difficulty: number;
+  due: string;
+  lastReview: string | null;
+  state: ScheduleState;
+  reps: number;
+  lapses: number;
+}
+
 export interface Exam {
   id: string;
   subject: string;
@@ -136,6 +158,8 @@ export interface Mistake {
   reviewCount: number;
   lastReviewed: string | null;
   nextReviewDate: string | null;
+  /** FSRS memory state. Optional for back-compat; initialized lazily on read. */
+  schedule?: MistakeSchedule;
   createdAt: string;
 }
 

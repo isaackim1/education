@@ -15,7 +15,10 @@ import {
   buildProjectSystemPrompt,
   type ProjectChatContext,
 } from "@/lib/project-prompts";
-import { getProjectMistakes } from "@/lib/project-storage";
+import {
+  getDueProjectMistakes,
+  getProjectMistakes,
+} from "@/lib/project-storage";
 import type { Material, Mistake, StudyProject, Topic } from "@/lib/types";
 import { daysUntilExam } from "@/lib/utils";
 
@@ -50,9 +53,8 @@ function truncateForMessage(text: string, maxChars: number): string {
   return `${trimmed.slice(0, maxChars)}...`;
 }
 
-function getRecentUnreviewedMistakes(projectId: string) {
-  return getProjectMistakes(projectId)
-    .filter((mistake) => !mistake.reviewed)
+function getRecentDueMistakes(projectId: string) {
+  return getDueProjectMistakes(projectId)
     .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -93,7 +95,7 @@ function buildProjectChatContext(
         content: material.content.trim(),
         fileName: material.fileName,
       })),
-    recentUnreviewedMistakes: getRecentUnreviewedMistakes(projectId),
+    recentDueMistakes: getRecentDueMistakes(projectId),
   };
 }
 
@@ -150,10 +152,8 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
     activeTopicName ?? "All topics",
     materialsWithContent.length > 0 ? "materials" : "no materials yet",
   ];
-  if (
-    getProjectMistakes(projectId).some((mistake) => !mistake.reviewed)
-  ) {
-    trainingContextParts.push("recent mistakes");
+  if (getDueProjectMistakes(projectId).length > 0) {
+    trainingContextParts.push("mistakes due");
   }
   const trainingContextNote = `Training with: ${trainingContextParts.join(" · ")}`;
 
@@ -236,7 +236,7 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
       <PageHeader
         eyebrow="Adaptive training"
         title="Training chat"
-        description="Ivvy asks exam-style questions, saves your mistakes, and can use recent unreviewed mistakes to guide what comes next."
+        description="Ivvy asks exam-style questions, saves your mistakes, and can use recent due mistakes to guide what comes next."
       />
 
         {requizMistake ? (

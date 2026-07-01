@@ -8,9 +8,9 @@ import { PageHeader } from "@/components/ui/primitives";
 import { useProject } from "@/hooks/useProject";
 import {
   getProjectMistakes,
-  markProjectMistakeReviewed,
   resetProjectMistakeReview,
 } from "@/lib/project-storage";
+import { isScheduleDue } from "@/lib/scheduling";
 import type { Mistake } from "@/lib/types";
 
 const PRIMARY_ACTION =
@@ -57,11 +57,6 @@ export default function ProjectMistakesPage({
 
   const isLoaded = projectLoaded && mistakesLoaded;
 
-  function handleMarkReviewed(mistakeId: string) {
-    markProjectMistakeReviewed(params.projectId, mistakeId);
-    refreshMistakes();
-  }
-
   function handleResetReview(mistakeId: string) {
     resetProjectMistakeReview(params.projectId, mistakeId);
     refreshMistakes();
@@ -90,14 +85,16 @@ export default function ProjectMistakesPage({
     );
   }
 
-  const unreviewedCount = sortedMistakes.filter((m) => !m.reviewed).length;
+  const dueCount = sortedMistakes.filter((m) =>
+    isScheduleDue(m.schedule)
+  ).length;
 
   return (
     <ProjectShell projectId={params.projectId} active="coach">
       <PageHeader
         eyebrow="Memory layer"
         title="Mistake bank"
-        description="Mistakes saved during training. Unreviewed mistakes guide future questions. Marking reviewed means you have looked at it — not that you have mastered it."
+        description="Mistakes saved during training. Due mistakes guide future questions; scheduled mistakes return when FSRS says they are ready."
         action={
           sortedMistakes.length > 0 ? (
             <Link
@@ -129,7 +126,7 @@ export default function ProjectMistakesPage({
       ) : (
         <>
           <p className="mb-4 text-sm text-[#56524B]">
-            {sortedMistakes.length} total · {unreviewedCount} unreviewed
+            {sortedMistakes.length} total · {dueCount} due to review
           </p>
 
           <div className="grid gap-4 lg:grid-cols-2">
@@ -140,29 +137,30 @@ export default function ProjectMistakesPage({
               >
                 <ProjectMistakeCard mistake={mistake} />
                 <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-[#EFEBE2]">
-                  {!mistake.reviewed ? (
-                    <button
-                      type="button"
-                      onClick={() => handleMarkReviewed(mistake.id)}
+                  {isScheduleDue(mistake.schedule) ? (
+                    <Link
+                      href={`/projects/${params.projectId}/review?mistakeId=${mistake.id}`}
                       className={OUTLINE_ACTION}
                     >
-                      Mark reviewed
-                    </button>
+                      Review in queue
+                    </Link>
                   ) : (
                     <button
                       type="button"
                       onClick={() => handleResetReview(mistake.id)}
                       className={OUTLINE_ACTION}
                     >
-                      Mark unresolved
+                      Review now
                     </button>
                   )}
-                  <Link
-                    href={`/projects/${params.projectId}/review?mistakeId=${mistake.id}`}
-                    className={TEXT_LINK}
-                  >
-                    Review this mistake
-                  </Link>
+                  {!isScheduleDue(mistake.schedule) ? (
+                    <Link
+                      href={`/projects/${params.projectId}/review?mistakeId=${mistake.id}`}
+                      className={TEXT_LINK}
+                    >
+                      Open review
+                    </Link>
+                  ) : null}
                 </div>
               </div>
             ))}

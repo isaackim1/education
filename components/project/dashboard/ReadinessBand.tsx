@@ -36,7 +36,7 @@ export default function ReadinessBand({
           </div>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#56524B]">
             A preparation estimate based on setup, materials, practice, and
-            reviewed mistakes. It is not a predicted grade.
+            whether saved mistakes are currently due. It is not a predicted grade.
           </p>
         </div>
       </div>

@@ -8,9 +8,10 @@ import { PageHeader } from "@/components/ui/primitives";
 import { useProject } from "@/hooks/useProject";
 import {
   getProjectMistakes,
-  markProjectMistakeReviewed,
+  gradeProjectMistake,
 } from "@/lib/project-storage";
-import type { Mistake } from "@/lib/types";
+import { isScheduleDue } from "@/lib/scheduling";
+import type { Mistake, ReviewRating } from "@/lib/types";
 
 const PRIMARY_ACTION =
   "inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#1A1A17] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#1A1A17]";
@@ -33,15 +34,16 @@ const BACK_LINK =
 const FIELD =
   "w-full rounded-2xl border border-[#E7E3DA] bg-white px-4 py-3 text-sm text-[#1A1A17] placeholder:text-[#7A766D] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
 
+const RATINGS: { rating: ReviewRating; label: string; hint: string }[] = [
+  { rating: "again", label: "Missed", hint: "Wrong — see it again soon" },
+  { rating: "hard", label: "Shaky", hint: "Right, but a struggle" },
+  { rating: "good", label: "Got it", hint: "Recalled cleanly" },
+];
+
 function sortForReview(mistakes: Mistake[]): Mistake[] {
-  return [...mistakes].sort((a, b) => {
-    if (a.reviewed !== b.reviewed) {
-      return a.reviewed ? 1 : -1;
-    }
-    return (
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  });
+  return [...mistakes].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
 }
 
 const UNICODE_LETTER_OR_NUMBER = new RegExp("[\\p{L}\\p{N}]", "u");
@@ -86,28 +88,23 @@ function ProjectReviewContent({
     setMistakesLoaded(true);
   }, [refreshMistakes]);
 
-  const reviewQueue = useMemo(
-    () => sortForReview(mistakes),
+  const dueQueue = useMemo(
+    () => sortForReview(mistakes.filter((m) => isScheduleDue(m.schedule))),
     [mistakes]
   );
 
-  const unreviewedQueue = useMemo(
-    () => reviewQueue.filter((mistake) => !mistake.reviewed),
-    [reviewQueue]
-  );
-
   useEffect(() => {
-    if (!mistakesLoaded || unreviewedQueue.length === 0 || !requestedMistakeId) {
+    if (!mistakesLoaded || dueQueue.length === 0 || !requestedMistakeId) {
       return;
     }
 
-    const idx = unreviewedQueue.findIndex((m) => m.id === requestedMistakeId);
+    const idx = dueQueue.findIndex((m) => m.id === requestedMistakeId);
     if (idx >= 0) {
       setCurrentIndex(idx);
     }
-  }, [mistakesLoaded, unreviewedQueue, requestedMistakeId]);
+  }, [mistakesLoaded, dueQueue, requestedMistakeId]);
 
-  const currentMistake = unreviewedQueue[currentIndex] ?? null;
+  const currentMistake = dueQueue[currentIndex] ?? null;
   const isLoaded = projectLoaded && mistakesLoaded;
   const canRevealApproach = hasMeaningfulAttempt(tryAgainAnswer);
 
@@ -121,18 +118,15 @@ function ProjectReviewContent({
     setApproachRevealed(true);
   }
 
-  function handleMarkReviewed() {
+  function handleGrade(rating: ReviewRating) {
     if (!currentMistake || !approachRevealed) return;
 
-    const nextQueue = unreviewedQueue.filter(
+    const nextQueue = dueQueue.filter(
       (mistake) => mistake.id !== currentMistake.id
     );
-    const nextIndex = nextIndexAfterReview(
-      currentIndex,
-      unreviewedQueue.length
-    );
+    const nextIndex = nextIndexAfterReview(currentIndex, dueQueue.length);
 
-    markProjectMistakeReviewed(projectId, currentMistake.id);
+    gradeProjectMistake(projectId, currentMistake.id, rating);
     refreshMistakes();
     setTryAgainAnswer("");
     setApproachRevealed(false);
@@ -154,10 +148,10 @@ function ProjectReviewContent({
   }
 
   function handleNext() {
-    if (unreviewedQueue.length === 0) return;
-    const nextIndex = (currentIndex + 1) % unreviewedQueue.length;
+    if (dueQueue.length === 0) return;
+    const nextIndex = (currentIndex + 1) % dueQueue.length;
     setCurrentIndex(nextIndex);
-    const next = unreviewedQueue[nextIndex];
+    const next = dueQueue[nextIndex];
     if (next) {
       router.replace(
         `/projects/${projectId}/review?mistakeId=${next.id}`,
@@ -189,18 +183,17 @@ function ProjectReviewContent({
     );
   }
 
-  const allReviewed =
-    reviewQueue.length > 0 && unreviewedQueue.length === 0;
+  const allCaughtUp = mistakes.length > 0 && dueQueue.length === 0;
 
   return (
     <ProjectShell projectId={projectId} active="coach" width="max-w-3xl">
       <PageHeader
         eyebrow="Active recall"
         title="Review"
-        description="Active retrieval practice for saved mistakes. Try each one again before checking the better approach, then mark it reviewed."
+        description="Spaced retrieval practice. Try each due mistake again, check the better approach, then rate how it went — Ivvy schedules when you see it next."
       />
 
-        {reviewQueue.length === 0 ? (
+        {mistakes.length === 0 ? (
           <div className="rounded-2xl border border-[#E7E3DA] bg-white px-6 py-14 text-center">
             <h2 className="text-base font-medium text-[#1A1A17]">
               Nothing in the review queue yet
@@ -216,17 +209,17 @@ function ProjectReviewContent({
               Start training
             </Link>
           </div>
-        ) : allReviewed ? (
+        ) : allCaughtUp ? (
           <div className="rounded-2xl border border-[#E7E3DA] bg-white px-6 py-14 text-center">
             <span className="inline-flex items-center rounded-full bg-[#E6F4EA] px-3 py-1 text-xs font-medium text-[#137333]">
-              Review complete
+              Nothing due
             </span>
             <h2 className="text-base font-medium text-[#1A1A17] mt-4">
-              You&apos;ve reviewed all saved mistakes
+              You&apos;re caught up for now
             </h2>
             <p className="text-sm text-[#56524B] mt-2 mx-auto max-w-sm">
-              Keep training in chat to save new mistakes, or revisit the mistake
-              bank anytime.
+              Every saved mistake is scheduled for a future date. Keep training
+              in chat to surface new ones, or revisit the mistake bank anytime.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
               <Link
@@ -246,9 +239,9 @@ function ProjectReviewContent({
         ) : currentMistake ? (
           <>
             <p className="text-sm text-[#56524B] mb-4">
-              Reviewing {currentIndex + 1} of {unreviewedQueue.length} unreviewed
-              {reviewQueue.length > unreviewedQueue.length
-                ? ` · ${reviewQueue.length} saved total`
+              Reviewing {currentIndex + 1} of {dueQueue.length} due
+              {mistakes.length > dueQueue.length
+                ? ` · ${mistakes.length} saved total`
                 : ""}
             </p>
 
@@ -261,8 +254,13 @@ function ProjectReviewContent({
                   {currentMistake.mistakeCategory}
                 </span>
                 <span className="inline-flex items-center rounded-full bg-[#FEEFC3] px-2.5 py-0.5 text-xs font-medium text-[#B06000]">
-                  Unreviewed
+                  Due
                 </span>
+                {currentMistake.reviewCount > 0 ? (
+                  <span className="inline-flex items-center rounded-full bg-[#EFEBE2] px-2.5 py-0.5 text-xs text-[#56524B]">
+                    Seen {currentMistake.reviewCount}×
+                  </span>
+                ) : null}
               </div>
 
               {currentMistake.question.trim() ? (
@@ -348,35 +346,46 @@ function ProjectReviewContent({
                     </div>
                   ) : null}
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handleMarkReviewed}
-                      className={OUTLINE_ACTION}
-                    >
-                      Mark reviewed
-                    </button>
-                    <Link
-                      href={`/projects/${projectId}/chat?mistakeId=${currentMistake.id}`}
-                      className={REQUIZ_ACTION}
-                    >
-                      Requiz me in chat
-                    </Link>
-                    {unreviewedQueue.length > 1 ? (
-                      <button
-                        type="button"
-                        onClick={handleNext}
+                  <div>
+                    <p className="text-xs font-medium text-[#56524B] mb-2">
+                      How did that go?
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {RATINGS.map(({ rating, label, hint }) => (
+                        <button
+                          key={rating}
+                          type="button"
+                          onClick={() => handleGrade(rating)}
+                          title={hint}
+                          className={TONAL_ACTION}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                      <Link
+                        href={`/projects/${projectId}/chat?mistakeId=${currentMistake.id}`}
+                        className={REQUIZ_ACTION}
+                      >
+                        Requiz me in chat
+                      </Link>
+                      {dueQueue.length > 1 ? (
+                        <button
+                          type="button"
+                          onClick={handleNext}
+                          className={TEXT_LINK}
+                        >
+                          Skip for now
+                        </button>
+                      ) : null}
+                      <Link
+                        href={`/projects/${projectId}/mistakes`}
                         className={TEXT_LINK}
                       >
-                        Next mistake
-                      </button>
-                    ) : null}
-                    <Link
-                      href={`/projects/${projectId}/mistakes`}
-                      className={TEXT_LINK}
-                    >
-                      Mistake bank
-                    </Link>
+                        Mistake bank
+                      </Link>
+                    </div>
                   </div>
                 </div>
               )}
@@ -389,7 +398,7 @@ function ProjectReviewContent({
                   >
                     Requiz me in chat
                   </Link>
-                  {unreviewedQueue.length > 1 ? (
+                  {dueQueue.length > 1 ? (
                     <button
                       type="button"
                       onClick={handleNext}

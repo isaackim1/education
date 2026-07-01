@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/primitives";
 import { Reveal } from "@/components/ui/motion";
 import { getProjectChat, getProjectMistakes } from "@/lib/project-storage";
+import { isScheduleDue } from "@/lib/scheduling";
 import type { Chat, Mistake } from "@/lib/types";
 
 function formatDate(dateString: string): string {
@@ -150,12 +151,14 @@ export default function ProjectPage({
   const meaningfulMaterials = materials.filter(
     (material) => material.content.trim().length > 0
   );
-  const reviewedMistakes = mistakes.filter((mistake) => mistake.reviewed).length;
-  const unreviewedMistakes = mistakes.length - reviewedMistakes;
+  const dueMistakes = mistakes.filter((mistake) =>
+    isScheduleDue(mistake.schedule)
+  ).length;
+  const scheduledMistakes = mistakes.length - dueMistakes;
   const reviewPercentage =
     mistakes.length === 0
       ? 0
-      : Math.round((reviewedMistakes / mistakes.length) * 100);
+      : Math.round((scheduledMistakes / mistakes.length) * 100);
   const isExamUrgent = examDays !== null && examDays <= 7;
 
   return (
@@ -238,7 +241,7 @@ export default function ProjectPage({
                 detail={
                   mistakes.length === 0
                     ? "Train to find weak areas"
-                    : `${unreviewedMistakes} unreviewed`
+                    : `${dueMistakes} due to review`
                 }
               />
               <MetricCard
@@ -247,7 +250,7 @@ export default function ProjectPage({
                 detail={
                   mistakes.length === 0
                     ? "No review queue yet"
-                    : `${reviewedMistakes} of ${mistakes.length} reviewed`
+                    : `${scheduledMistakes} scheduled · ${dueMistakes} due`
                 }
               />
             </div>
@@ -257,7 +260,7 @@ export default function ProjectPage({
         <Reveal delay={320} className="h-full lg:col-span-4">
           <ReviewProgressRing
             total={mistakes.length}
-            reviewed={reviewedMistakes}
+            due={dueMistakes}
           />
         </Reveal>
 

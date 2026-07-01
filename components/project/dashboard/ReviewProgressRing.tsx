@@ -1,13 +1,13 @@
 export default function ReviewProgressRing({
   total,
-  reviewed,
+  due,
 }: {
   total: number;
-  reviewed: number;
+  due: number;
 }) {
+  const scheduled = Math.max(0, total - due);
   const percentage =
-    total === 0 ? 0 : Math.round((Math.min(total, reviewed) / total) * 100);
-  const unreviewed = Math.max(0, total - reviewed);
+    total === 0 ? 0 : Math.round((Math.min(total, scheduled) / total) * 100);
 
   return (
     <section className="h-full rounded-xl border border-[#E7E3DA] bg-white p-6 sm:p-7">
@@ -39,15 +39,15 @@ export default function ReviewProgressRing({
               No saved mistakes yet. Train in chat and Ivvy will build a review
               queue from the errors worth revisiting.
             </p>
-          ) : unreviewed === 0 ? (
+          ) : due === 0 ? (
             <p className="mt-2 text-sm text-[#56524B]">
-              All {total} saved mistake{total === 1 ? " is" : "s are"} reviewed.
-              Keep training to surface the next weak area.
+              All {total} saved mistake{total === 1 ? " is" : "s are"} scheduled
+              for a future review. Keep training to surface the next weak area.
             </p>
           ) : (
             <p className="mt-2 text-sm text-[#56524B]">
-              {reviewed} of {total} saved mistakes reviewed. {unreviewed} still
-              need active recall.
+              {due} of {total} saved mistake{total === 1 ? "" : "s"} due now.
+              Work through them with active recall.
             </p>
           )}
         </div>
