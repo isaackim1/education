@@ -147,7 +147,7 @@ export default function LogPage({
   }
 
   return (
-    <ProjectShell projectId={params.projectId} active="log" width="max-w-3xl">
+    <ProjectShell projectId={params.projectId} active="overview" width="max-w-3xl">
       <PageHeader
         eyebrow="Activity"
         title="Training log"

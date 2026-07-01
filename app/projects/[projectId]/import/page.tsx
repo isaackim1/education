@@ -499,7 +499,7 @@ function ImportContent({ projectId }: { projectId: string }) {
   }
 
   return (
-    <ProjectShell projectId={projectId} active="import">
+    <ProjectShell projectId={projectId} active="materials">
         <header className="mb-8">
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#7A766D]">
             Upload once · Ivvy organizes · You review

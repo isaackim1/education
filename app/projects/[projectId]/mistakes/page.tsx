@@ -93,7 +93,7 @@ export default function ProjectMistakesPage({
   const unreviewedCount = sortedMistakes.filter((m) => !m.reviewed).length;
 
   return (
-    <ProjectShell projectId={params.projectId} active="mistakes">
+    <ProjectShell projectId={params.projectId} active="coach">
       <PageHeader
         eyebrow="Memory layer"
         title="Mistake bank"

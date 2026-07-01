@@ -193,7 +193,7 @@ function ProjectReviewContent({
     reviewQueue.length > 0 && unreviewedQueue.length === 0;
 
   return (
-    <ProjectShell projectId={projectId} active="review" width="max-w-3xl">
+    <ProjectShell projectId={projectId} active="coach" width="max-w-3xl">
       <PageHeader
         eyebrow="Active recall"
         title="Review"

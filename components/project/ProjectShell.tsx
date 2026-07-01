@@ -12,18 +12,7 @@ import type { ReactNode } from "react";
  * than a narrow centered column. Presentational only — no product logic.
  */
 
-export type ProjectNavId =
-  | "overview"
-  | "setup"
-  | "import"
-  | "materials"
-  | "study"
-  | "train"
-  | "chat"
-  | "mistakes"
-  | "review"
-  | "goals"
-  | "log";
+export type ProjectNavId = "overview" | "coach" | "materials";
 
 type NavItem = { id: ProjectNavId; label: string; suffix: string };
 
@@ -32,26 +21,8 @@ const NAV_GROUPS: { heading: string; items: NavItem[] }[] = [
     heading: "Workspace",
     items: [
       { id: "overview", label: "Overview", suffix: "" },
-      { id: "setup", label: "Topics", suffix: "/setup" },
-      { id: "import", label: "Import", suffix: "/import" },
+      { id: "coach", label: "Coach", suffix: "/coach" },
       { id: "materials", label: "Materials", suffix: "/materials" },
-    ],
-  },
-  {
-    heading: "Study",
-    items: [
-      { id: "study", label: "Study", suffix: "/study" },
-      { id: "train", label: "Train", suffix: "/train" },
-      { id: "chat", label: "Chat", suffix: "/chat" },
-    ],
-  },
-  {
-    heading: "Progress",
-    items: [
-      { id: "mistakes", label: "Mistakes", suffix: "/mistakes" },
-      { id: "review", label: "Review", suffix: "/review" },
-      { id: "goals", label: "Goals", suffix: "/goals" },
-      { id: "log", label: "Log", suffix: "/log" },
     ],
   },
 ];

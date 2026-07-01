@@ -193,15 +193,15 @@ export default function ProjectPage({
           <TodaysPlan plan={todaysPlan} />
 
           <PrimaryActionCard
-            eyebrow="Study modes"
-            title="Choose how to train"
-            description="Practice questions, teach a topic back, build a study sheet, or revisit saved mistakes — one coherent learning system."
+            eyebrow="Coach"
+            title="Train with your materials"
+            description="Practice questions, ask Ivvy, teach a topic back, build a study sheet, or review saved mistakes — one guided learning space."
             action={
               <Link
-                href={`/projects/${params.projectId}/study`}
+                href={`/projects/${params.projectId}/coach`}
                 className={primaryAction}
               >
-                Open study modes
+                Open Coach
               </Link>
             }
           />
@@ -270,28 +270,28 @@ export default function ProjectPage({
             <Eyebrow>Jump to</Eyebrow>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
-                href={`/projects/${params.projectId}/import`}
+                href={`/projects/${params.projectId}/coach`}
                 className={SECONDARY_LINK}
               >
-                Upload materials
+                Open Coach
               </Link>
               <Link
-                href={`/projects/${params.projectId}/train`}
+                href={`/projects/${params.projectId}/coach`}
                 className={SECONDARY_LINK}
               >
-                Train
+                Train with Ivvy
               </Link>
               <Link
-                href={`/projects/${params.projectId}/mistakes`}
+                href={`/projects/${params.projectId}/coach`}
                 className={SECONDARY_LINK}
               >
-                Mistake bank
+                Review with Coach
               </Link>
               <Link
-                href={`/projects/${params.projectId}/review`}
+                href={`/projects/${params.projectId}/materials`}
                 className={SECONDARY_LINK}
               >
-                Review
+                Materials
               </Link>
             </div>
           </section>

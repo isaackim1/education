@@ -133,7 +133,7 @@ export default function GoalsPage({
   }
 
   return (
-    <ProjectShell projectId={params.projectId} active="goals" width="max-w-3xl">
+    <ProjectShell projectId={params.projectId} active="overview" width="max-w-3xl">
       <PageHeader
         eyebrow="Targets"
         title="Study goals"

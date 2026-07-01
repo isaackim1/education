@@ -232,7 +232,7 @@ function ProjectChatContent({ projectId }: { projectId: string }) {
   }
 
   return (
-    <ProjectShell projectId={projectId} active="chat" width="max-w-3xl">
+    <ProjectShell projectId={projectId} active="coach" width="max-w-3xl">
       <PageHeader
         eyebrow="Adaptive training"
         title="Training chat"

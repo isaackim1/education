@@ -536,7 +536,7 @@ function ActiveTrainingContent({ projectId }: { projectId: string }) {
   const savedMistakes = rounds.filter((round) => round.mistakeSaved).length;
 
   return (
-    <ProjectShell projectId={projectId} active="train" width="max-w-3xl">
+    <ProjectShell projectId={projectId} active="coach" width="max-w-3xl">
         <header className="mb-8">
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#7A766D]">
             Train

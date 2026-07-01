@@ -234,13 +234,13 @@ export default function TeachBackPage({
   }
 
   return (
-    <ProjectShell projectId={projectId} active="study" width="max-w-3xl">
+    <ProjectShell projectId={projectId} active="coach" width="max-w-3xl">
         <header className="mb-6">
           <Link
-            href={`/projects/${projectId}/study`}
+            href={`/projects/${projectId}/coach`}
             className="inline-flex items-center h-8 -ml-3 px-3 rounded-full text-sm text-[#56524B] transition-colors hover:bg-[#EFEBE2] hover:text-[#1A1A17] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
           >
-            &larr; Study modes
+            &larr; Coach
           </Link>
           <h1 className="mt-2 font-serif text-[34px] leading-[1.08] tracking-[-0.01em] text-[#1A1A17] sm:text-[40px]">
             Teach it back. Ivvy checks the gaps.
