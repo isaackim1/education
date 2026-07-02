@@ -23,7 +23,7 @@ export default function ProjectMistakeCard({
             Due
           </span>
         ) : (
-          <span className="inline-flex items-center rounded-full bg-[#E6F4EA] px-2.5 py-0.5 text-xs font-medium text-[#137333]">
+          <span className="inline-flex items-center rounded-full bg-[#EAF0EB] px-2.5 py-0.5 text-xs font-medium text-[#1E4634]">
             Scheduled
           </span>
         )}

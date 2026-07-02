@@ -350,7 +350,7 @@ export default function ProjectMaterialCard({
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-base font-medium text-[#1A1A17]">{topicName}</h3>
         {hasSavedContent ? (
-          <span className="inline-flex items-center rounded-full bg-[#E6F4EA] px-2.5 py-0.5 text-xs font-medium text-[#137333]">
+          <span className="inline-flex items-center rounded-full bg-[#EAF0EB] px-2.5 py-0.5 text-xs font-medium text-[#1E4634]">
             Saved
           </span>
         ) : (
@@ -463,7 +463,7 @@ export default function ProjectMaterialCard({
           {saveState === "saved" ? "Saved" : "Save"}
         </button>
         {saveState === "saved" ? (
-          <span className="text-xs font-medium text-[#137333]" role="status">
+          <span className="text-xs font-medium text-[#1E4634]" role="status">
             Material saved
           </span>
         ) : null}

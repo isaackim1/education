@@ -15,7 +15,8 @@ export default function ReviewProgressRing({
         <div
           className="relative flex h-28 w-28 shrink-0 items-center justify-center rounded-full"
           style={{
-            background: `conic-gradient(#137333 ${percentage}%, #E7E3DA 0)`,
+            backgroundColor: percentage > 0 ? "#EAF0EB" : "#EFEBE2",
+            border: "1px solid #E7E3DA",
           }}
           role="progressbar"
           aria-label="Mistake review progress"
@@ -24,14 +25,14 @@ export default function ReviewProgressRing({
           aria-valuemax={100}
         >
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white">
-            <span className="font-serif text-[26px] leading-none tracking-[-0.02em] text-[#1A1A17] tabular-nums">
+            <span className="font-sans text-[26px] leading-none tracking-[-0.02em] text-[#1A1A17] tabular-nums">
               {percentage}%
             </span>
           </div>
         </div>
 
         <div>
-          <h2 className="font-serif text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
+          <h2 className="font-sans text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
             Mistake review progress
           </h2>
           {total === 0 ? (

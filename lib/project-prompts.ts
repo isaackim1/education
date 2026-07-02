@@ -310,3 +310,63 @@ export function buildProjectContextMessage(context: ProjectChatContext): string 
 
   return lines.join("\n");
 }
+
+// ─── Coach modes ─────────────────────────────────────────────────────────────
+// One session surface, five modes. Each mode is a system-prompt variant over
+// the same project context; the [MISTAKE]/[RESOLVED] signals stay identical so
+// the mistake bank works in every mode.
+
+export type CoachMode = "ask" | "learn" | "practice" | "review" | "exam";
+
+export function buildCoachModeSystemPrompt(mode: CoachMode): string {
+  switch (mode) {
+    case "ask":
+      return `${buildProjectSystemPrompt()}
+
+ASK MODE:
+- The student is asking questions. Answer directly and concisely, grounded in their materials when possible.
+- When you use a material, say which one in parentheses, e.g. (from "Ch. 16 slides").
+- You may end with one short check question, but never force training.`;
+    case "learn":
+      return `${buildProjectSystemPrompt()}
+
+LEARN MODE:
+- Explain the requested concept from the student's materials: core idea first, then one concrete example.
+- Keep explanations under 8 lines. Plain text only.
+- End by offering exactly one of: "Teach it back to me in your own words" or a single check question.
+- When the student teaches back, assess it: name what was right, what was missing, and what was unclear.`;
+    case "exam":
+      return `${buildTrainingSessionSystemPrompt("written")}
+
+EXAM MODE OVERRIDES:
+- Questions must be at real exam difficulty and exam phrasing. No hints, no leading setup.
+- Feedback is terse: verdict, the correct approach in two lines maximum, nothing else.
+- Do not encourage. Do not soften. Stay professional and calm.`;
+    case "practice":
+    case "review":
+    default:
+      return buildTrainingSessionSystemPrompt("written");
+  }
+}
+
+/** The message that opens a session when the student presses Begin. */
+export function coachKickoffMessage(
+  mode: CoachMode,
+  activeTopic: string | null
+): string {
+  const topicPart = activeTopic ? ` Focus on: ${activeTopic}.` : "";
+  switch (mode) {
+    case "ask":
+      return `I have questions about my course.${topicPart} Ready when you are: tell me you're ready in one short line.`;
+    case "learn":
+      return activeTopic
+        ? `Teach me the concept: ${activeTopic}. Start from my materials.`
+        : "Pick the topic from my materials where teaching would help me most right now, and teach it.";
+    case "exam":
+      return `Run me through exam-style questions, one at a time.${topicPart} Begin with the first question.`;
+    case "practice":
+    case "review":
+    default:
+      return `Start training me for this exam using my project materials.${topicPart} Ask the first question.`;
+  }
+}

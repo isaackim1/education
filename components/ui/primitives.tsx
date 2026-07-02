@@ -20,15 +20,20 @@ import type { ReactNode } from "react";
  * consistent.
  */
 
-// ── Palette (warm neutral) ───────────────────────────────────────────────────
-export const ink = "#1A1A17"; // primary text + primary action
+// ── Palette (ivory + forest + ink) ───────────────────────────────────────────
+export const ink = "#1A1A17"; // primary text
 export const graphite = "#56524B"; // secondary text
 export const muted = "#7A766D"; // metadata / captions
-export const paper = "#FAF8F4"; // app background (warm off-white)
+export const paper = "#FAF8F4"; // app background (ivory)
 export const panel = "#F4F1EA"; // warm tonal surface
 export const border = "#E7E3DA"; // hairline border
 export const borderStrong = "#D8D3C8"; // input / interactive border
-export const signal = "#137333"; // green — status & progress only
+export const forest = "#1E4634"; // primary action + Ivvy's guidance
+export const forestDeep = "#16382A"; // hover/active on forest
+export const forestTint = "#EAF0EB"; // subtle forest fill (scheduled, selected)
+export const clay = "#9C4126"; // high-risk only: certain + wrong
+export const clayTint = "#F6EAE4"; // high-risk tag background
+export const signal = forest; // legacy alias
 
 // ── Spot pastels (semantic tags / accents, used sparingly) ───────────────────
 export const accent = {
@@ -41,7 +46,7 @@ export const accent = {
 // ── Shared control classes ───────────────────────────────────────────────────
 // Crisp 6px radius, solid ink, subtle scale on press. No pills, no shadows.
 export const primaryAction =
-  "inline-flex h-10 items-center justify-center rounded-md bg-[#1A1A17] px-6 text-sm font-medium text-white transition-[background-color,transform] duration-200 hover:bg-black active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]";
+  "inline-flex h-10 items-center justify-center rounded-md bg-[#1E4634] px-6 text-sm font-medium text-white transition-[background-color,transform] duration-200 hover:bg-[#16382A] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4634] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]";
 
 export const outlineAction =
   "inline-flex h-10 items-center justify-center rounded-md border border-[#D8D3C8] px-5 text-sm font-medium text-[#1A1A17] transition-[background-color,transform] duration-200 hover:bg-[#EFEBE2] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8F4]";
@@ -108,7 +113,7 @@ export function PageHeader({
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="max-w-2xl">
           {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
-          <h1 className="mt-2.5 font-serif text-[36px] leading-[1.05] tracking-[-0.02em] text-[#1A1A17] sm:text-[44px]">
+          <h1 className="mt-2.5 text-[28px] font-medium leading-[1.15] tracking-[-0.02em] text-[#1A1A17] sm:text-[32px]">
             {title}
           </h1>
           {description ? (
@@ -138,7 +143,7 @@ export function SectionHeader({
     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
         {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
-        <h2 className="mt-1.5 font-serif text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
+        <h2 className="mt-1.5 text-[20px] font-medium leading-tight tracking-[-0.01em] text-[#1A1A17]">
           {title}
         </h2>
         {description ? (
@@ -203,7 +208,7 @@ export function PrimaryActionCard({
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-xl">
           {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
-          <h2 className="mt-2 font-serif text-[25px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
+          <h2 className="mt-2 text-[20px] font-medium leading-tight tracking-[-0.01em] text-[#1A1A17]">
             {title}
           </h2>
           {description ? (
@@ -232,7 +237,7 @@ export function MetricCard({
       <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#7A766D]">
         {label}
       </p>
-      <p className="mt-2 font-serif text-[32px] leading-none tracking-[-0.02em] text-[#1A1A17] tabular-nums">
+      <p className="mt-2 text-[28px] font-medium leading-none tracking-[-0.01em] text-[#1A1A17] tabular-nums">
         {value}
       </p>
       {detail ? (
@@ -254,7 +259,7 @@ export function StatusPill({
 }) {
   const tones: Record<PillTone, string> = {
     neutral: "bg-[#F4F1EA] text-[#56524B]",
-    success: "bg-[#E7F0E9] text-[#137333]",
+    success: "bg-[#EAF0EB] text-[#1E4634]",
     warning: "bg-[#F7ECD0] text-[#9A6700]",
   };
   return (
@@ -268,7 +273,14 @@ export function StatusPill({
 
 // Editorial tag — small, uppercase, wide tracking, muted spot pastel. Pills are
 // allowed here (the skill reserves pill shapes for tags/badges only).
-type TagTone = "neutral" | "red" | "blue" | "green" | "yellow";
+type TagTone =
+  | "neutral"
+  | "red"
+  | "blue"
+  | "green"
+  | "yellow"
+  | "clay"
+  | "forest";
 
 export function Tag({
   children,
@@ -281,8 +293,12 @@ export function Tag({
     neutral: "bg-[#F4F1EA] text-[#56524B]",
     red: "bg-[#FDEBEC] text-[#9F2F2D]",
     blue: "bg-[#E1F3FE] text-[#1F6C9F]",
-    green: "bg-[#EDF3EC] text-[#346538]",
+    green: "bg-[#EAF0EB] text-[#1E4634]",
     yellow: "bg-[#FBF3DB] text-[#956400]",
+    // High-risk only: a mistake missed while the student felt certain.
+    clay: "bg-[#F6EAE4] text-[#9C4126]",
+    // Scheduled / on-track — Ivvy's guidance tone.
+    forest: "bg-[#EAF0EB] text-[#1E4634]",
   };
   return (
     <span
@@ -342,7 +358,7 @@ export function EmptyState({
 }) {
   return (
     <section className="rounded-xl border border-dashed border-[#D8D3C8] bg-white px-6 py-16 text-center">
-      <h2 className="font-serif text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
+      <h2 className="text-[20px] font-medium leading-tight tracking-[-0.01em] text-[#1A1A17]">
         {title}
       </h2>
       {description ? (

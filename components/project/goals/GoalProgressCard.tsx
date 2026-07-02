@@ -32,7 +32,7 @@ function ProgressRow({
         aria-valuemax={100}
       >
         <div
-          className={`h-full rounded-full ${met ? "bg-[#137333]" : "bg-[#1A1A17]"}`}
+          className={`h-full rounded-full ${met ? "bg-[#1E4634]" : "bg-[#1A1A17]"}`}
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -54,7 +54,7 @@ export default function GoalProgressCard({
   if (!weeklyProgress) {
     return (
       <section className="h-full rounded-xl border border-[#E7E3DA] bg-white p-6 sm:p-7">
-        <h2 className="font-serif text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
+        <h2 className="font-sans text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
           Set your study goals
         </h2>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#56524B]">
@@ -74,7 +74,7 @@ export default function GoalProgressCard({
     <section className="h-full rounded-xl border border-[#E7E3DA] bg-white p-6 sm:p-7">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="font-serif text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
+          <h2 className="font-sans text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
             This week
           </h2>
           <p className="mt-1.5 text-sm leading-relaxed text-[#56524B]">

@@ -55,13 +55,13 @@ export default function MessageBlock({
                 Save as mistake
               </button>
             ) : isMistakeSaved ? (
-              <span className="text-xs font-medium text-[#137333]">Saved</span>
+              <span className="text-xs font-medium text-[#1E4634]">Saved</span>
             ) : "mistakeSaved" in message && message.mistakeSaved ? (
               <>
                 <span className="inline-flex items-center rounded-full bg-[#FEEFC3] px-2 py-0.5 text-xs font-medium text-[#B06000]">
                   Flagged as possible mistake
                 </span>
-                <span className="text-xs font-medium text-[#137333]">
+                <span className="text-xs font-medium text-[#1E4634]">
                   Saved to mistake review
                 </span>
               </>

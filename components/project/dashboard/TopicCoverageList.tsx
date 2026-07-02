@@ -33,7 +33,7 @@ export default function TopicCoverageList({
     <section className="h-full rounded-xl border border-[#E7E3DA] bg-white p-6 sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-serif text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
+          <h2 className="font-sans text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
             Topic coverage
           </h2>
           <p className="mt-1.5 text-sm leading-relaxed text-[#56524B]">
@@ -93,7 +93,7 @@ export default function TopicCoverageList({
                   <div
                     className={`h-full rounded-full ${
                       row.progressPercent === 100
-                        ? "bg-[#137333]"
+                        ? "bg-[#1E4634]"
                         : "bg-[#56524B]"
                     }`}
                     style={{ width: `${row.progressPercent}%` }}

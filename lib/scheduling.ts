@@ -253,3 +253,17 @@ export function isScheduleDue(
   if (schedule.state === "new") return true;
   return isoDateOnly(schedule.due) <= today;
 }
+
+/**
+ * Pure preview of when a mistake would come back if graded with `rating` right
+ * now — powers the "→ tomorrow / → 3 days" hints under the grade buttons. Never
+ * writes anything; grading itself goes through gradeProjectMistake.
+ */
+export function previewNextDue(
+  schedule: MistakeSchedule | undefined,
+  rating: ReviewRating,
+  today: string = getTodayIsoDate()
+): string {
+  const base = schedule && isValidSchedule(schedule) ? schedule : newSchedule(today);
+  return gradeSchedule(base, rating, today).due;
+}

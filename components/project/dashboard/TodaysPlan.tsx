@@ -24,7 +24,7 @@ export default function TodaysPlan({ plan }: { plan: TodaysPlanMetrics }) {
     <section className="h-full rounded-xl border border-[#D8D3C8] bg-[#EFEBE2] p-6 sm:p-8">
       <Eyebrow>Today&apos;s training plan</Eyebrow>
       <div className="mt-3">
-        <h2 className="font-serif text-[25px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
+        <h2 className="font-sans text-[25px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
           {plan.primary.title}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[#56524B]">

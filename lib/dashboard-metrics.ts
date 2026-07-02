@@ -442,7 +442,7 @@ export function computeTodaysPlan(
     add({
       title: "Add topics",
       description: "Define what the exam covers so Ivvy can structure training.",
-      href: `${base}/setup`,
+      href: `${base}/materials?tab=topics`,
       kind: "setup",
     });
   } else {
@@ -459,7 +459,7 @@ export function computeTodaysPlan(
       add({
         title: "Start training",
         description: "Answer focused exam questions and begin finding weak areas.",
-        href: `${base}/train`,
+        href: `${base}/coach?mode=practice`,
         kind: "training",
       });
     }
@@ -469,7 +469,7 @@ export function computeTodaysPlan(
         add({
           title: `Review toward your weekly goal (${weeklyProgress.reviewsDone} of ${weeklyProgress.reviewGoal})`,
           description: "Keep your review streak on pace for this week.",
-          href: `${base}/review`,
+          href: `${base}/coach?mode=review`,
           kind: "review",
         });
       } else {
@@ -478,7 +478,7 @@ export function computeTodaysPlan(
             dueMistakes.length === 1 ? "" : "s"
           }`,
           description: "Retry saved mistakes before they fade from memory.",
-          href: `${base}/review`,
+          href: `${base}/coach?mode=review`,
           kind: "review",
         });
       }
@@ -504,7 +504,7 @@ export function computeTodaysPlan(
       add({
         title: `Train your focus topic: ${focusTopicToTrain.name}`,
         description: "You marked this as a priority for the exam.",
-        href: `${base}/train?topic=${encodeURIComponent(focusTopicToTrain.id)}`,
+        href: `${base}/coach?mode=practice&topic=${encodeURIComponent(focusTopicToTrain.name)}`,
         kind: "training",
       });
     }
@@ -536,25 +536,16 @@ export function computeTodaysPlan(
         description: `${weakest.count} due mistake${
           weakest.count === 1 ? "" : "s"
         } point${weakest.count === 1 ? "s" : ""} to this topic.`,
-        href: `${base}/train?topic=${encodeURIComponent(weakest.topic.id)}`,
+        href: `${base}/coach?mode=practice&topic=${encodeURIComponent(weakest.topic.name)}`,
         kind: "training",
       });
     }
 
-    // Goal-aware: remind the student to log effort toward the weekly session goal.
-    if (weeklyProgress && !weeklyProgress.sessionsMet) {
-      add({
-        title: `Log a session toward your weekly goal (${weeklyProgress.sessionsDone} of ${weeklyProgress.sessionGoal})`,
-        description: "Record study, chat, or review time to track your week.",
-        href: `${base}/log`,
-        kind: "training",
-      });
-    }
 
     add({
       title: "Keep training",
       description: "Continue with focused exam questions to maintain momentum.",
-      href: `${base}/train`,
+      href: `${base}/coach?mode=practice`,
       kind: "training",
     });
   }

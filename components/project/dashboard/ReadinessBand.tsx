@@ -29,7 +29,7 @@ export default function ReadinessBand({
         <div>
           <Eyebrow>Preparation readiness</Eyebrow>
           <div className="mt-3 flex items-baseline gap-3">
-            <p className="font-serif text-[46px] leading-none tracking-[-0.02em] text-[#1A1A17] tabular-nums">
+            <p className="font-sans text-[46px] leading-none tracking-[-0.02em] text-[#1A1A17] tabular-nums">
               {readiness.displayScore}%
             </p>
             <Tag tone={bandTone}>{readiness.band}</Tag>
@@ -50,7 +50,7 @@ export default function ReadinessBand({
         aria-valuemax={100}
       >
         <div
-          className="h-full rounded-full bg-[#137333]"
+          className="h-full rounded-full bg-[#1E4634]"
           style={{ width: `${readiness.displayScore}%` }}
         />
       </div>

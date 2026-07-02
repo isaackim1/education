@@ -42,7 +42,7 @@ export default function CalibrationCard({
     return (
       <section className="h-full rounded-xl border border-[#E7E3DA] bg-white p-6 sm:p-7">
         <Eyebrow>Calibration</Eyebrow>
-        <h2 className="mt-2 font-serif text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
+        <h2 className="mt-2 font-sans text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
           How well do you know what you know?
         </h2>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#56524B]">
@@ -54,7 +54,7 @@ export default function CalibrationCard({
         <div className="mt-5">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#EFEBE2]">
             <div
-              className="h-full rounded-full bg-[#137333] transition-[width] duration-500"
+              className="h-full rounded-full bg-[#1E4634] transition-[width] duration-500"
               style={{ width: `${percent}%` }}
             />
           </div>
@@ -84,7 +84,7 @@ export default function CalibrationCard({
       <Eyebrow>Calibration</Eyebrow>
       <div className="mt-3 flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
         <div className="shrink-0">
-          <p className="font-serif text-[44px] leading-none tracking-[-0.02em] text-[#1A1A17] tabular-nums">
+          <p className="font-sans text-[44px] leading-none tracking-[-0.02em] text-[#1A1A17] tabular-nums">
             {metrics.calibrationScore}%
           </p>
           <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.14em] text-[#7A766D]">

@@ -144,7 +144,7 @@ export default function NewProjectPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full h-11 rounded-full bg-[#1A1A17] text-white text-sm font-medium transition-colors hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
+              className="w-full h-11 rounded-md bg-[#1E4634] text-white text-sm font-medium transition-colors hover:bg-[#16382A] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
             >
               Create project
             </button>

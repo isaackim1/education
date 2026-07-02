@@ -13,21 +13,29 @@ const config: Config = {
         foreground: "var(--foreground)",
       },
       fontFamily: {
-        // Native geometric sans — SF Pro / Helvetica Neue. No Inter, no web
-        // fetch. (minimalist-ui: banned Inter/Roboto/Open Sans.)
+        // One family everywhere — Helvetica Neue with native fallbacks. No
+        // webfont fetch, no Inter, no serif. Weight and scale do the work.
         sans: [
-          '"SF Pro Display"',
-          '"SF Pro Text"',
+          '"Helvetica Neue"',
           "-apple-system",
           "BlinkMacSystemFont",
-          '"Helvetica Neue"',
+          "Helvetica",
           '"Segoe UI"',
-          "system-ui",
+          "Arial",
           "sans-serif",
         ],
-        // Editorial display serif — Newsreader via next/font.
-        serif: ["var(--font-serif)", "ui-serif", "Georgia", "Cambria", "serif"],
-        // Meta-data / keystrokes.
+        // Legacy alias — a few older classnames may still say font-serif;
+        // they render the same grotesk stack.
+        serif: [
+          '"Helvetica Neue"',
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Helvetica",
+          '"Segoe UI"',
+          "Arial",
+          "sans-serif",
+        ],
+        // Meta-data / dates / keystrokes.
         mono: [
           '"SF Mono"',
           '"JetBrains Mono"',
