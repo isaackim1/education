@@ -26,6 +26,7 @@ import {
   type ProjectChatContext,
 } from "@/lib/project-prompts";
 import {
+  STORAGE_ERROR_EVENT,
   getDueProjectMistakes,
   getProjectMistakes,
   getRetrievalAttempts,
@@ -44,11 +45,10 @@ import type {
 import { daysUntilExam, generateId, getTodayIsoDate } from "@/lib/utils";
 
 /**
- * Coach — one continuous session surface. Modes (Ask / Learn / Practice /
- * Review / Exam) are states of this page, not separate routes: Ask, Learn,
- * Practice, and Exam share the persistent training thread with mode-specific
- * coaching prompts; Review works the due queue with the confidence step and
- * FSRS grading. The right rail shows what Ivvy knows right now.
+ * Coach — one continuous session surface. Modes are states of this page, not
+ * separate routes: Ask, Learn, and Practice share the persistent training
+ * thread; Review works the due queue with the confidence step and FSRS grading.
+ * The right rail shows what Ivvy knows right now.
  */
 
 const MODES: { id: CoachMode; label: string }[] = [
@@ -56,7 +56,6 @@ const MODES: { id: CoachMode; label: string }[] = [
   { id: "learn", label: "Learn" },
   { id: "practice", label: "Practice" },
   { id: "review", label: "Review" },
-  { id: "exam", label: "Exam" },
 ];
 
 const LABEL =
@@ -72,6 +71,7 @@ const RATINGS: { rating: ReviewRating; label: string }[] = [
   { rating: "again", label: "Missed" },
   { rating: "hard", label: "Shaky" },
   { rating: "good", label: "Got it" },
+  { rating: "easy", label: "Easy" },
 ];
 
 const CHIP_ON =
@@ -88,10 +88,11 @@ function isCoachMode(value: string | null): value is CoachMode {
     value === "ask" ||
     value === "learn" ||
     value === "practice" ||
-    value === "review" ||
-    value === "exam"
+    value === "review"
   );
 }
+
+const DAILY_BRIEFING_STALE_MS = 10 * 60 * 60 * 1000;
 
 /** High-risk first, then oldest-first — the evidence loop's queue order. */
 function sortForReview(mistakes: Mistake[], dangerous: Set<string>): Mistake[] {
@@ -130,6 +131,37 @@ function formatDueDate(dueIso: string): string {
     month: "short",
     day: "numeric",
   });
+}
+
+function normalizeTopicName(value: string): string {
+  return value
+    .toLocaleLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function findTopicByName(topics: Topic[], name: string | null): Topic | null {
+  if (!name) return null;
+  const normalized = normalizeTopicName(name);
+  if (!normalized) return null;
+  return (
+    topics.find((topic) => normalizeTopicName(topic.name) === normalized) ??
+    topics.find((topic) => topic.id === name) ??
+    topics.find((topic) => {
+      const topicName = normalizeTopicName(topic.name);
+      return topicName.includes(normalized) || normalized.includes(topicName);
+    }) ??
+    null
+  );
+}
+
+function isStaleThread(lastMessageAt: string | null): boolean {
+  if (!lastMessageAt) return false;
+  const timestamp = new Date(lastMessageAt).getTime();
+  if (Number.isNaN(timestamp)) return false;
+  return Date.now() - timestamp > DAILY_BRIEFING_STALE_MS;
 }
 
 function buildContext(
@@ -199,6 +231,8 @@ function CoachContent({ projectId }: { projectId: string }) {
   const [activeTopicName, setActiveTopicName] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [confidence, setConfidence] = useState<ConfidenceLevel | null>(null);
+  const [continuePreviousThread, setContinuePreviousThread] = useState(false);
+  const [storageWarning, setStorageWarning] = useState<string | null>(null);
 
   // Review-mode state
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -222,6 +256,20 @@ function CoachContent({ projectId }: { projectId: string }) {
     setMistakesLoaded(true);
   }, [refreshMistakes]);
 
+  useEffect(() => {
+    function handleStorageError(event: Event) {
+      const detail = (event as CustomEvent<{ message?: string }>).detail;
+      setStorageWarning(
+        detail?.message ??
+          "Ivvy could not save to this browser. Export a backup before continuing."
+      );
+    }
+
+    window.addEventListener(STORAGE_ERROR_EVENT, handleStorageError);
+    return () =>
+      window.removeEventListener(STORAGE_ERROR_EVENT, handleStorageError);
+  }, []);
+
   const dueQueue = useMemo(
     () =>
       sortForReview(
@@ -240,6 +288,38 @@ function CoachContent({ projectId }: { projectId: string }) {
   const highRiskDueCount = dueQueue.filter((m) => dangerousIds.has(m.id))
     .length;
 
+  const recommendedTopicName = useMemo(() => {
+    if (activeTopicName) return activeTopicName;
+
+    const dueByTopic = topics
+      .map((topic) => ({
+        topic,
+        count: mistakes.filter(
+          (mistake) =>
+            mistake.topicId === topic.id && isScheduleDue(mistake.schedule)
+        ).length,
+      }))
+      .sort((a, b) => b.count - a.count)[0];
+    if (dueByTopic && dueByTopic.count > 0) return dueByTopic.topic.name;
+
+    const weakTopic = [...topics]
+      .filter((topic) => topic.isWeakTopic || topic.mistakeCount > 0)
+      .sort((a, b) => b.mistakeCount - a.mistakeCount)[0];
+    if (weakTopic) return weakTopic.name;
+
+    const materialTopicIds = new Set(
+      materials
+        .filter((material) => material.content.trim().length > 0)
+        .map((material) => material.topicId)
+    );
+    const topicWithMaterials = topics.find((topic) =>
+      materialTopicIds.has(topic.id)
+    );
+    return topicWithMaterials?.name ?? topics[0]?.name ?? null;
+  }, [activeTopicName, topics, mistakes, materials]);
+
+  const effectiveTopicName = activeTopicName ?? recommendedTopicName;
+
   // Initialize mode once data is ready: honor ?mode=, else recommend.
   useEffect(() => {
     if (mode !== null || !mistakesLoaded) return;
@@ -255,8 +335,9 @@ function CoachContent({ projectId }: { projectId: string }) {
   useEffect(() => {
     const requested = searchParams.get("topic");
     if (!requested) return;
-    if (topics.some((topic) => topic.name === requested)) {
-      setActiveTopicName(requested);
+    const match = findTopicByName(topics, requested);
+    if (match) {
+      setActiveTopicName(match.name);
     }
   }, [searchParams, topics]);
 
@@ -300,7 +381,7 @@ function CoachContent({ projectId }: { projectId: string }) {
         project,
         topics,
         materials,
-        activeTopicName,
+        effectiveTopicName,
         projectId
       );
       setInput("");
@@ -308,17 +389,21 @@ function CoachContent({ projectId }: { projectId: string }) {
       const result = await sendMessage(content, {
         systemPrompt: buildCoachModeSystemPrompt(mode),
         contextMessage: buildProjectContextMessage(context),
-        mistakeContext: { topics, activeTopicName },
+        mistakeContext: {
+          topics,
+          activeTopicName,
+          fallbackTopicName: effectiveTopicName,
+        },
       });
 
-      // Calibration: a rated answer in Practice/Exam is a retrieval attempt.
+      // Calibration: a rated answer in Practice is a retrieval attempt.
       if (
         result &&
         pendingConfidence !== null &&
-        (mode === "practice" || mode === "exam")
+        mode === "practice"
       ) {
         const topicId =
-          topics.find((t) => t.name === activeTopicName)?.id ?? null;
+          findTopicByName(topics, effectiveTopicName)?.id ?? null;
         recordRetrievalAttempt(projectId, {
           mistakeId: result.mistakeId ?? `chat-${generateId()}`,
           topicId,
@@ -336,6 +421,7 @@ function CoachContent({ projectId }: { projectId: string }) {
       topics,
       materials,
       activeTopicName,
+      effectiveTopicName,
       projectId,
       sendMessage,
       refreshMistakes,
@@ -345,8 +431,8 @@ function CoachContent({ projectId }: { projectId: string }) {
   const handleBegin = useCallback(() => {
     if (!mode) return;
     if (mode === "review") return;
-    void handleSend(coachKickoffMessage(mode, activeTopicName));
-  }, [mode, activeTopicName, handleSend]);
+    void handleSend(coachKickoffMessage(mode, effectiveTopicName));
+  }, [mode, effectiveTopicName, handleSend]);
 
   // ── Review mode ─────────────────────────────────────────────────────────────
 
@@ -412,11 +498,29 @@ function CoachContent({ projectId }: { projectId: string }) {
 
   const base = `/projects/${projectId}`;
   const hasMaterials = materialsWithContent.length > 0;
-  const showConfidence = mode === "practice" || mode === "exam";
+  const showConfidence = mode === "practice";
   const reviewedCount = reviewedThisSession.size;
+  const threadIsStale = isStaleThread(messages.at(-1)?.timestamp ?? null);
+  const showBriefing =
+    messages.length === 0 || (threadIsStale && !continuePreviousThread);
 
   return (
     <ProjectShell projectId={projectId} active="coach" width="max-w-6xl">
+      {storageWarning ? (
+        <div className="mb-4 rounded-lg border border-[#D8D3C8] bg-white px-4 py-3 text-sm text-[#1A1A17]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p>{storageWarning}</p>
+            <button
+              type="button"
+              onClick={() => setStorageWarning(null)}
+              className="text-xs font-medium text-[#1E4634] underline-offset-2 hover:underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {/* Mode switcher */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E7E3DA] pb-4">
         <div
@@ -644,7 +748,7 @@ function CoachContent({ projectId }: { projectId: string }) {
                       <p className="mb-2 text-xs font-medium text-[#56524B]">
                         How did that go?
                       </p>
-                      <div className="grid gap-2 sm:grid-cols-3">
+                      <div className="grid gap-2 sm:grid-cols-4">
                         {RATINGS.map(({ rating, label }) => (
                           <button
                             key={rating}
@@ -670,9 +774,9 @@ function CoachContent({ projectId }: { projectId: string }) {
               </div>
             ) : null
           ) : (
-            /* ── ASK / LEARN / PRACTICE / EXAM — the training thread ── */
+            /* ── ASK / LEARN / PRACTICE — the training thread ── */
             <div className="flex min-h-[32rem] flex-col overflow-hidden rounded-xl border border-[#E7E3DA] bg-white">
-              {messages.length === 0 ? (
+              {showBriefing ? (
                 /* Session briefing — never an empty chat box */
                 <div className="flex flex-1 flex-col justify-center px-6 py-12 sm:px-10">
                   <p className={LABEL}>Today&apos;s session</p>
@@ -692,7 +796,11 @@ function CoachContent({ projectId }: { projectId: string }) {
                       <p className="mt-2 max-w-md text-sm leading-relaxed text-[#56524B]">
                         {dueCount > 0
                           ? "Reviews come first; they fade if they wait. After that, Ivvy trains your weakest topic."
-                          : "Ivvy asks one question at a time, saves what you miss, and brings it back when it's due."}
+                          : `Ivvy asks one question at a time${
+                              effectiveTopicName
+                                ? `, starting with ${effectiveTopicName}`
+                                : ""
+                            }, saves what you miss, and brings it back when it's due.`}
                       </p>
                       <div className="mt-6 flex flex-wrap items-center gap-3">
                         {dueCount > 0 ? (
@@ -701,7 +809,7 @@ function CoachContent({ projectId }: { projectId: string }) {
                             onClick={() => selectMode("review")}
                             className={PRIMARY}
                           >
-                            Start with reviews
+                            Start today&apos;s session
                           </button>
                         ) : (
                           <button
@@ -710,7 +818,7 @@ function CoachContent({ projectId }: { projectId: string }) {
                             disabled={isSending}
                             className={PRIMARY}
                           >
-                            {isSending ? "Starting…" : "Begin"}
+                            {isSending ? "Starting…" : "Start today's session"}
                           </button>
                         )}
                         {dueCount > 0 ? (
@@ -721,6 +829,15 @@ function CoachContent({ projectId }: { projectId: string }) {
                             className={CHIP_OFF}
                           >
                             {isSending ? "Starting…" : `Skip to ${mode}`}
+                          </button>
+                        ) : null}
+                        {messages.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setContinuePreviousThread(true)}
+                            className={CHIP_OFF}
+                          >
+                            Continue previous thread
                           </button>
                         ) : null}
                       </div>
@@ -746,6 +863,15 @@ function CoachContent({ projectId }: { projectId: string }) {
                             className={CHIP_OFF}
                           >
                             Ask anyway
+                          </button>
+                        ) : null}
+                        {messages.length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setContinuePreviousThread(true)}
+                            className={CHIP_OFF}
+                          >
+                            Continue previous thread
                           </button>
                         ) : null}
                       </div>
@@ -807,8 +933,7 @@ function CoachContent({ projectId }: { projectId: string }) {
                     </button>
                   </div>
                 ) : null}
-                {(mode === "practice" || mode === "exam") &&
-                messages.length > 0 ? (
+                {mode === "practice" && messages.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"

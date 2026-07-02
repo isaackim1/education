@@ -48,6 +48,13 @@ export default function NewProjectPage() {
       examDate,
       targetGrade: targetGrade.trim() || "Pass",
     });
+    if (!project) {
+      setSubmitting(false);
+      setError(
+        "Ivvy could not save this project in your browser. Export a backup or free storage, then try again."
+      );
+      return;
+    }
     router.push(`/projects/${project.id}`);
   }
 

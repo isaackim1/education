@@ -61,6 +61,7 @@ function toApiMessages(
 export type ProjectMistakeContext = {
   topics: Topic[];
   activeTopicName: string | null;
+  fallbackTopicName?: string | null;
 };
 
 export type SendMessageOptions = {
@@ -88,6 +89,12 @@ function parseMistakeCategory(value: unknown): MistakeCategory {
     return value;
   }
   return "conceptual";
+}
+
+function parseMistakeTopicName(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 export function useChat(projectId: string) {
@@ -189,6 +196,9 @@ export function useChat(projectId: string) {
         const mistakeCategory = parseMistakeCategory(
           "mistakeCategory" in data ? data.mistakeCategory : undefined
         );
+        const mistakeTopicName = parseMistakeTopicName(
+          "mistakeTopicName" in data ? data.mistakeTopicName : undefined
+        );
 
         let agentMessage = createChatMessage(
           "agent",
@@ -203,8 +213,10 @@ export function useChat(projectId: string) {
             studentAnswer: trimmed,
             agentReply: data.reply,
             mistakeCategory,
+            agentTopicName: mistakeTopicName,
             topics: options.mistakeContext.topics,
             activeTopicName: options.mistakeContext.activeTopicName,
+            fallbackTopicName: options.mistakeContext.fallbackTopicName ?? null,
             messagesBeforeAgent: withStudent.messages,
           });
           const mistakeSaved = saveProjectMistake(projectId, mistake);

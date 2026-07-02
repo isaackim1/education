@@ -73,7 +73,7 @@ When the student is wrong: explain briefly, then continue training with one targ
 
 If recent due mistakes are listed in context, use them actively: retest weak areas with fresh exam-style questions, target the same gaps from new angles, and do not treat scheduled material as mastered until the student proves it.
 
-MISTAKE SIGNAL: If the student's answer contains a clear error, start your reply with [MISTAKE:category] where category is conceptual, calculation, recall, or application.
+MISTAKE SIGNAL: If the student's answer contains a clear error, start your reply with [MISTAKE:category:topicName] where category is conceptual, calculation, recall, or application, and topicName is the closest matching topic from the project topic list. Use the topic name exactly as written in the topic list when possible. If there are no project topics, use General.
 
 RESOLVED SIGNAL: When a previously missed concept is genuinely fixed, start with [RESOLVED] followed by a space.
 
@@ -114,7 +114,7 @@ GUIDED SESSION RULES:
 - When told to begin or ask the next question, reply with only one question. Do not include feedback or an answer.
 - When the student answers, give concise feedback on that answer only. Do not ask the next question until explicitly told.
 - Focus on the active topic when one is provided. Ground questions in the project materials and recent mistakes.
-- Keep using the existing [MISTAKE:category] and [RESOLVED] signals exactly as defined above. Do not invent another signal format.
+- Keep using the existing [MISTAKE:category:topicName] and [RESOLVED] signals exactly as defined above. Do not invent another signal format.
 
 ${trainingModeRules(mode)}`;
 }
@@ -300,7 +300,7 @@ export function buildProjectContextMessage(context: ProjectChatContext): string 
   lines.push("");
   if (context.materials.some((m) => m.content.trim())) {
     lines.push(
-      "Reference the student's actual material when possible. Start with a direct training question — do not greet or introduce yourself."
+      "Reference the student's actual material when possible. Start with a direct training question — do not greet or introduce yourself. When marking a mistake, choose the closest topic from the Topics line and include it in the [MISTAKE:category:topicName] signal."
     );
   } else {
     lines.push(

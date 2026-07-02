@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CenteredNotice,
   primaryAction,
@@ -19,6 +19,11 @@ import {
   signOut,
   type LocalUser,
 } from "@/lib/session";
+import {
+  STORAGE_ERROR_EVENT,
+  exportProjectData,
+  importProjectData,
+} from "@/lib/project-storage";
 
 function formatExamDate(dateString: string): string {
   const date = new Date(`${dateString}T00:00:00`);
@@ -54,9 +59,12 @@ function ReadinessCell({ summary }: { summary: ProjectSummary }) {
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const { projects, isLoaded, deleteProject } = useProjects();
+  const { projects, isLoaded, deleteProject, refreshProjects } = useProjects();
   const [user, setUser] = useState<LocalUser | null>(null);
   const [sessionChecked, setSessionChecked] = useState(false);
+  const [storageWarning, setStorageWarning] = useState<string | null>(null);
+  const [backupStatus, setBackupStatus] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -64,6 +72,20 @@ export default function ProjectsPage() {
     setUser(session);
     setSessionChecked(true);
   }, [isLoaded, projects.length, router]);
+
+  useEffect(() => {
+    function handleStorageError(event: Event) {
+      const detail = (event as CustomEvent<{ message?: string }>).detail;
+      setStorageWarning(
+        detail?.message ??
+          "Ivvy could not save to this browser. Export a backup before continuing."
+      );
+    }
+
+    window.addEventListener(STORAGE_ERROR_EVENT, handleStorageError);
+    return () =>
+      window.removeEventListener(STORAGE_ERROR_EVENT, handleStorageError);
+  }, []);
 
   const summaries = useMemo(
     () =>
@@ -109,6 +131,32 @@ export default function ProjectsPage() {
       )
     ) {
       deleteProject(summary.project.id);
+    }
+  }
+
+  function handleExport() {
+    const exported = exportProjectData();
+    setBackupStatus(
+      exported
+        ? "Backup downloaded."
+        : "Could not export from this browser."
+    );
+  }
+
+  async function handleImport(file: File | undefined) {
+    if (!file) return;
+    try {
+      const imported = importProjectData(await file.text());
+      if (!imported) {
+        setBackupStatus("That file is not a valid Ivvy backup.");
+        return;
+      }
+      refreshProjects();
+      setBackupStatus("Backup imported. Your local Ivvy data has been restored.");
+    } catch {
+      setBackupStatus("Could not read that backup file.");
+    } finally {
+      if (importInputRef.current) importInputRef.current.value = "";
     }
   }
 
@@ -158,6 +206,21 @@ export default function ProjectsPage() {
       </header>
 
       <div className="relative z-10 mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-12">
+        {storageWarning ? (
+          <div className="mb-6 rounded-lg border border-[#D8D3C8] bg-white px-4 py-3 text-sm text-[#1A1A17]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p>{storageWarning}</p>
+              <button
+                type="button"
+                onClick={() => setStorageWarning(null)}
+                className="text-xs font-medium text-[#1E4634] underline-offset-2 hover:underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         {/* Header row */}
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -168,10 +231,39 @@ export default function ProjectsPage() {
               {metaParts.join(" · ")}
             </p>
           </div>
-          <Link href="/projects/new" className={primaryAction}>
-            New exam project
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleExport}
+              className="inline-flex h-10 items-center justify-center rounded-md border border-[#D8D3C8] px-4 text-sm font-medium text-[#1A1A17] transition-colors hover:bg-[#EFEBE2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4634] focus-visible:ring-offset-2"
+            >
+              Export backup
+            </button>
+            <button
+              type="button"
+              onClick={() => importInputRef.current?.click()}
+              className="inline-flex h-10 items-center justify-center rounded-md border border-[#D8D3C8] px-4 text-sm font-medium text-[#1A1A17] transition-colors hover:bg-[#EFEBE2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1E4634] focus-visible:ring-offset-2"
+            >
+              Import backup
+            </button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={(event) => void handleImport(event.target.files?.[0])}
+            />
+            <Link href="/projects/new" className={primaryAction}>
+              New exam project
+            </Link>
+          </div>
         </div>
+
+        {backupStatus ? (
+          <p className="mt-3 text-sm text-[#56524B]" role="status">
+            {backupStatus}
+          </p>
+        ) : null}
 
         {/* Needs attention — at most three sentence-rows */}
         {attention.length > 0 ? (

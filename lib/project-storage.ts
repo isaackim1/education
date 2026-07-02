@@ -23,6 +23,9 @@ import { normalizeRetrievalAttempt } from "./calibration";
 import { addDaysToDate, getTodayIsoDate } from "./utils";
 
 const PROJECTS_KEY = "sc_projects";
+const BACKUP_VERSION = 1;
+const IVVY_BACKUP_PREFIX = "ivvy-backup";
+export const STORAGE_ERROR_EVENT = "ivvy-storage-error";
 
 function projectTopicsKey(projectId: string): string {
   return `sc_topics_${projectId}`;
@@ -170,6 +173,15 @@ function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
+function notifyStorageError(message: string): void {
+  if (!isBrowser()) return;
+  window.dispatchEvent(
+    new CustomEvent(STORAGE_ERROR_EVENT, {
+      detail: { message },
+    })
+  );
+}
+
 function readJson<T>(key: string, fallback: T): T {
   if (!isBrowser()) return fallback;
   try {
@@ -187,7 +199,88 @@ function writeJson<T>(key: string, value: T): boolean {
     window.localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch {
-    // Swallow quota / serialization errors; callers cannot recover on SSR.
+    notifyStorageError(
+      "Ivvy could not save to this browser. Export a backup and free storage before continuing."
+    );
+    return false;
+  }
+}
+
+function shouldExportKey(key: string): boolean {
+  return key.startsWith("sc_") || key === "ivvy:session";
+}
+
+type IvvyBackup = {
+  app: "ivvy";
+  version: number;
+  exportedAt: string;
+  keys: Record<string, string>;
+};
+
+function isIvvyBackup(value: unknown): value is IvvyBackup {
+  return (
+    isRecord(value) &&
+    value.app === "ivvy" &&
+    typeof value.version === "number" &&
+    isRecord(value.keys) &&
+    Object.values(value.keys).every((entry) => typeof entry === "string")
+  );
+}
+
+export function exportProjectData(): boolean {
+  if (!isBrowser()) return false;
+
+  const keys: Record<string, string> = {};
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index);
+    if (!key || !shouldExportKey(key)) continue;
+    const value = window.localStorage.getItem(key);
+    if (value !== null) keys[key] = value;
+  }
+
+  const backup: IvvyBackup = {
+    app: "ivvy",
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    keys,
+  };
+  const json = JSON.stringify(backup, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${IVVY_BACKUP_PREFIX}-${new Date()
+    .toISOString()
+    .slice(0, 10)}.json`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.URL.revokeObjectURL(url);
+  return true;
+}
+
+export function importProjectData(rawJson: string): boolean {
+  if (!isBrowser()) return false;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawJson);
+  } catch {
+    return false;
+  }
+
+  if (!isIvvyBackup(parsed)) return false;
+
+  try {
+    for (const [key, value] of Object.entries(parsed.keys)) {
+      if (!shouldExportKey(key)) continue;
+      window.localStorage.setItem(key, value);
+    }
+    return true;
+  } catch {
+    notifyStorageError(
+      "Ivvy could not import the backup into this browser. Free storage and try again."
+    );
     return false;
   }
 }
@@ -208,11 +301,11 @@ export function getProjects(): StudyProject[] {
   return Array.isArray(raw) ? (raw as StudyProject[]) : [];
 }
 
-export function saveProjects(projects: StudyProject[]): void {
-  writeJson(PROJECTS_KEY, projects);
+export function saveProjects(projects: StudyProject[]): boolean {
+  return writeJson(PROJECTS_KEY, projects);
 }
 
-export function saveProject(project: StudyProject): void {
+export function saveProject(project: StudyProject): boolean {
   const projects = getProjects();
   const index = projects.findIndex((p) => p.id === project.id);
   if (index >= 0) {
@@ -220,7 +313,7 @@ export function saveProject(project: StudyProject): void {
   } else {
     projects.push(project);
   }
-  saveProjects(projects);
+  return saveProjects(projects);
 }
 
 export function getProject(projectId: string): StudyProject | null {
@@ -239,8 +332,8 @@ export function getProjectTopics(projectId: string): Topic[] {
   return Array.isArray(raw) ? (raw as Topic[]) : [];
 }
 
-export function saveProjectTopics(projectId: string, topics: Topic[]): void {
-  writeJson(projectTopicsKey(projectId), topics);
+export function saveProjectTopics(projectId: string, topics: Topic[]): boolean {
+  return writeJson(projectTopicsKey(projectId), topics);
 }
 
 // ─── Project materials ───────────────────────────────────────────────────────
@@ -253,8 +346,8 @@ export function getProjectMaterials(projectId: string): Material[] {
 export function saveProjectMaterials(
   projectId: string,
   materials: Material[]
-): void {
-  writeJson(projectMaterialsKey(projectId), materials);
+): boolean {
+  return writeJson(projectMaterialsKey(projectId), materials);
 }
 
 export function saveMaterial(material: Material): void {
@@ -281,8 +374,8 @@ export function getProjectChat(projectId: string): Chat | null {
   return readJson<Chat | null>(projectChatKey(projectId), null);
 }
 
-export function saveProjectChat(projectId: string, chat: Chat): void {
-  writeJson(projectChatKey(projectId), chat);
+export function saveProjectChat(projectId: string, chat: Chat): boolean {
+  return writeJson(projectChatKey(projectId), chat);
 }
 
 // ─── Project mistakes ────────────────────────────────────────────────────────
@@ -481,17 +574,50 @@ function isMistakeCategory(value: string): value is MistakeCategory {
 
 export function resolveProjectMistakeTopic(
   topics: Topic[],
-  activeTopicName: string | null
+  activeTopicName: string | null,
+  agentTopicName: string | null = null,
+  fallbackTopicName: string | null = null
 ): { topicId: string; topicName: string } {
-  if (activeTopicName) {
-    const match = topics.find((topic) => topic.name === activeTopicName);
+  const candidates = [activeTopicName, agentTopicName, fallbackTopicName].filter(
+    (value): value is string => typeof value === "string" && value.trim().length > 0
+  );
+
+  for (const candidate of candidates) {
+    const match = findMatchingTopic(topics, candidate);
     if (match) {
       return { topicId: match.id, topicName: match.name };
     }
-    return { topicId: "general", topicName: activeTopicName };
   }
 
   return { topicId: "general", topicName: "General" };
+}
+
+function normalizeTopicName(value: string): string {
+  return value
+    .toLocaleLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function findMatchingTopic(topics: Topic[], name: string): Topic | null {
+  const normalized = normalizeTopicName(name);
+  if (!normalized) return null;
+
+  const exact = topics.find(
+    (topic) => normalizeTopicName(topic.name) === normalized
+  );
+  if (exact) return exact;
+
+  const contains = topics.find((topic) => {
+    const topicName = normalizeTopicName(topic.name);
+    return (
+      topicName.length > 0 &&
+      (topicName.includes(normalized) || normalized.includes(topicName))
+    );
+  });
+  return contains ?? null;
 }
 
 const MAX_CORRECT_APPROACH_CHARS = 400;
@@ -516,8 +642,10 @@ export type CreateProjectMistakeInput = {
   studentAnswer: string;
   agentReply: string;
   mistakeCategory: string;
+  agentTopicName?: string | null;
   topics: Topic[];
   activeTopicName: string | null;
+  fallbackTopicName?: string | null;
   messagesBeforeAgent: ChatMessage[];
 };
 
@@ -526,7 +654,9 @@ export function createProjectMistakeFromChat(
 ): Mistake {
   const { topicId, topicName } = resolveProjectMistakeTopic(
     input.topics,
-    input.activeTopicName
+    input.activeTopicName,
+    input.agentTopicName ?? null,
+    input.fallbackTopicName ?? null
   );
   const category = isMistakeCategory(input.mistakeCategory)
     ? input.mistakeCategory

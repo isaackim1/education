@@ -65,9 +65,12 @@ export async function POST(request: Request) {
       ? rawReply.slice(resolvedMatch[0].length).trim()
       : rawReply;
 
-    const mistakeMatch = afterResolved.match(/^\[MISTAKE(?::(\w+))?\]\s*/i);
+    const mistakeMatch = afterResolved.match(
+      /^\[MISTAKE(?::(\w+)(?::([^\]]+))?)?\]\s*/i
+    );
     const flaggedMistake = !resolved && Boolean(mistakeMatch);
     const rawCategory = mistakeMatch?.[1]?.toLowerCase() ?? "";
+    const mistakeTopicName = mistakeMatch?.[2]?.trim() || null;
     const mistakeCategory: MistakeCategory = isMistakeCategory(rawCategory)
       ? rawCategory
       : "conceptual";
@@ -79,7 +82,13 @@ export async function POST(request: Request) {
       throw new Error("Agent returned no text");
     }
 
-    return NextResponse.json({ reply, flaggedMistake, mistakeCategory, resolved });
+    return NextResponse.json({
+      reply,
+      flaggedMistake,
+      mistakeCategory,
+      mistakeTopicName,
+      resolved,
+    });
   } catch {
     return NextResponse.json({ error: "Agent failed" }, { status: 500 });
   }
