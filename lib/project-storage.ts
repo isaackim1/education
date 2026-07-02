@@ -1,11 +1,13 @@
 import type {
   Chat,
   ChatMessage,
+  ConfidenceLevel,
   LearningProfile,
   Material,
   Mistake,
   MistakeCategory,
   ProjectGoals,
+  RetrievalAttempt,
   ReviewRating,
   StudyProject,
   Topic,
@@ -17,6 +19,7 @@ import {
   isValidSchedule,
   newSchedule,
 } from "./scheduling";
+import { normalizeRetrievalAttempt } from "./calibration";
 import { addDaysToDate, getTodayIsoDate } from "./utils";
 
 const PROJECTS_KEY = "sc_projects";
@@ -47,6 +50,10 @@ function projectGoalsKey(projectId: string): string {
 
 function trainingLogKey(projectId: string): string {
   return `sc_training_log_${projectId}`;
+}
+
+function retrievalAttemptsKey(projectId: string): string {
+  return `sc_attempts_${projectId}`;
 }
 
 const MAX_WEEKLY_SESSION_GOAL = 50;
@@ -379,28 +386,51 @@ export function updateProjectMistake(
 /**
  * Grade a review and reschedule the mistake. Keeps the legacy reviewed/count/
  * date fields in sync so older UI keeps working while queues run off `schedule`.
+ *
+ * When the student tapped a pre-answer `confidence`, this also records a
+ * RetrievalAttempt for the calibration score, and closes the loop (PLAN Step 5):
+ * a confidently-wrong answer — the most dangerous gap — is pulled straight back
+ * to today so it resurfaces in the very next session.
  */
 export function gradeProjectMistake(
   projectId: string,
   mistakeId: string,
-  rating: ReviewRating
+  rating: ReviewRating,
+  confidence?: ConfidenceLevel
 ): boolean {
   const current = getProjectMistakes(projectId).find(
     (mistake) => mistake.id === mistakeId
   );
   if (!current) return false;
   const today = getTodayIsoDate();
-  const schedule = gradeSchedule(
+  const graded = gradeSchedule(
     current.schedule ?? newSchedule(today),
     rating,
     today
   );
+
+  const wasCorrect = rating !== "again";
+  const overconfidentMiss = confidence === 3 && !wasCorrect;
+  const schedule = overconfidentMiss
+    ? { ...graded, due: today, state: "relearning" as const }
+    : graded;
+
+  if (confidence !== undefined) {
+    recordRetrievalAttempt(projectId, {
+      mistakeId,
+      topicId: current.topicId || null,
+      predictedConfidence: confidence,
+      wasCorrect,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
   return updateProjectMistake(projectId, mistakeId, {
     schedule,
     reviewed: true,
     reviewCount: schedule.reps,
     lastReviewed: new Date().toISOString(),
-    nextReviewDate: schedule.due,
+    nextReviewDate: overconfidentMiss ? today : schedule.due,
   });
 }
 
@@ -593,6 +623,33 @@ export function deleteTrainingSession(
   );
 }
 
+// ─── Retrieval attempts (calibration) ────────────────────────────────────────
+
+// Calibration only needs recent history; cap storage so a heavy reviewer never
+// blows the localStorage quota.
+const MAX_RETRIEVAL_ATTEMPTS = 500;
+
+export function getRetrievalAttempts(projectId: string): RetrievalAttempt[] {
+  const raw = readJson<unknown>(retrievalAttemptsKey(projectId), []);
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map(normalizeRetrievalAttempt)
+    .filter((attempt): attempt is RetrievalAttempt => attempt !== null);
+}
+
+export function recordRetrievalAttempt(
+  projectId: string,
+  attempt: RetrievalAttempt
+): boolean {
+  const attempts = getRetrievalAttempts(projectId);
+  attempts.push(attempt);
+  const trimmed =
+    attempts.length > MAX_RETRIEVAL_ATTEMPTS
+      ? attempts.slice(attempts.length - MAX_RETRIEVAL_ATTEMPTS)
+      : attempts;
+  return writeJson(retrievalAttemptsKey(projectId), trimmed);
+}
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 export function clearProjectData(projectId: string): void {
@@ -603,4 +660,5 @@ export function clearProjectData(projectId: string): void {
   removeItem(projectProfileKey(projectId));
   removeItem(projectGoalsKey(projectId));
   removeItem(trainingLogKey(projectId));
+  removeItem(retrievalAttemptsKey(projectId));
 }

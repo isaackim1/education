@@ -18,7 +18,9 @@ import {
 import {
   getDueProjectMistakes,
   getProjectMistakes,
+  getRetrievalAttempts,
 } from "@/lib/project-storage";
+import { getOverconfidentMistakeIds } from "@/lib/calibration";
 import type { Material, Mistake, StudyProject, Topic } from "@/lib/types";
 import { daysUntilExam } from "@/lib/utils";
 
@@ -54,11 +56,17 @@ function truncateForMessage(text: string, maxChars: number): string {
 }
 
 function getRecentDueMistakes(projectId: string) {
+  // Evidence loop: a mistake the student got wrong while feeling certain is the
+  // most dangerous gap, so the next training session leads with it. Recency
+  // breaks ties within each group.
+  const dangerous = getOverconfidentMistakeIds(getRetrievalAttempts(projectId));
   return getDueProjectMistakes(projectId)
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
+    .sort((a, b) => {
+      const aRank = dangerous.has(a.id) ? 0 : 1;
+      const bRank = dangerous.has(b.id) ? 0 : 1;
+      if (aRank !== bRank) return aRank - bRank;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    })
     .slice(0, 3)
     .map((mistake) => ({
       topicName: mistake.topicName,

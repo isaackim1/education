@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ActivityGrid from "@/components/project/dashboard/ActivityGrid";
+import CalibrationCard from "@/components/project/dashboard/CalibrationCard";
 import ReadinessBand from "@/components/project/dashboard/ReadinessBand";
 import ReviewProgressRing from "@/components/project/dashboard/ReviewProgressRing";
 import TodaysPlan from "@/components/project/dashboard/TodaysPlan";
@@ -35,9 +36,14 @@ import {
   Tag,
 } from "@/components/ui/primitives";
 import { Reveal } from "@/components/ui/motion";
-import { getProjectChat, getProjectMistakes } from "@/lib/project-storage";
+import {
+  getProjectChat,
+  getProjectMistakes,
+  getRetrievalAttempts,
+} from "@/lib/project-storage";
+import { computeCalibration } from "@/lib/calibration";
 import { isScheduleDue } from "@/lib/scheduling";
-import type { Chat, Mistake } from "@/lib/types";
+import type { Chat, Mistake, RetrievalAttempt } from "@/lib/types";
 
 function formatDate(dateString: string): string {
   const date = new Date(`${dateString}T00:00:00`);
@@ -70,11 +76,13 @@ export default function ProjectPage({
   const { sessions, isLoaded: logLoaded } = useTrainingLog(params.projectId);
   const [mistakes, setMistakes] = useState<Mistake[]>([]);
   const [chat, setChat] = useState<Chat | null>(null);
+  const [attempts, setAttempts] = useState<RetrievalAttempt[]>([]);
   const [dashboardDataLoaded, setDashboardDataLoaded] = useState(false);
 
   const refreshDashboardData = useCallback(() => {
     setMistakes(getProjectMistakes(params.projectId));
     setChat(getProjectChat(params.projectId));
+    setAttempts(getRetrievalAttempts(params.projectId));
   }, [params.projectId]);
 
   useEffect(() => {
@@ -94,6 +102,7 @@ export default function ProjectPage({
     () => computeTopicCoverage(topics, materials, mistakes),
     [topics, materials, mistakes]
   );
+  const calibration = useMemo(() => computeCalibration(attempts), [attempts]);
   const weeklyProgress = useMemo(
     () => computeWeeklyProgress(goals, sessions, mistakes),
     [goals, sessions, mistakes]
@@ -268,6 +277,13 @@ export default function ProjectPage({
         <Reveal delay={400} className="lg:col-span-12">
           <ActivityGrid cells={activity} />
         </Reveal>
+
+        {/* Calibration — only once the student has rated at least one answer */}
+        {calibration.attemptCount > 0 ? (
+          <Reveal delay={440} className="lg:col-span-12">
+            <CalibrationCard metrics={calibration} topics={topics} />
+          </Reveal>
+        ) : null}
 
         {/* Coverage + goals rail */}
         <Reveal delay={480} className="h-full lg:col-span-8">

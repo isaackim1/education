@@ -8,10 +8,12 @@ import { PageHeader } from "@/components/ui/primitives";
 import { useProject } from "@/hooks/useProject";
 import {
   getProjectMistakes,
+  getRetrievalAttempts,
   gradeProjectMistake,
 } from "@/lib/project-storage";
+import { getOverconfidentMistakeIds } from "@/lib/calibration";
 import { isScheduleDue } from "@/lib/scheduling";
-import type { Mistake, ReviewRating } from "@/lib/types";
+import type { ConfidenceLevel, Mistake, ReviewRating } from "@/lib/types";
 
 const PRIMARY_ACTION =
   "inline-flex items-center justify-center gap-2 h-10 px-6 rounded-full bg-[#1A1A17] text-white text-sm font-medium transition-colors hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#1A1A17]";
@@ -40,10 +42,36 @@ const RATINGS: { rating: ReviewRating; label: string; hint: string }[] = [
   { rating: "good", label: "Got it", hint: "Recalled cleanly" },
 ];
 
-function sortForReview(mistakes: Mistake[]): Mistake[] {
-  return [...mistakes].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
+const CONFIDENCE_OPTIONS: {
+  value: ConfidenceLevel;
+  label: string;
+  hint: string;
+}[] = [
+  { value: 1, label: "Guessing", hint: "Little idea" },
+  { value: 2, label: "Fairly sure", hint: "Think I've got it" },
+  { value: 3, label: "Certain", hint: "Confident this is right" },
+];
+
+const CONFIDENCE_ON =
+  "inline-flex items-center h-9 px-4 rounded-full bg-[#1A1A17] text-white text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
+
+const CONFIDENCE_OFF =
+  "inline-flex items-center h-9 px-4 rounded-full border border-[#D8D3C8] text-sm text-[#1A1A17] transition-colors hover:bg-[#EFEBE2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2";
+
+/**
+ * Evidence loop: a mistake the student got wrong while feeling certain is the
+ * most dangerous gap, so it leads the queue. Everything else stays oldest-first.
+ */
+function sortForReview(
+  mistakes: Mistake[],
+  dangerous: Set<string>
+): Mistake[] {
+  return [...mistakes].sort((a, b) => {
+    const aRank = dangerous.has(a.id) ? 0 : 1;
+    const bRank = dangerous.has(b.id) ? 0 : 1;
+    if (aRank !== bRank) return aRank - bRank;
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  });
 }
 
 const UNICODE_LETTER_OR_NUMBER = new RegExp("[\\p{L}\\p{N}]", "u");
@@ -74,13 +102,21 @@ function ProjectReviewContent({
 
   const { project, isLoaded: projectLoaded } = useProject(projectId);
   const [mistakes, setMistakes] = useState<Mistake[]>([]);
+  const [dangerousIds, setDangerousIds] = useState<Set<string>>(new Set());
   const [mistakesLoaded, setMistakesLoaded] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [tryAgainAnswer, setTryAgainAnswer] = useState("");
   const [approachRevealed, setApproachRevealed] = useState(false);
+  const [confidence, setConfidence] = useState<ConfidenceLevel | null>(null);
+  // Cards graded in this sitting stay out of the queue even when a confidently-
+  // wrong miss is rescheduled to today — it resurfaces next session, not now.
+  const [reviewedThisSession, setReviewedThisSession] = useState<Set<string>>(
+    new Set()
+  );
 
   const refreshMistakes = useCallback(() => {
     setMistakes(getProjectMistakes(projectId));
+    setDangerousIds(getOverconfidentMistakeIds(getRetrievalAttempts(projectId)));
   }, [projectId]);
 
   useEffect(() => {
@@ -89,8 +125,14 @@ function ProjectReviewContent({
   }, [refreshMistakes]);
 
   const dueQueue = useMemo(
-    () => sortForReview(mistakes.filter((m) => isScheduleDue(m.schedule))),
-    [mistakes]
+    () =>
+      sortForReview(
+        mistakes.filter(
+          (m) => isScheduleDue(m.schedule) && !reviewedThisSession.has(m.id)
+        ),
+        dangerousIds
+      ),
+    [mistakes, dangerousIds, reviewedThisSession]
   );
 
   useEffect(() => {
@@ -111,6 +153,7 @@ function ProjectReviewContent({
   useEffect(() => {
     setTryAgainAnswer("");
     setApproachRevealed(false);
+    setConfidence(null);
   }, [currentMistake?.id]);
 
   function handleShowBetterApproach() {
@@ -121,15 +164,16 @@ function ProjectReviewContent({
   function handleGrade(rating: ReviewRating) {
     if (!currentMistake || !approachRevealed) return;
 
-    const nextQueue = dueQueue.filter(
-      (mistake) => mistake.id !== currentMistake.id
-    );
+    const gradedId = currentMistake.id;
+    const nextQueue = dueQueue.filter((mistake) => mistake.id !== gradedId);
     const nextIndex = nextIndexAfterReview(currentIndex, dueQueue.length);
 
-    gradeProjectMistake(projectId, currentMistake.id, rating);
+    gradeProjectMistake(projectId, gradedId, rating, confidence ?? undefined);
+    setReviewedThisSession((prev) => new Set(prev).add(gradedId));
     refreshMistakes();
     setTryAgainAnswer("");
     setApproachRevealed(false);
+    setConfidence(null);
 
     if (nextQueue.length === 0) {
       setCurrentIndex(0);
@@ -301,6 +345,37 @@ function ProjectReviewContent({
                   className={FIELD}
                 />
               </div>
+
+              {!approachRevealed ? (
+                <div>
+                  <p className="text-xs font-medium text-[#56524B] mb-2">
+                    Before you check — how sure are you?
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {CONFIDENCE_OPTIONS.map(({ value, label, hint }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() =>
+                          setConfidence((prev) =>
+                            prev === value ? null : value
+                          )
+                        }
+                        aria-pressed={confidence === value}
+                        title={hint}
+                        className={
+                          confidence === value ? CONFIDENCE_ON : CONFIDENCE_OFF
+                        }
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-[#7A766D] mt-2">
+                    Optional — this powers your calibration score.
+                  </p>
+                </div>
+              ) : null}
 
               {!approachRevealed ? (
                 <button

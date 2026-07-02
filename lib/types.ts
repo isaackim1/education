@@ -23,6 +23,23 @@ export type ReviewRating = "again" | "hard" | "good" | "easy";
 
 export type ScheduleState = "new" | "learning" | "review" | "relearning";
 
+/** Pre-answer confidence a student taps before feedback: guessing → certain. */
+export type ConfidenceLevel = 1 | 2 | 3;
+
+/**
+ * One graded retrieval where the student predicted their confidence before
+ * seeing feedback. The gap between `predictedConfidence` and `wasCorrect` is the
+ * calibration signal (illusion of competence / Dunning-Kruger). `wasCorrect`
+ * comes free from the FSRS grade: "again" ⇒ wrong, any other rating ⇒ right.
+ */
+export interface RetrievalAttempt {
+  mistakeId: string;
+  topicId: string | null;
+  predictedConfidence: ConfidenceLevel;
+  wasCorrect: boolean;
+  timestamp: string;
+}
+
 /**
  * Per-mistake memory state for the in-house FSRS scheduler. `stability` is the
  * number of days until recall probability drops to the desired retention;
