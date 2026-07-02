@@ -1,7 +1,7 @@
-import { redirect } from "next/navigation";
+import LandingPage from "@/components/marketing/LandingPage";
 
-// The root path is a thin entry point: it always sends visitors to the
-// marketing home at /home. No localStorage or project-based gating here.
+// The root path IS the marketing landing page: why Ivvy exists. The app
+// entrance is /login and /signup; the workspace lives under /projects.
 export default function RootPage() {
-  redirect("/home");
+  return <LandingPage />;
 }

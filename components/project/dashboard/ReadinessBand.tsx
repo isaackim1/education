@@ -1,3 +1,4 @@
+import { Eyebrow, Tag } from "@/components/ui/primitives";
 import type { ReadinessMetrics } from "@/lib/dashboard-metrics";
 
 const COMPONENT_LABELS: {
@@ -15,24 +16,27 @@ export default function ReadinessBand({
 }: {
   readiness: ReadinessMetrics;
 }) {
+  const bandTone =
+    readiness.displayScore >= 67
+      ? "green"
+      : readiness.displayScore >= 34
+        ? "yellow"
+        : "neutral";
+
   return (
-    <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
+    <section className="h-full rounded-xl border border-[#E7E3DA] bg-white p-6 sm:p-8">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#56524B]">
-            Preparation readiness
-          </p>
-          <div className="mt-2 flex items-baseline gap-3">
-            <p className="text-4xl font-semibold tracking-tight text-[#1A1A17]">
+          <Eyebrow>Preparation readiness</Eyebrow>
+          <div className="mt-3 flex items-baseline gap-3">
+            <p className="font-sans text-[46px] leading-none tracking-[-0.02em] text-[#1A1A17] tabular-nums">
               {readiness.displayScore}%
             </p>
-            <span className="inline-flex items-center rounded-full bg-[#EFEBE2] px-3 py-1 text-xs font-medium text-[#56524B]">
-              {readiness.band}
-            </span>
+            <Tag tone={bandTone}>{readiness.band}</Tag>
           </div>
-          <p className="mt-2 max-w-xl text-sm text-[#56524B]">
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#56524B]">
             A preparation estimate based on setup, materials, practice, and
-            reviewed mistakes. It is not a predicted grade.
+            whether saved mistakes are currently due. It is not a predicted grade.
           </p>
         </div>
       </div>
@@ -46,16 +50,21 @@ export default function ReadinessBand({
         aria-valuemax={100}
       >
         <div
-          className="h-full rounded-full bg-[#137333]"
+          className="h-full rounded-full bg-[#1E4634]"
           style={{ width: `${readiness.displayScore}%` }}
         />
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {COMPONENT_LABELS.map(({ key, label }) => (
-          <div key={key} className="rounded-xl bg-[#FAF8F4] px-3 py-3">
-            <p className="text-xs text-[#56524B]">{label}</p>
-            <p className="mt-1 text-sm font-semibold text-[#1A1A17]">
+          <div
+            key={key}
+            className="rounded-xl border border-[#E7E3DA] bg-[#FAF8F4] px-3 py-3"
+          >
+            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#7A766D]">
+              {label}
+            </p>
+            <p className="mt-1.5 font-mono text-sm text-[#1A1A17] tabular-nums">
               {Math.round(readiness.components[key] * 100)}%
             </p>
           </div>

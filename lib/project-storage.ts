@@ -1,17 +1,31 @@
 import type {
   Chat,
   ChatMessage,
+  ConfidenceLevel,
   LearningProfile,
   Material,
   Mistake,
   MistakeCategory,
   ProjectGoals,
+  RetrievalAttempt,
+  ReviewRating,
   StudyProject,
   Topic,
   TrainingSession,
 } from "./types";
+import {
+  gradeSchedule,
+  isScheduleDue,
+  isValidSchedule,
+  newSchedule,
+} from "./scheduling";
+import { normalizeRetrievalAttempt } from "./calibration";
+import { addDaysToDate, getTodayIsoDate } from "./utils";
 
 const PROJECTS_KEY = "sc_projects";
+const BACKUP_VERSION = 1;
+const IVVY_BACKUP_PREFIX = "ivvy-backup";
+export const STORAGE_ERROR_EVENT = "ivvy-storage-error";
 
 function projectTopicsKey(projectId: string): string {
   return `sc_topics_${projectId}`;
@@ -39,6 +53,10 @@ function projectGoalsKey(projectId: string): string {
 
 function trainingLogKey(projectId: string): string {
   return `sc_training_log_${projectId}`;
+}
+
+function retrievalAttemptsKey(projectId: string): string {
+  return `sc_attempts_${projectId}`;
 }
 
 const MAX_WEEKLY_SESSION_GOAL = 50;
@@ -155,6 +173,15 @@ function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
+function notifyStorageError(message: string): void {
+  if (!isBrowser()) return;
+  window.dispatchEvent(
+    new CustomEvent(STORAGE_ERROR_EVENT, {
+      detail: { message },
+    })
+  );
+}
+
 function readJson<T>(key: string, fallback: T): T {
   if (!isBrowser()) return fallback;
   try {
@@ -172,7 +199,88 @@ function writeJson<T>(key: string, value: T): boolean {
     window.localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch {
-    // Swallow quota / serialization errors; callers cannot recover on SSR.
+    notifyStorageError(
+      "Ivvy could not save to this browser. Export a backup and free storage before continuing."
+    );
+    return false;
+  }
+}
+
+function shouldExportKey(key: string): boolean {
+  return key.startsWith("sc_") || key === "ivvy:session";
+}
+
+type IvvyBackup = {
+  app: "ivvy";
+  version: number;
+  exportedAt: string;
+  keys: Record<string, string>;
+};
+
+function isIvvyBackup(value: unknown): value is IvvyBackup {
+  return (
+    isRecord(value) &&
+    value.app === "ivvy" &&
+    typeof value.version === "number" &&
+    isRecord(value.keys) &&
+    Object.values(value.keys).every((entry) => typeof entry === "string")
+  );
+}
+
+export function exportProjectData(): boolean {
+  if (!isBrowser()) return false;
+
+  const keys: Record<string, string> = {};
+  for (let index = 0; index < window.localStorage.length; index += 1) {
+    const key = window.localStorage.key(index);
+    if (!key || !shouldExportKey(key)) continue;
+    const value = window.localStorage.getItem(key);
+    if (value !== null) keys[key] = value;
+  }
+
+  const backup: IvvyBackup = {
+    app: "ivvy",
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    keys,
+  };
+  const json = JSON.stringify(backup, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${IVVY_BACKUP_PREFIX}-${new Date()
+    .toISOString()
+    .slice(0, 10)}.json`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.URL.revokeObjectURL(url);
+  return true;
+}
+
+export function importProjectData(rawJson: string): boolean {
+  if (!isBrowser()) return false;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawJson);
+  } catch {
+    return false;
+  }
+
+  if (!isIvvyBackup(parsed)) return false;
+
+  try {
+    for (const [key, value] of Object.entries(parsed.keys)) {
+      if (!shouldExportKey(key)) continue;
+      window.localStorage.setItem(key, value);
+    }
+    return true;
+  } catch {
+    notifyStorageError(
+      "Ivvy could not import the backup into this browser. Free storage and try again."
+    );
     return false;
   }
 }
@@ -193,11 +301,11 @@ export function getProjects(): StudyProject[] {
   return Array.isArray(raw) ? (raw as StudyProject[]) : [];
 }
 
-export function saveProjects(projects: StudyProject[]): void {
-  writeJson(PROJECTS_KEY, projects);
+export function saveProjects(projects: StudyProject[]): boolean {
+  return writeJson(PROJECTS_KEY, projects);
 }
 
-export function saveProject(project: StudyProject): void {
+export function saveProject(project: StudyProject): boolean {
   const projects = getProjects();
   const index = projects.findIndex((p) => p.id === project.id);
   if (index >= 0) {
@@ -205,7 +313,7 @@ export function saveProject(project: StudyProject): void {
   } else {
     projects.push(project);
   }
-  saveProjects(projects);
+  return saveProjects(projects);
 }
 
 export function getProject(projectId: string): StudyProject | null {
@@ -224,8 +332,8 @@ export function getProjectTopics(projectId: string): Topic[] {
   return Array.isArray(raw) ? (raw as Topic[]) : [];
 }
 
-export function saveProjectTopics(projectId: string, topics: Topic[]): void {
-  writeJson(projectTopicsKey(projectId), topics);
+export function saveProjectTopics(projectId: string, topics: Topic[]): boolean {
+  return writeJson(projectTopicsKey(projectId), topics);
 }
 
 // ─── Project materials ───────────────────────────────────────────────────────
@@ -238,8 +346,8 @@ export function getProjectMaterials(projectId: string): Material[] {
 export function saveProjectMaterials(
   projectId: string,
   materials: Material[]
-): void {
-  writeJson(projectMaterialsKey(projectId), materials);
+): boolean {
+  return writeJson(projectMaterialsKey(projectId), materials);
 }
 
 export function saveMaterial(material: Material): void {
@@ -266,15 +374,78 @@ export function getProjectChat(projectId: string): Chat | null {
   return readJson<Chat | null>(projectChatKey(projectId), null);
 }
 
-export function saveProjectChat(projectId: string, chat: Chat): void {
-  writeJson(projectChatKey(projectId), chat);
+export function saveProjectChat(projectId: string, chat: Chat): boolean {
+  return writeJson(projectChatKey(projectId), chat);
 }
 
 // ─── Project mistakes ────────────────────────────────────────────────────────
 
+/** Seed the old fixed-interval reviews into an FSRS stability estimate. */
+function legacyStability(reviewCount: number): number {
+  if (reviewCount <= 1) return 2;
+  if (reviewCount === 2) return 5;
+  return 10;
+}
+
+function validDateOnly(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const date = value.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const [year, month, day] = date.split("-").map(Number);
+  const parsed = new Date(year, month - 1, day);
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return null;
+  }
+  return date;
+}
+
+/**
+ * Lazily attach an FSRS schedule to mistakes saved before the scheduler
+ * existed. Never-reviewed mistakes become due-now "new" cards; already-reviewed
+ * ones keep their intended next date so prior review work isn't discarded.
+ */
+function ensureSchedule(mistake: Mistake): Mistake {
+  if (isValidSchedule(mistake.schedule)) return mistake;
+  const today = getTodayIsoDate();
+  if (!mistake.reviewed || mistake.reviewCount <= 0) {
+    return { ...mistake, schedule: newSchedule(today) };
+  }
+  const stability = legacyStability(mistake.reviewCount);
+  const due =
+    validDateOnly(mistake.nextReviewDate) ??
+    addDaysToDate(today, Math.round(stability));
+  return {
+    ...mistake,
+    schedule: {
+      stability,
+      difficulty: 5,
+      due,
+      lastReview: validDateOnly(mistake.lastReviewed) ?? today,
+      state: "review",
+      reps: mistake.reviewCount,
+      lapses: 0,
+    },
+  };
+}
+
 export function getProjectMistakes(projectId: string): Mistake[] {
   const raw = readJson<unknown>(projectMistakesKey(projectId), []);
-  return Array.isArray(raw) ? (raw as Mistake[]) : [];
+  if (!Array.isArray(raw)) return [];
+  return (raw as Mistake[]).map(ensureSchedule);
+}
+
+/** Mistakes whose next review date has arrived (or that were never reviewed). */
+export function getDueProjectMistakes(
+  projectId: string,
+  today: string = getTodayIsoDate()
+): Mistake[] {
+  return getProjectMistakes(projectId).filter((mistake) =>
+    isScheduleDue(mistake.schedule, today)
+  );
 }
 
 export function saveProjectMistakes(
@@ -305,7 +476,67 @@ export function updateProjectMistake(
   return saveProjectMistakes(projectId, mistakes);
 }
 
+/**
+ * Grade a review and reschedule the mistake. Keeps the legacy reviewed/count/
+ * date fields in sync so older UI keeps working while queues run off `schedule`.
+ *
+ * When the student tapped a pre-answer `confidence`, this also records a
+ * RetrievalAttempt for the calibration score, and closes the loop (PLAN Step 5):
+ * a confidently-wrong answer — the most dangerous gap — is pulled straight back
+ * to today so it resurfaces in the very next session.
+ */
+export function gradeProjectMistake(
+  projectId: string,
+  mistakeId: string,
+  rating: ReviewRating,
+  confidence?: ConfidenceLevel
+): boolean {
+  const current = getProjectMistakes(projectId).find(
+    (mistake) => mistake.id === mistakeId
+  );
+  if (!current) return false;
+  const today = getTodayIsoDate();
+  const graded = gradeSchedule(
+    current.schedule ?? newSchedule(today),
+    rating,
+    today
+  );
+
+  const wasCorrect = rating !== "again";
+  const overconfidentMiss = confidence === 3 && !wasCorrect;
+  const schedule = overconfidentMiss
+    ? { ...graded, due: today, state: "relearning" as const }
+    : graded;
+
+  if (confidence !== undefined) {
+    recordRetrievalAttempt(projectId, {
+      mistakeId,
+      topicId: current.topicId || null,
+      predictedConfidence: confidence,
+      wasCorrect,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  return updateProjectMistake(projectId, mistakeId, {
+    schedule,
+    reviewed: true,
+    reviewCount: schedule.reps,
+    lastReviewed: new Date().toISOString(),
+    nextReviewDate: overconfidentMiss ? today : schedule.due,
+  });
+}
+
+/** Back-compat shim: a plain "reviewed" tap counts as a successful recall. */
 export function markProjectMistakeReviewed(
+  projectId: string,
+  mistakeId: string
+): boolean {
+  return gradeProjectMistake(projectId, mistakeId, "good");
+}
+
+/** Bring a mistake back into the due queue immediately. */
+export function resetProjectMistakeReview(
   projectId: string,
   mistakeId: string
 ): boolean {
@@ -313,19 +544,13 @@ export function markProjectMistakeReviewed(
     (mistake) => mistake.id === mistakeId
   );
   if (!current) return false;
-  if (current.reviewed) return true;
+  const today = getTodayIsoDate();
+  const base = current.schedule ?? newSchedule(today);
   return updateProjectMistake(projectId, mistakeId, {
-    reviewed: true,
-    reviewCount: current.reviewCount + 1,
-    lastReviewed: new Date().toISOString(),
+    reviewed: false,
+    nextReviewDate: today,
+    schedule: { ...base, due: today, state: "relearning" },
   });
-}
-
-export function resetProjectMistakeReview(
-  projectId: string,
-  mistakeId: string
-): boolean {
-  return updateProjectMistake(projectId, mistakeId, { reviewed: false });
 }
 
 function generateMistakeId(): string {
@@ -349,17 +574,50 @@ function isMistakeCategory(value: string): value is MistakeCategory {
 
 export function resolveProjectMistakeTopic(
   topics: Topic[],
-  activeTopicName: string | null
+  activeTopicName: string | null,
+  agentTopicName: string | null = null,
+  fallbackTopicName: string | null = null
 ): { topicId: string; topicName: string } {
-  if (activeTopicName) {
-    const match = topics.find((topic) => topic.name === activeTopicName);
+  const candidates = [activeTopicName, agentTopicName, fallbackTopicName].filter(
+    (value): value is string => typeof value === "string" && value.trim().length > 0
+  );
+
+  for (const candidate of candidates) {
+    const match = findMatchingTopic(topics, candidate);
     if (match) {
       return { topicId: match.id, topicName: match.name };
     }
-    return { topicId: "general", topicName: activeTopicName };
   }
 
   return { topicId: "general", topicName: "General" };
+}
+
+function normalizeTopicName(value: string): string {
+  return value
+    .toLocaleLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function findMatchingTopic(topics: Topic[], name: string): Topic | null {
+  const normalized = normalizeTopicName(name);
+  if (!normalized) return null;
+
+  const exact = topics.find(
+    (topic) => normalizeTopicName(topic.name) === normalized
+  );
+  if (exact) return exact;
+
+  const contains = topics.find((topic) => {
+    const topicName = normalizeTopicName(topic.name);
+    return (
+      topicName.length > 0 &&
+      (topicName.includes(normalized) || normalized.includes(topicName))
+    );
+  });
+  return contains ?? null;
 }
 
 const MAX_CORRECT_APPROACH_CHARS = 400;
@@ -384,8 +642,10 @@ export type CreateProjectMistakeInput = {
   studentAnswer: string;
   agentReply: string;
   mistakeCategory: string;
+  agentTopicName?: string | null;
   topics: Topic[];
   activeTopicName: string | null;
+  fallbackTopicName?: string | null;
   messagesBeforeAgent: ChatMessage[];
 };
 
@@ -394,7 +654,9 @@ export function createProjectMistakeFromChat(
 ): Mistake {
   const { topicId, topicName } = resolveProjectMistakeTopic(
     input.topics,
-    input.activeTopicName
+    input.activeTopicName,
+    input.agentTopicName ?? null,
+    input.fallbackTopicName ?? null
   );
   const category = isMistakeCategory(input.mistakeCategory)
     ? input.mistakeCategory
@@ -416,7 +678,8 @@ export function createProjectMistakeFromChat(
     reviewed: false,
     reviewCount: 0,
     lastReviewed: null,
-    nextReviewDate: null,
+    nextReviewDate: getTodayIsoDate(),
+    schedule: newSchedule(getTodayIsoDate()),
     createdAt: new Date().toISOString(),
   };
 }
@@ -490,6 +753,33 @@ export function deleteTrainingSession(
   );
 }
 
+// ─── Retrieval attempts (calibration) ────────────────────────────────────────
+
+// Calibration only needs recent history; cap storage so a heavy reviewer never
+// blows the localStorage quota.
+const MAX_RETRIEVAL_ATTEMPTS = 500;
+
+export function getRetrievalAttempts(projectId: string): RetrievalAttempt[] {
+  const raw = readJson<unknown>(retrievalAttemptsKey(projectId), []);
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map(normalizeRetrievalAttempt)
+    .filter((attempt): attempt is RetrievalAttempt => attempt !== null);
+}
+
+export function recordRetrievalAttempt(
+  projectId: string,
+  attempt: RetrievalAttempt
+): boolean {
+  const attempts = getRetrievalAttempts(projectId);
+  attempts.push(attempt);
+  const trimmed =
+    attempts.length > MAX_RETRIEVAL_ATTEMPTS
+      ? attempts.slice(attempts.length - MAX_RETRIEVAL_ATTEMPTS)
+      : attempts;
+  return writeJson(retrievalAttemptsKey(projectId), trimmed);
+}
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 
 export function clearProjectData(projectId: string): void {
@@ -500,4 +790,5 @@ export function clearProjectData(projectId: string): void {
   removeItem(projectProfileKey(projectId));
   removeItem(projectGoalsKey(projectId));
   removeItem(trainingLogKey(projectId));
+  removeItem(retrievalAttemptsKey(projectId));
 }

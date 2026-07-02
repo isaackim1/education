@@ -13,7 +13,37 @@ const config: Config = {
         foreground: "var(--foreground)",
       },
       fontFamily: {
-        serif: ["var(--font-serif)", "ui-serif", "Georgia", "Cambria", "serif"],
+        // One family everywhere — Helvetica Neue with native fallbacks. No
+        // webfont fetch, no Inter, no serif. Weight and scale do the work.
+        sans: [
+          '"Helvetica Neue"',
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Helvetica",
+          '"Segoe UI"',
+          "Arial",
+          "sans-serif",
+        ],
+        // Legacy alias — a few older classnames may still say font-serif;
+        // they render the same grotesk stack.
+        serif: [
+          '"Helvetica Neue"',
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Helvetica",
+          '"Segoe UI"',
+          "Arial",
+          "sans-serif",
+        ],
+        // Meta-data / dates / keystrokes.
+        mono: [
+          '"SF Mono"',
+          '"JetBrains Mono"',
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "monospace",
+        ],
       },
     },
   },

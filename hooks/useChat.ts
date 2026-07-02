@@ -61,12 +61,21 @@ function toApiMessages(
 export type ProjectMistakeContext = {
   topics: Topic[];
   activeTopicName: string | null;
+  fallbackTopicName?: string | null;
 };
 
 export type SendMessageOptions = {
   systemPrompt: string;
   contextMessage: string;
   mistakeContext?: ProjectMistakeContext;
+};
+
+/** Outcome of one exchange — lets callers record calibration attempts. */
+export type SendMessageResult = {
+  flaggedMistake: boolean;
+  resolved: boolean;
+  /** Set when a flagged mistake was persisted to the mistake bank. */
+  mistakeId: string | null;
 };
 
 function parseMistakeCategory(value: unknown): MistakeCategory {
@@ -80,6 +89,12 @@ function parseMistakeCategory(value: unknown): MistakeCategory {
     return value;
   }
   return "conceptual";
+}
+
+function parseMistakeTopicName(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
 }
 
 export function useChat(projectId: string) {
@@ -127,9 +142,12 @@ export function useChat(projectId: string) {
   );
 
   const sendMessage = useCallback(
-    async (content: string, options: SendMessageOptions) => {
+    async (
+      content: string,
+      options: SendMessageOptions
+    ): Promise<SendMessageResult | null> => {
       const trimmed = content.trim();
-      if (!trimmed || isSendingRef.current) return;
+      if (!trimmed || isSendingRef.current) return null;
 
       const current = getProjectChat(projectId) ?? createEmptyChat(projectId);
       const studentMessage = createChatMessage("student", trimmed);
@@ -171,8 +189,15 @@ export function useChat(projectId: string) {
           "flaggedMistake" in data && typeof data.flaggedMistake === "boolean"
             ? data.flaggedMistake
             : false;
+        const resolved =
+          "resolved" in data && typeof data.resolved === "boolean"
+            ? data.resolved
+            : false;
         const mistakeCategory = parseMistakeCategory(
           "mistakeCategory" in data ? data.mistakeCategory : undefined
+        );
+        const mistakeTopicName = parseMistakeTopicName(
+          "mistakeTopicName" in data ? data.mistakeTopicName : undefined
         );
 
         let agentMessage = createChatMessage(
@@ -181,19 +206,23 @@ export function useChat(projectId: string) {
           flaggedMistake
         );
 
+        let savedMistakeId: string | null = null;
         if (flaggedMistake && options.mistakeContext) {
           const mistake = createProjectMistakeFromChat({
             projectId,
             studentAnswer: trimmed,
             agentReply: data.reply,
             mistakeCategory,
+            agentTopicName: mistakeTopicName,
             topics: options.mistakeContext.topics,
             activeTopicName: options.mistakeContext.activeTopicName,
+            fallbackTopicName: options.mistakeContext.fallbackTopicName ?? null,
             messagesBeforeAgent: withStudent.messages,
           });
           const mistakeSaved = saveProjectMistake(projectId, mistake);
           if (mistakeSaved) {
             agentMessage = { ...agentMessage, mistakeSaved: true };
+            savedMistakeId = mistake.id;
           }
         }
 
@@ -204,6 +233,7 @@ export function useChat(projectId: string) {
           lastMessageAt: agentMessage.timestamp,
         };
         persistChat(withAgent);
+        return { flaggedMistake, resolved, mistakeId: savedMistakeId };
       } catch {
         const fallback = createChatMessage(
           "agent",
@@ -216,6 +246,7 @@ export function useChat(projectId: string) {
           lastMessageAt: fallback.timestamp,
         };
         persistChat(withFallback);
+        return null;
       } finally {
         isSendingRef.current = false;
         setIsSending(false);

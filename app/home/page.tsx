@@ -1,7 +1,6 @@
-import LandingPage from "@/components/marketing/LandingPage";
+import { redirect } from "next/navigation";
 
-// /home is the product marketing home. It always renders the landing page —
-// no localStorage or project-based gating, so it never redirects to /projects.
+// Legacy marketing route — the landing page now lives at the root.
 export default function HomePage() {
-  return <LandingPage />;
+  redirect("/");
 }

@@ -39,7 +39,7 @@ export default function SessionInput({
         type="button"
         onClick={onSubmit}
         disabled={disabled || !value.trim()}
-        className="shrink-0 inline-flex items-center justify-center h-11 px-6 rounded-full bg-[#1A1A17] text-white text-sm font-medium transition-colors hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
+        className="shrink-0 inline-flex items-center justify-center h-11 px-6 rounded-md bg-[#1E4634] text-white text-sm font-medium transition-colors hover:bg-[#16382A] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A17] focus-visible:ring-offset-2"
       >
         Send
       </button>

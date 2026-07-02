@@ -39,7 +39,7 @@ export function useProjects() {
   }, [refreshProjects]);
 
   const createProject = useCallback(
-    (input: CreateProjectInput): StudyProject => {
+    (input: CreateProjectInput): StudyProject | null => {
       const project: StudyProject = {
         id: generateProjectId(),
         name: input.name.trim(),
@@ -49,7 +49,8 @@ export function useProjects() {
         createdAt: new Date().toISOString(),
         lastStudiedAt: null,
       };
-      saveProject(project);
+      const saved = saveProject(project);
+      if (!saved) return null;
       refreshProjects();
       return project;
     },

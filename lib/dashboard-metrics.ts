@@ -7,6 +7,7 @@ import type {
   Topic,
   TrainingSession,
 } from "./types";
+import { isScheduleDue } from "./scheduling";
 
 export type ReadinessBand =
   | "Getting set up"
@@ -36,7 +37,7 @@ export type TopicCoverageState =
   | "No materials"
   | "Has materials"
   | "Practiced"
-  | "Reviewed";
+  | "Scheduled";
 
 export interface TopicCoverageRow {
   topicId: string;
@@ -44,7 +45,8 @@ export interface TopicCoverageRow {
   state: TopicCoverageState;
   progressPercent: number;
   mistakeCount: number;
-  unreviewedCount: number;
+  dueCount: number;
+  scheduledCount: number;
   reviewedCount: number;
   hasMaterials: boolean;
   isWeakArea: boolean;
@@ -220,7 +222,10 @@ export function computeReadiness(
       .filter((topicId) => topics.some((topic) => topic.id === topicId))
   ).size;
   const totalMistakes = mistakes.length;
-  const reviewedMistakes = mistakes.filter((mistake) => mistake.reviewed).length;
+  const dueMistakes = mistakes.filter((mistake) =>
+    isScheduleDue(mistake.schedule)
+  ).length;
+  const scheduledMistakes = totalMistakes - dueMistakes;
 
   const components = {
     setup: clamp(topicsCount / 5),
@@ -229,7 +234,7 @@ export function computeReadiness(
     review:
       totalMistakes === 0
         ? 0
-        : clamp(reviewedMistakes / Math.max(1, totalMistakes)),
+        : clamp(scheduledMistakes / Math.max(1, totalMistakes)),
   };
 
   const score = Math.round(
@@ -346,8 +351,8 @@ export function computeTopicCoverage(
   }
 
   return rows.sort((a, b) => {
-    if (a.unreviewedCount !== b.unreviewedCount) {
-      return b.unreviewedCount - a.unreviewedCount;
+    if (a.dueCount !== b.dueCount) {
+      return b.dueCount - a.dueCount;
     }
     if (a.isWeakArea !== b.isWeakArea) return a.isWeakArea ? -1 : 1;
     if (a.progressPercent !== b.progressPercent) {
@@ -366,13 +371,16 @@ function buildCoverageRow(
 ): TopicCoverageRow {
   const mistakeCount = mistakes.length;
   const reviewedCount = mistakes.filter((mistake) => mistake.reviewed).length;
-  const unreviewedCount = mistakeCount - reviewedCount;
+  const dueCount = mistakes.filter((mistake) =>
+    isScheduleDue(mistake.schedule)
+  ).length;
+  const scheduledCount = mistakeCount - dueCount;
 
   let state: TopicCoverageState;
   let progressPercent: number;
 
-  if (mistakeCount > 0 && reviewedCount === mistakeCount) {
-    state = "Reviewed";
+  if (mistakeCount > 0 && dueCount === 0) {
+    state = "Scheduled";
     progressPercent = 100;
   } else if (mistakeCount > 0) {
     state = "Practiced";
@@ -396,10 +404,11 @@ function buildCoverageRow(
     state,
     progressPercent,
     mistakeCount,
-    unreviewedCount,
+    dueCount,
+    scheduledCount,
     reviewedCount,
     hasMaterials,
-    isWeakArea: unreviewedCount > 0,
+    isWeakArea: dueCount > 0,
   };
 }
 
@@ -413,7 +422,9 @@ export function computeTodaysPlan(
 ): TodaysPlanMetrics {
   const base = `/projects/${project.id}`;
   const materialIds = materialTopicIds(materials);
-  const unreviewedMistakes = mistakes.filter((mistake) => !mistake.reviewed);
+  const dueMistakes = mistakes.filter((mistake) =>
+    isScheduleDue(mistake.schedule)
+  );
   const focusTopicIds =
     goals && Array.isArray(goals.focusTopicIds) ? goals.focusTopicIds : [];
   const focusTopics = goals
@@ -431,7 +442,7 @@ export function computeTodaysPlan(
     add({
       title: "Add topics",
       description: "Define what the exam covers so Ivvy can structure training.",
-      href: `${base}/setup`,
+      href: `${base}/materials?tab=topics`,
       kind: "setup",
     });
   } else {
@@ -448,26 +459,26 @@ export function computeTodaysPlan(
       add({
         title: "Start training",
         description: "Answer focused exam questions and begin finding weak areas.",
-        href: `${base}/train`,
+        href: `${base}/coach?mode=practice`,
         kind: "training",
       });
     }
 
-    if (unreviewedMistakes.length > 0) {
+    if (dueMistakes.length > 0) {
       if (goals && weeklyProgress && !weeklyProgress.reviewsMet) {
         add({
           title: `Review toward your weekly goal (${weeklyProgress.reviewsDone} of ${weeklyProgress.reviewGoal})`,
           description: "Keep your review streak on pace for this week.",
-          href: `${base}/review`,
+          href: `${base}/coach?mode=review`,
           kind: "review",
         });
       } else {
         add({
-          title: `Review ${unreviewedMistakes.length} mistake${
-            unreviewedMistakes.length === 1 ? "" : "s"
+          title: `Review ${dueMistakes.length} due mistake${
+            dueMistakes.length === 1 ? "" : "s"
           }`,
           description: "Retry saved mistakes before they fade from memory.",
-          href: `${base}/review`,
+          href: `${base}/coach?mode=review`,
           kind: "review",
         });
       }
@@ -493,7 +504,7 @@ export function computeTodaysPlan(
       add({
         title: `Train your focus topic: ${focusTopicToTrain.name}`,
         description: "You marked this as a priority for the exam.",
-        href: `${base}/train?topic=${encodeURIComponent(focusTopicToTrain.id)}`,
+        href: `${base}/coach?mode=practice&topic=${encodeURIComponent(focusTopicToTrain.name)}`,
         kind: "training",
       });
     }
@@ -513,7 +524,7 @@ export function computeTodaysPlan(
     const weakest = topics
       .map((topic) => ({
         topic,
-        count: unreviewedMistakes.filter(
+        count: dueMistakes.filter(
           (mistake) => mistake.topicId === topic.id
         ).length,
       }))
@@ -522,28 +533,19 @@ export function computeTodaysPlan(
     if (weakest && weakest.count > 0) {
       add({
         title: `Train weakest area: ${weakest.topic.name}`,
-        description: `${weakest.count} unreviewed mistake${
+        description: `${weakest.count} due mistake${
           weakest.count === 1 ? "" : "s"
         } point${weakest.count === 1 ? "s" : ""} to this topic.`,
-        href: `${base}/train?topic=${encodeURIComponent(weakest.topic.id)}`,
+        href: `${base}/coach?mode=practice&topic=${encodeURIComponent(weakest.topic.name)}`,
         kind: "training",
       });
     }
 
-    // Goal-aware: remind the student to log effort toward the weekly session goal.
-    if (weeklyProgress && !weeklyProgress.sessionsMet) {
-      add({
-        title: `Log a session toward your weekly goal (${weeklyProgress.sessionsDone} of ${weeklyProgress.sessionGoal})`,
-        description: "Record study, chat, or review time to track your week.",
-        href: `${base}/log`,
-        kind: "training",
-      });
-    }
 
     add({
       title: "Keep training",
       description: "Continue with focused exam questions to maintain momentum.",
-      href: `${base}/train`,
+      href: `${base}/coach?mode=practice`,
       kind: "training",
     });
   }

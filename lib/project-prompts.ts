@@ -7,7 +7,7 @@ export interface ProjectChatContext {
   topics: { name: string; masteryScore?: number }[];
   activeTopic: string | null;
   materials: { topicName: string; content: string; fileName?: string }[];
-  recentUnreviewedMistakes?: {
+  recentDueMistakes?: {
     topicName: string;
     mistakeCategory: string;
     question: string;
@@ -71,9 +71,9 @@ Train the student for their exam. Ask before you explain. Prefer one focused que
 
 When the student is wrong: explain briefly, then continue training with one targeted question. Do not give the full answer on the first wrong attempt.
 
-If recent unreviewed mistakes are listed in context, use them actively: retest weak areas with fresh exam-style questions, target the same gaps from new angles, and do not treat already-resolved material as mastered until the student proves it.
+If recent due mistakes are listed in context, use them actively: retest weak areas with fresh exam-style questions, target the same gaps from new angles, and do not treat scheduled material as mastered until the student proves it.
 
-MISTAKE SIGNAL: If the student's answer contains a clear error, start your reply with [MISTAKE:category] where category is conceptual, calculation, recall, or application.
+MISTAKE SIGNAL: If the student's answer contains a clear error, start your reply with [MISTAKE:category:topicName] where category is conceptual, calculation, recall, or application, and topicName is the closest matching topic from the project topic list. Use the topic name exactly as written in the topic list when possible. If there are no project topics, use General.
 
 RESOLVED SIGNAL: When a previously missed concept is genuinely fixed, start with [RESOLVED] followed by a space.
 
@@ -114,7 +114,7 @@ GUIDED SESSION RULES:
 - When told to begin or ask the next question, reply with only one question. Do not include feedback or an answer.
 - When the student answers, give concise feedback on that answer only. Do not ask the next question until explicitly told.
 - Focus on the active topic when one is provided. Ground questions in the project materials and recent mistakes.
-- Keep using the existing [MISTAKE:category] and [RESOLVED] signals exactly as defined above. Do not invent another signal format.
+- Keep using the existing [MISTAKE:category:topicName] and [RESOLVED] signals exactly as defined above. Do not invent another signal format.
 
 ${trainingModeRules(mode)}`;
 }
@@ -280,10 +280,10 @@ export function buildProjectContextMessage(context: ProjectChatContext): string 
     lines.push("Student materials: none saved yet.");
   }
 
-  const mistakes = context.recentUnreviewedMistakes ?? [];
+  const mistakes = context.recentDueMistakes ?? [];
   if (mistakes.length > 0) {
     lines.push("");
-    lines.push("Recent unreviewed mistakes:");
+    lines.push("Recent due mistakes:");
     for (const mistake of mistakes.slice(0, 3)) {
       lines.push(`- Topic: ${truncateText(mistake.topicName, 100)}`);
       lines.push(`  Category: ${truncateText(mistake.mistakeCategory, 40)}`);
@@ -300,7 +300,7 @@ export function buildProjectContextMessage(context: ProjectChatContext): string 
   lines.push("");
   if (context.materials.some((m) => m.content.trim())) {
     lines.push(
-      "Reference the student's actual material when possible. Start with a direct training question — do not greet or introduce yourself."
+      "Reference the student's actual material when possible. Start with a direct training question — do not greet or introduce yourself. When marking a mistake, choose the closest topic from the Topics line and include it in the [MISTAKE:category:topicName] signal."
     );
   } else {
     lines.push(
@@ -309,4 +309,64 @@ export function buildProjectContextMessage(context: ProjectChatContext): string 
   }
 
   return lines.join("\n");
+}
+
+// ─── Coach modes ─────────────────────────────────────────────────────────────
+// One session surface, five modes. Each mode is a system-prompt variant over
+// the same project context; the [MISTAKE]/[RESOLVED] signals stay identical so
+// the mistake bank works in every mode.
+
+export type CoachMode = "ask" | "learn" | "practice" | "review" | "exam";
+
+export function buildCoachModeSystemPrompt(mode: CoachMode): string {
+  switch (mode) {
+    case "ask":
+      return `${buildProjectSystemPrompt()}
+
+ASK MODE:
+- The student is asking questions. Answer directly and concisely, grounded in their materials when possible.
+- When you use a material, say which one in parentheses, e.g. (from "Ch. 16 slides").
+- You may end with one short check question, but never force training.`;
+    case "learn":
+      return `${buildProjectSystemPrompt()}
+
+LEARN MODE:
+- Explain the requested concept from the student's materials: core idea first, then one concrete example.
+- Keep explanations under 8 lines. Plain text only.
+- End by offering exactly one of: "Teach it back to me in your own words" or a single check question.
+- When the student teaches back, assess it: name what was right, what was missing, and what was unclear.`;
+    case "exam":
+      return `${buildTrainingSessionSystemPrompt("written")}
+
+EXAM MODE OVERRIDES:
+- Questions must be at real exam difficulty and exam phrasing. No hints, no leading setup.
+- Feedback is terse: verdict, the correct approach in two lines maximum, nothing else.
+- Do not encourage. Do not soften. Stay professional and calm.`;
+    case "practice":
+    case "review":
+    default:
+      return buildTrainingSessionSystemPrompt("written");
+  }
+}
+
+/** The message that opens a session when the student presses Begin. */
+export function coachKickoffMessage(
+  mode: CoachMode,
+  activeTopic: string | null
+): string {
+  const topicPart = activeTopic ? ` Focus on: ${activeTopic}.` : "";
+  switch (mode) {
+    case "ask":
+      return `I have questions about my course.${topicPart} Ready when you are: tell me you're ready in one short line.`;
+    case "learn":
+      return activeTopic
+        ? `Teach me the concept: ${activeTopic}. Start from my materials.`
+        : "Pick the topic from my materials where teaching would help me most right now, and teach it.";
+    case "exam":
+      return `Run me through exam-style questions, one at a time.${topicPart} Begin with the first question.`;
+    case "practice":
+    case "review":
+    default:
+      return `Start training me for this exam using my project materials.${topicPart} Ask the first question.`;
+  }
 }

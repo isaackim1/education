@@ -1,4 +1,5 @@
 import type { Mistake } from "@/lib/types";
+import { isScheduleDue } from "@/lib/scheduling";
 import { formatDate } from "@/lib/utils";
 
 export default function ProjectMistakeCard({
@@ -17,13 +18,13 @@ export default function ProjectMistakeCard({
         <span className="inline-flex items-center rounded-full bg-[#EFEBE2] px-2.5 py-0.5 text-xs text-[#56524B]">
           {mistake.mistakeCategory}
         </span>
-        {mistake.reviewed ? (
-          <span className="inline-flex items-center rounded-full bg-[#E6F4EA] px-2.5 py-0.5 text-xs font-medium text-[#137333]">
-            Reviewed
+        {isScheduleDue(mistake.schedule) ? (
+          <span className="inline-flex items-center rounded-full bg-[#FEEFC3] px-2.5 py-0.5 text-xs font-medium text-[#B06000]">
+            Due
           </span>
         ) : (
-          <span className="inline-flex items-center rounded-full bg-[#FEEFC3] px-2.5 py-0.5 text-xs font-medium text-[#B06000]">
-            Unreviewed
+          <span className="inline-flex items-center rounded-full bg-[#EAF0EB] px-2.5 py-0.5 text-xs font-medium text-[#1E4634]">
+            Scheduled
           </span>
         )}
       </div>
@@ -63,7 +64,10 @@ export default function ProjectMistakeCard({
       <p className="text-xs text-[#7A766D]">
         {formatDate(mistake.createdAt)}
         {mistake.reviewCount > 0
-          ? ` · Reviewed ${mistake.reviewCount} time${mistake.reviewCount === 1 ? "" : "s"}`
+          ? ` · Seen ${mistake.reviewCount}×`
+          : ""}
+        {!isScheduleDue(mistake.schedule) && mistake.schedule?.due
+          ? ` · Next review ${formatDate(mistake.schedule.due)}`
           : ""}
       </p>
     </div>

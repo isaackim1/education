@@ -2,9 +2,9 @@ import type { ActivityCell } from "@/lib/dashboard-metrics";
 
 const LEVEL_CLASSES: Record<ActivityCell["level"], string> = {
   0: "bg-[#EFEBE2]",
-  1: "bg-[#E6F4EA]",
-  2: "bg-[#137333]/50",
-  3: "bg-[#137333]",
+  1: "bg-[#EAF0EB]",
+  2: "bg-[#1E4634]/50",
+  3: "bg-[#1E4634]",
 };
 
 function formatActivityDate(value: string): string {
@@ -22,18 +22,18 @@ export default function ActivityGrid({ cells }: { cells: ActivityCell[] }) {
   const activeDays = cells.filter((cell) => cell.count > 0).length;
 
   return (
-    <section className="rounded-2xl border border-[#E7E3DA] bg-white p-5 sm:p-6">
+    <section className="h-full rounded-xl border border-[#E7E3DA] bg-white p-6 sm:p-7">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-[#1A1A17]">
+          <h2 className="font-sans text-[23px] leading-tight tracking-[-0.02em] text-[#1A1A17]">
             Training activity
           </h2>
-          <p className="mt-1 text-sm text-[#56524B]">
+          <p className="mt-1.5 text-sm leading-relaxed text-[#56524B]">
             Messages, mistakes, and reviews · last 12 weeks
           </p>
         </div>
         <div className="text-right leading-none">
-          <span className="font-serif text-[28px] tracking-[-0.01em] text-[#1A1A17] tabular-nums">
+          <span className="font-sans text-[28px] tracking-[-0.01em] text-[#1A1A17] tabular-nums">
             {totalActivity}
           </span>
           <span className="ml-1 text-xs font-medium text-[#56524B]">
